@@ -22,12 +22,20 @@ Documento fuente: `docs/SRS.pdf` — 24 requisitos funcionales y 6 de seguridad.
 ### Arrancar
 
 ```bash
-cp .env.example .env          # y rellena los valores
-docker compose up -d          # PostgreSQL en :5432, Adminer en :8080
+cp .env.example .env          # solo si .env no existe; rellena POSTGRES_PASSWORD
+docker compose config --quiet # valida sin mostrar credenciales
+docker compose up -d          # solo PostgreSQL, en 127.0.0.1:5432
+docker compose ps            # comprobar estado y salud
 
 cd backend && dotnet run --project src/Combustible.Api
 cd frontend && npm install && npm run dev
 ```
+
+`POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB` son obligatorias; Compose
+rechaza valores vacíos. `POSTGRES_PORT` es opcional (5432). No compartas ni comitees `.env`.
+Adminer solo arranca con `docker compose --profile herramientas up -d`, en
+`127.0.0.1:8080`. Las variables QR/JWT/SMTP/SMS son contratos previstos:
+el esqueleto actual todavía no las consume ni conecta la API a PostgreSQL.
 
 ### Verificar
 
@@ -35,6 +43,10 @@ cd frontend && npm install && npm run dev
 cd backend  && dotnet test    # pruebas del backend
 cd frontend && npm run build  # compilación del frontend
 ```
+
+La CI está definida en `.github/workflows/ci.yml`: build y pruebas de .NET en
+Release, y `npm ci` + build del frontend. Se ejecuta en pushes y pull requests;
+también permite arranque manual. Su ejecución real requiere un remoto en GitHub.
 
 ## Estructura
 
