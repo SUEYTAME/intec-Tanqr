@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           global-json-file: backend/global.json
+      - name: Fuente TTF para los PDF (PDFsharp no incluye fuentes)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-dejavu-core
       - name: Restaurar dependencias
         run: dotnet restore
       - name: Compilar
