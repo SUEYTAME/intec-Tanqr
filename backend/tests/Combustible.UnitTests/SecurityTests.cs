@@ -67,7 +67,7 @@ public sealed class SecurityTests(ApiFixture fixture)
                 var newPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(24));
                 Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync($"/api/usuarios/{user.Id}/password", new { password = newPassword })).StatusCode);
                 Assert.Equal(HttpStatusCode.Unauthorized, (await renewed.GetAsync("/api/auth/me")).StatusCode);
-                using var anonymous = fixture.Factory.CreateClient();
+                using var anonymous = fixture.CreateClient();
                 Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password })).StatusCode);
                 Assert.Equal(HttpStatusCode.OK, (await anonymous.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = newPassword })).StatusCode);
             }
@@ -78,7 +78,7 @@ public sealed class SecurityTests(ApiFixture fixture)
     public async Task Cinco_fallos_bloquean_incluso_la_contrasena_correcta()
     {
         var user = await CreateUserAsync();
-        using var client = fixture.Factory.CreateClient();
+        using var client = fixture.CreateClient();
         for (var i = 0; i < 5; i++)
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = "Esta frase es incorrecta" })).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password })).StatusCode);
@@ -107,8 +107,21 @@ public sealed class SecurityTests(ApiFixture fixture)
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password })).StatusCode);
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password, code = "invalid" })).StatusCode);
             Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password, code = Totp(secret) })).StatusCode);
-            Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password, recoveryCode = recovery })).StatusCode);
+            var recovered = await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password, recoveryCode = recovery });
+            Assert.Equal(HttpStatusCode.OK, recovered.StatusCode);
+            var recoveredSession = (await recovered.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString();
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password, recoveryCode = recovery })).StatusCode);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", recoveredSession);
+            var regenerated = await client.PostAsJsonAsync("/api/auth/mfa/recovery-codes", new { password = user.Password, code = Totp(secret) });
+            Assert.Equal(HttpStatusCode.OK, regenerated.StatusCode);
+            var replacement = (await regenerated.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("recoveryCodes")[0].GetString();
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);
+            var newLogin = await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password, code = Totp(secret) });
+            newLogin.EnsureSuccessStatusCode();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", (await newLogin.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("accessToken").GetString());
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/mfa/disable", new { password = user.Password, recoveryCode = replacement })).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password })).StatusCode);
         }
     }
 

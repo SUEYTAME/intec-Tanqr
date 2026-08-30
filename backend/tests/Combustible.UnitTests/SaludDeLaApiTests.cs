@@ -15,7 +15,7 @@ public sealed class SaludDeLaApiTests
     [Fact]
     public async Task El_endpoint_de_salud_responde_200()
     {
-        using var cliente = _fixture.Factory.CreateClient();
+        using var cliente = _fixture.CreateClient();
 
         var respuesta = await cliente.GetAsync("/health");
 
@@ -26,7 +26,7 @@ public sealed class SaludDeLaApiTests
     [Fact]
     public async Task La_raiz_identifica_el_servicio()
     {
-        using var cliente = _fixture.Factory.CreateClient();
+        using var cliente = _fixture.CreateClient();
 
         var respuesta = await cliente.GetAsync("/");
 

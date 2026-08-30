@@ -108,16 +108,38 @@ public static class AuthEndpoints
 
         group.MapPost("/mfa/disable", async (MfaRequest request, HttpContext http, UserManager<AppUser> users, AppDbContext db, AuditWriter audit) =>
         {
-            var user = (await users.FindByIdAsync(http.Actor()))!;
-            if (!await users.CheckPasswordAsync(user, request.Password) || request.Code is null
-                || !await users.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultAuthenticatorProvider, request.Code)) return Results.Unauthorized();
             await using var tx = await db.Database.BeginTransactionAsync();
+            await db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({http.Actor()}, 1))");
+            var user = (await users.FindByIdAsync(http.Actor()))!;
+            if (!await VerifyMfaAsync(users, user, request)) return Results.Unauthorized();
             UserEndpoints.Ensure(await users.SetTwoFactorEnabledAsync(user, false));
             UserEndpoints.Ensure(await users.ResetAuthenticatorKeyAsync(user));
             await audit.WriteAsync(http.Actor(), http.Ip(), "mfa_disabled", "User", http.Actor());
             await tx.CommitAsync();
             return Results.NoContent();
         }).RequireAuthorization();
+
+        group.MapPost("/mfa/recovery-codes", async (MfaRequest request, HttpContext http, UserManager<AppUser> users, AppDbContext db, AuditWriter audit) =>
+        {
+            await using var tx = await db.Database.BeginTransactionAsync();
+            await db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({http.Actor()}, 1))");
+            var user = (await users.FindByIdAsync(http.Actor()))!;
+            if (!await VerifyMfaAsync(users, user, request)) return Results.Unauthorized();
+            var recoveryCodes = await users.GenerateNewTwoFactorRecoveryCodesAsync(user, 10)
+                ?? throw new InvalidOperationException("No se generaron códigos de recuperación.");
+            UserEndpoints.Ensure(await users.UpdateSecurityStampAsync(user));
+            await audit.WriteAsync(http.Actor(), http.Ip(), "mfa_recovery_codes_regenerated", "User", http.Actor());
+            await tx.CommitAsync();
+            return Results.Ok(new { recoveryCodes });
+        }).RequireAuthorization();
+    }
+
+    private static async Task<bool> VerifyMfaAsync(UserManager<AppUser> users, AppUser user, MfaRequest request)
+    {
+        if (!user.TwoFactorEnabled || !await users.CheckPasswordAsync(user, request.Password)) return false;
+        if (request.RecoveryCode is { Length: > 0 })
+            return (await users.RedeemTwoFactorRecoveryCodeAsync(user, request.RecoveryCode.Trim())).Succeeded;
+        return request.Code is not null && await users.VerifyTwoFactorTokenAsync(user, TokenOptions.DefaultAuthenticatorProvider, request.Code);
     }
 
     public static string Actor(this HttpContext http) => http.User.FindFirst("sub")?.Value ?? "anonymous";

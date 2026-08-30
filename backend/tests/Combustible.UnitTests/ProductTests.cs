@@ -22,7 +22,7 @@ public sealed class ProductTests(ApiFixture fixture)
     [InlineData("/api/auditoria")]
     public async Task Sin_token_no_hay_acceso(string path)
     {
-        using var client = fixture.Factory.CreateClient();
+        using var client = fixture.CreateClient();
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(path)).StatusCode);
     }
 
@@ -99,6 +99,35 @@ public sealed class ProductTests(ApiFixture fixture)
                 Assert.Equal(canWrite ? HttpStatusCode.Created : HttpStatusCode.Forbidden,
                     (await client.PostAsJsonAsync("/api/departamentos/", new { code = Guid.NewGuid().ToString("N")[..12], name = "Prueba permisos" })).StatusCode);
             }
+        }
+    }
+
+    [Fact]
+    public async Task Refresh_concurrente_no_emite_dos_sesiones_validas()
+    {
+        var (_, session) = await fixture.LoginAsync();
+        using var first = fixture.CreateClient();
+        using var second = fixture.CreateClient();
+        var results = await Task.WhenAll(
+            first.PostAsJsonAsync("/api/auth/refresh", new { refreshToken = session.RefreshToken }),
+            second.PostAsJsonAsync("/api/auth/refresh", new { refreshToken = session.RefreshToken }));
+        Assert.Single(results, x => x.StatusCode == HttpStatusCode.OK);
+        Assert.Single(results, x => x.StatusCode == HttpStatusCode.Unauthorized);
+        var winner = (await results.Single(x => x.IsSuccessStatusCode).Content.ReadFromJsonAsync<SessionResponse>())!;
+        first.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", winner.AccessToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await first.GetAsync("/api/auth/me")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Escrituras_concurrentes_conservan_la_cadena_de_auditoria()
+    {
+        var (client, _) = await fixture.LoginAsync();
+        using (client)
+        {
+            var responses = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ =>
+                client.PostAsJsonAsync("/api/departamentos/", new { code = Guid.NewGuid().ToString("N")[..15], name = "Prueba concurrente" })));
+            Assert.All(responses, response => Assert.Equal(HttpStatusCode.Created, response.StatusCode));
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/auditoria/verificar")).StatusCode);
         }
     }
 

@@ -303,6 +303,9 @@ export function Account() {
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [completionMessage, setCompletionMessage] = useState(
+    "Autenticación activada. Vuelve a ingresar con tu contraseña y un código.",
+  );
   useEffect(() => {
     let alive = true;
     api<{ twoFactorEnabled: boolean }>("/api/auth/me")
@@ -353,6 +356,37 @@ export function Account() {
       setBusy(false);
     }
   }
+  async function manage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    const data = new FormData(event.currentTarget);
+    const operation = data.get("operation");
+    try {
+      const result = await api<{ recoveryCodes: string[] } | undefined>(
+        `/api/auth/mfa/${operation}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            password: data.get("password"),
+            code: data.get("code") || null,
+            recoveryCode: data.get("recovery") || null,
+          }),
+        },
+      );
+      setRecoveryCodes(result?.recoveryCodes ?? []);
+      setCompletionMessage(
+        operation === "disable"
+          ? "Autenticación en dos pasos desactivada. Vuelve a ingresar."
+          : "Códigos reemplazados. Los anteriores dejaron de ser válidos. Vuelve a ingresar.",
+      );
+      setComplete(true);
+    } catch (e) {
+      setError(explain(e));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <>
       <div className="page-heading">
@@ -376,17 +410,20 @@ export function Account() {
         </div>
         {complete ? (
           <div style={{ padding: 24 }}>
-            <p className="notice">
-              Autenticación activada. Vuelve a ingresar con tu contraseña y un
-              código.
-            </p>
-            <p>
-              Guarda estos códigos en un lugar seguro. Cada uno permite un solo
-              acceso de recuperación y se muestra únicamente ahora.
-            </p>
-            <pre className="setup-key">{recoveryCodes.join("\n")}</pre>
+            <p className="notice">{completionMessage}</p>
+            {recoveryCodes.length > 0 && (
+              <>
+                <p>
+                  Guarda estos códigos en un lugar seguro. Cada uno permite un
+                  solo acceso de recuperación y se muestra únicamente ahora.
+                </p>
+                <pre className="setup-key">{recoveryCodes.join("\n")}</pre>
+              </>
+            )}
             <button className="primary" onClick={() => sessionStore.set(null)}>
-              He guardado los códigos · Iniciar sesión
+              {recoveryCodes.length > 0
+                ? "He guardado los códigos · Iniciar sesión"
+                : "Volver a iniciar sesión"}
             </button>
           </div>
         ) : (
@@ -437,6 +474,55 @@ export function Account() {
               </button>
             </form>
           )
+        )}
+        {!complete && mfa === true && (
+          <form onSubmit={manage}>
+            <p>
+              Confirma tu identidad para cambiar esta protección. Todas tus
+              sesiones anteriores se cerrarán.
+            </p>
+            <label>
+              Operación
+              <select name="operation">
+                <option value="recovery-codes">
+                  Regenerar códigos de recuperación
+                </option>
+                <option value="disable">
+                  Desactivar autenticación en dos pasos
+                </option>
+              </select>
+            </label>
+            <label style={{ marginTop: 18 }}>
+              Contraseña actual
+              <input
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                maxLength={128}
+              />
+            </label>
+            <label style={{ marginTop: 18 }}>
+              Código del autenticador
+              <input
+                name="code"
+                inputMode="numeric"
+                maxLength={6}
+                autoComplete="one-time-code"
+              />
+            </label>
+            <label style={{ marginTop: 18 }}>
+              O un código de recuperación
+              <input name="recovery" maxLength={30} autoComplete="off" />
+            </label>
+            <button
+              className="primary"
+              style={{ marginTop: 20 }}
+              disabled={busy}
+            >
+              {busy ? "Procesando…" : "Confirmar cambio"}
+            </button>
+          </form>
         )}
       </section>
     </>

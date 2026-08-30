@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using Combustible.Api;
@@ -22,6 +23,15 @@ public sealed class ApiFixture : IAsyncLifetime
     public string Password { get; } = Convert.ToBase64String(RandomNumberGenerator.GetBytes(24));
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
     public string ApplicationConnection { get; private set; } = string.Empty;
+    private int _clientNumber;
+
+    public HttpClient CreateClient()
+    {
+        var number = Interlocked.Increment(ref _clientNumber);
+        var address = IPAddress.Parse($"10.0.{number / 256}.{number % 256}");
+        return new HttpClient(Factory.Server.CreateHandler(context => context.Connection.RemoteIpAddress = address))
+        { BaseAddress = new Uri("http://localhost") };
+    }
 
     public async Task InitializeAsync()
     {
@@ -52,7 +62,7 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public async Task<(HttpClient Client, SessionResponse Session)> LoginAsync(string? email = null, string? password = null)
     {
-        var client = Factory.CreateClient();
+        var client = CreateClient();
         var response = await client.PostAsJsonAsync("/api/auth/login", new { email = email ?? "admin@localhost.test", password = password ?? Password });
         response.EnsureSuccessStatusCode();
         var session = (await response.Content.ReadFromJsonAsync<SessionResponse>())!;
