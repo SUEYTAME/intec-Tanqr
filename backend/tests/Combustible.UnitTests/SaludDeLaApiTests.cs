@@ -1,21 +1,21 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Combustible.UnitTests;
 
 // Fase 0: la unica afirmacion que este esqueleto puede sostener es que la
 // aplicacion arranca de verdad y responde. Se prueba levantandola en memoria,
 // no comprobando que el codigo "parece" correcto.
-public sealed class SaludDeLaApiTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection("api")]
+public sealed class SaludDeLaApiTests
 {
-    private readonly WebApplicationFactory<Program> _fabrica;
+    private readonly ApiFixture _fixture;
 
-    public SaludDeLaApiTests(WebApplicationFactory<Program> fabrica) => _fabrica = fabrica;
+    public SaludDeLaApiTests(ApiFixture fixture) => _fixture = fixture;
 
     [Fact]
     public async Task El_endpoint_de_salud_responde_200()
     {
-        var cliente = _fabrica.CreateClient();
+        using var cliente = _fixture.Factory.CreateClient();
 
         var respuesta = await cliente.GetAsync("/health");
 
@@ -26,7 +26,7 @@ public sealed class SaludDeLaApiTests : IClassFixture<WebApplicationFactory<Prog
     [Fact]
     public async Task La_raiz_identifica_el_servicio()
     {
-        var cliente = _fabrica.CreateClient();
+        using var cliente = _fixture.Factory.CreateClient();
 
         var respuesta = await cliente.GetAsync("/");
 
