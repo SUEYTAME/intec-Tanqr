@@ -1,69 +1,82 @@
 # Plataforma de Tickets Digitales de Combustible — INTEC
 
-Plataforma web + PWA de despacho para el control del inventario y despacho de combustible de
-INTEC, mediante tickets digitales con QR firmado criptográficamente y trazabilidad completa.
+Web + PWA para tickets con QR firmado, inventario y despacho. Desarrollo en curso.
+El estado verificable y los pendientes están en `vault/Estado actual del proyecto.md`.
+Agentes: leer `AGENTS.md` primero. Requisitos: `docs/SRS.pdf`.
 
-Documento fuente: `docs/SRS.pdf` — 24 requisitos funcionales y 6 de seguridad.
+## Acceder en Windows
 
-## Para agentes
+1. Abre Docker Desktop.
+2. Haz doble clic en **Iniciar.cmd**, o ejecuta `./scripts/iniciar.ps1` desde PowerShell 7.
+3. Entra en **http://localhost:5173**.
+4. Consulta el usuario y la contraseña inicial en **artifacts/acceso-local.txt**.
 
-**Lee `AGENTS.md`.** Es el punto de entrada. No empieces por este README.
+El arranque crea los secretos que falten en `.env`, levanta PostgreSQL, aplica las
+migraciones explícitamente y crea un administrador local solo si no hay usuarios.
+No reemplaza contraseñas existentes ni borra volúmenes. `.env` y `artifacts/` se ignoran
+por Git; no los publiques. Las credenciales locales no son una configuración de producción.
+Si cambias la contraseña desde la aplicación, el archivo de acceso conserva el valor inicial.
 
-## Para personas
+Para actualizar los servidores tras cambiar código: `./scripts/iniciar.ps1 -Reiniciar`.
+Para detener solo API y web: `./scripts/detener.ps1`. PostgreSQL y sus datos se conservan.
+Los scripts solo detienen PID, fecha de inicio y comando que coincidan con su registro.
 
-### Qué necesitas
+## Qué puedes usar
 
-| Herramienta | Versión | Estado |
-|---|---|---|
-| .NET SDK | 10.0.401 LTS | fijado en `backend/global.json` |
-| Node.js | 24.x | |
-| Docker Desktop | 29.x | **debe estar corriendo** antes de `docker compose` |
+- Login, sesión revocable, MFA TOTP opcional y códigos de recuperación de un solo uso.
+- Departamentos, empleados y vehículos: crear, consultar, editar y desactivar.
+- Administración de usuarios: crear, modificar perfil/rol, desactivar y restablecer contraseña.
+- Auditoría de operaciones y accesos; permisos SQL que impiden alterar sus registros.
+- Interfaz adaptable a móvil. Todavía no es una PWA instalable ni registra despachos.
 
-### Arrancar
+Administrador administra cuentas; Administrador y Supervisor escriben catálogos.
+Auditor y Administrador consultan auditoría. Los cinco roles pueden leer catálogos.
+No hay registro público. Cambiar permisos, desactivar, cambiar contraseña o activar MFA
+invalida sesiones previas. Los tokens se mantienen solo en memoria de la pestaña.
+La edición de catálogos exige `If-Match` para detectar cambios concurrentes.
 
-```bash
-cp .env.example .env          # solo si .env no existe; rellena POSTGRES_PASSWORD
-docker compose config --quiet # valida sin mostrar credenciales
-docker compose up -d          # solo PostgreSQL, en 127.0.0.1:5432
-docker compose ps            # comprobar estado y salud
+## Requisitos locales
 
-cd backend && dotnet run --project src/Combustible.Api
-cd frontend && npm install && npm run dev
+.NET SDK según `backend/global.json`, Node 24.15.0, npm, PowerShell 7 y Docker Desktop.
+PostgreSQL se publica únicamente en `127.0.0.1:15432` (configurable en `.env`);
+API en `127.0.0.1:5080`, web en `127.0.0.1:5173`.
+Adminer es opcional: `docker compose --profile herramientas up -d`, puerto 8080 local.
+No se detienen servicios ajenos si un puerto está ocupado: corrige la configuración.
+
+## Verificar
+
+```powershell
+# Desde backend/
+dotnet build
+dotnet test
+# Desde frontend/
+npm ci
+npm run build
+npm run lint
+npx playwright install chromium
+# Desde la raíz, con la aplicación levantada
+./scripts/probar-interfaz.ps1
+
+docker compose config --quiet
+docker compose ps
 ```
 
-`POSTGRES_USER`, `POSTGRES_PASSWORD` y `POSTGRES_DB` son obligatorias; Compose
-rechaza valores vacíos. `POSTGRES_PORT` es opcional (5432). No compartas ni comitees `.env`.
-Adminer solo arranca con `docker compose --profile herramientas up -d`, en
-`127.0.0.1:8080`. Las variables QR/JWT/SMTP/SMS son contratos previstos:
-el esqueleto actual todavía no las consume ni conecta la API a PostgreSQL.
+Las pruebas .NET usan PostgreSQL 17 efímero con Testcontainers: requieren Docker activo,
+no acceden a la base local. Las pruebas de navegador locales crean departamentos marcados
+`QA-` / `Prueba UI` y los dejan inactivos; en CI corren en una base efímera separada.
+No confundir la emulación móvil con una prueba en un Android físico.
 
-### Verificar
+CI en `.github/workflows/ci.yml`: build/test .NET, build/lint React y navegador real con
+API + PostgreSQL. Los secretos de CI se generan por ejecución y se enmascaran.
 
-```bash
-cd backend  && dotnet test    # pruebas del backend
-cd frontend && npm run build  # compilación del frontend
-```
+## Límites actuales
 
-La CI está definida en `.github/workflows/ci.yml`: build y pruebas de .NET en
-Release, y `npm ci` + build del frontend. Se ejecuta en pushes y pull requests;
-también permite arranque manual. Su ejecución real requiere un remoto en GitHub.
+El login local emite JWT; no se presenta como implementación completa de OAuth 2.0.
+Integración OAuth/OIDC, cifrado AES-256 en reposo, TLS de producción, tickets/QR,
+inventario, despacho, reportes y PWA siguen en el backlog.
+La auditoría detecta cambios en su cadena y restringe al usuario SQL de aplicación;
+no protege frente a un superusuario que controle la base completa y reconstruya la cadena.
+`GET /api/auditoria/verificar` valida la cadena con permisos de Auditor/Administrador.
 
-## Estructura
-
-```
-AGENTS.md            contrato para agentes — el punto de entrada
-vault/               vault de Obsidian: contexto, decisiones, changelog y backlog
-docs/SRS.pdf         el documento de requisitos
-backend/             API en .NET 10 (Domain → Application → Infrastructure → Api)
-frontend/            React + TypeScript + Vite
-docker-compose.yml   PostgreSQL 17 + Adminer
-```
-
-El vault vive **dentro** del repositorio a propósito: un solo `git pull` trae el código y el
-contexto que lo explica, y así nunca se desincronizan. Ábrelo en Obsidian con "Abrir carpeta
-como vault" apuntando a `vault/`.
-
-## Estado
-
-Fase 0, montaje del entorno. Sin funcionalidad de producto todavía. El estado real está en
-`vault/Estado actual del proyecto.md` y el backlog en `vault/Tareas pendientes.md`.
+El vault dentro del repositorio mantiene estado, decisiones delegadas, evidencia y próximos
+pasos para continuar en una sesión nueva con “continúa con el programa”.
