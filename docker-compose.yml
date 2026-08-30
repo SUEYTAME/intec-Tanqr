@@ -1,6 +1,14 @@
-# Entorno de desarrollo. ADR-002: PostgreSQL 17 en contenedor.
+# Entorno de desarrollo LOCAL. ADR-002: PostgreSQL 17 en contenedor.
 # Arranque:  docker compose up -d
 # Comprobar: docker compose ps
+#
+# SEGURIDAD — leer antes de cambiar los puertos:
+# Todo se publica en 127.0.0.1, no en 0.0.0.0. Docker publica en todas las
+# interfaces por defecto, asi que "5432:5432" deja la base de datos accesible
+# desde cualquier equipo de la misma red — el wifi del campus, por ejemplo.
+# Con Adminer al lado eso son credenciales mas una consola de administracion
+# completa a disposicion de la red. Si alguien necesita acceso remoto, que sea
+# por un tunel SSH, no quitando el 127.0.0.1 de aqui.
 
 services:
   db:
@@ -8,31 +16,40 @@ services:
     container_name: combustible-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-combustible}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambiar_en_local}
-      POSTGRES_DB: ${POSTGRES_DB:-combustible}
-      # Espanol dominicano para ordenaciones y mensajes; UTF-8 por los acentos
-      # de nombres, departamentos y observaciones de despacho.
+      # Sin valores por defecto, a proposito. La sintaxis :? aborta el arranque
+      # con un mensaje claro si falta la variable, en vez de levantar la base de
+      # datos con una credencial conocida que nadie se entera de que esta usando.
+      # Es la regla de AGENTS.md: errores explicitos, sin fallbacks inventados.
+      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER — copia .env.example a .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD — copia .env.example a .env}
+      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB — copia .env.example a .env}
+      # UTF-8 por los acentos de nombres, departamentos y observaciones de despacho.
       POSTGRES_INITDB_ARGS: "--encoding=UTF8"
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
       # Sin esto, la API arranca antes de que Postgres acepte conexiones y falla
-      # con un error de conexion que parece un bug de la API y no lo es.
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-combustible} -d ${POSTGRES_DB:-combustible}"]
+      # con un error que parece un bug de la API y no lo es.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
 
+  # Adminer es una consola de administracion de base de datos sin barrera propia:
+  # quien llegue al puerto puede entrar con las credenciales. Por eso vive en el
+  # perfil "herramientas" y no se levanta salvo que se pida explicitamente:
+  #     docker compose --profile herramientas up -d
+  # Nunca debe desplegarse fuera de la maquina de desarrollo.
   adminer:
     image: adminer:5
     container_name: combustible-adminer
+    profiles: ["herramientas"]
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       db:
         condition: service_healthy
