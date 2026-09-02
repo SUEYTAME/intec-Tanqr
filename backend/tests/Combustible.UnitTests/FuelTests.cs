@@ -138,6 +138,11 @@ public sealed class FuelTests(ApiFixture fixture)
             var pdf = await admin.GetAsync($"/api/tickets/{issued.TicketId}/pdf");
             Assert.Equal("application/pdf", pdf.Content.Headers.ContentType!.MediaType);
             Assert.StartsWith("%PDF", Encoding.ASCII.GetString((await pdf.Content.ReadAsByteArrayAsync())[..4]), StringComparison.Ordinal);
+            var png = await (await admin.GetAsync($"/api/tickets/{issued.TicketId}/qr.png")).Content.ReadAsByteArrayAsync();
+            Assert.Equal(new byte[] { 0x89, 0x50, 0x4E, 0x47 }, png[..4]);
+            var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
+            using (dispatcher)
+                Assert.Equal(HttpStatusCode.Forbidden, (await dispatcher.GetAsync($"/api/tickets/{issued.TicketId}/qr.png")).StatusCode);
         }
     }
 
