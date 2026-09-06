@@ -1,6 +1,8 @@
+using System.Globalization;
 using Combustible.Application;
 using Combustible.Domain;
 using Combustible.Infrastructure.Data;
+using Combustible.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,6 +41,8 @@ public static class UserEndpoints
             await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(710211)");
             var user = await users.FindByIdAsync(id.ToString());
             if (user is null) return Results.NotFound();
+            // Cambio de acceso = leer-modificar-escribir: exige la versión que el administrador vio.
+            if (user.ConcurrencyStamp != request.Version) return Results.StatusCode(412);
             if ((!request.Active || request.Role != Roles.Administrator) && await users.IsInRoleAsync(user, Roles.Administrator)
                 && (await users.GetUsersInRoleAsync(Roles.Administrator)).Count(x => x.Active) <= 1)
                 return Results.Conflict(new { error = "Debe quedar al menos un administrador activo." });
@@ -105,7 +109,46 @@ public static class UserEndpoints
             }
             return Results.Ok(new { valid = true, events = count, lastHash = previous });
         }).RequireAuthorization("audit-read");
+
+        // RS-06: ancla firmada del final de la cadena. Guardada FUERA del sistema (correo, papel, WORM),
+        // permite detectar que un superusuario reconstruyó la cadena completa después de emitirla.
+        app.MapGet("/api/auditoria/ancla", async (AppDbContext db, TicketSigner signer, AuditWriter audit, HttpContext http) =>
+        {
+            await using var tx = await db.Database.BeginTransactionAsync();
+            await audit.WriteAsync(http.Actor(), http.Ip(), "audit_anchor", "AuditEvent", string.Empty);
+            await tx.CommitAsync();
+            var last = await db.AuditEvents.AsNoTracking().OrderByDescending(x => x.Id).Select(x => new { x.Id, x.Hash }).FirstAsync();
+            var count = await db.AuditEvents.LongCountAsync(x => x.Id <= last.Id);
+            var issuedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var signature = signer.SignDetached(AnchorPurpose, AnchorData(last.Id, last.Hash, count, issuedAt));
+            return Results.Ok(new AuditAnchor(last.Id, last.Hash, count, issuedAt, signature));
+        }).RequireAuthorization("audit-read");
+        app.MapGet("/api/auditoria/clave-publica", (TicketSigner signer) => Results.Text(signer.PublicKeyPem(), "application/x-pem-file"))
+            .RequireAuthorization("audit-read");
+        app.MapPost("/api/auditoria/ancla/verificar", async (AuditAnchor anchor, AppDbContext db, TicketSigner signer, CancellationToken cancellationToken) =>
+        {
+            if (!signer.VerifyDetached(AnchorPurpose, AnchorData(anchor.LastId, anchor.LastHash, anchor.Count, anchor.IssuedAt), anchor.Signature))
+                return Results.Conflict(new { valid = false, reason = "La firma del ancla no corresponde a este sistema." });
+            var previous = string.Empty;
+            long count = 0;
+            await foreach (var entry in db.AuditEvents.AsNoTracking().Where(x => x.Id <= anchor.LastId).OrderBy(x => x.Id).AsAsyncEnumerable().WithCancellation(cancellationToken))
+            {
+                if (entry.PreviousHash != previous || entry.Hash != AuditWriter.ComputeHash(entry))
+                    return Results.Conflict(new { valid = false, reason = $"La cadena se rompe en el evento {entry.Id}." });
+                previous = entry.Hash;
+                count++;
+            }
+            if (count != anchor.Count || previous != anchor.LastHash)
+                return Results.Conflict(new { valid = false, reason = "La cadena actual no coincide con el ancla: fue reconstruida o truncada." });
+            return Results.Ok(new { valid = true, anchor.LastId, anchor.Count });
+        }).RequireAuthorization("audit-read").AddEndpointFilter<RequestValidationFilter>();
     }
+
+    private const string AnchorPurpose = "AUDIT-ANCHOR-v1";
+
+    private static string AnchorData(long lastId, string lastHash, long count, long issuedAt) =>
+        string.Join('|', lastId.ToString(CultureInfo.InvariantCulture), lastHash, count.ToString(CultureInfo.InvariantCulture), issuedAt.ToString(CultureInfo.InvariantCulture));
+
     public static void Ensure(IdentityResult result)
     {
         if (!result.Succeeded) throw new InvalidOperationException(string.Join("; ", result.Errors.Select(x => x.Code)));

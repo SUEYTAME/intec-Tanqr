@@ -30,6 +30,18 @@ public sealed class SecurityTests(ApiFixture fixture)
         }
     }
 
+    // La lista de usuarios pagina de 50 en 50 por correo; con muchas cuentas de prueba el usuario puede no estar en la primera página.
+    private static async Task<JsonElement> FindUserAsync(HttpClient admin, Guid id)
+    {
+        for (var page = 1; ; page++)
+        {
+            var list = await admin.GetFromJsonAsync<JsonElement>($"/api/usuarios/?page={page}");
+            var items = list.GetProperty("items").EnumerateArray().ToList();
+            if (items.Count == 0) throw new InvalidOperationException($"Usuario {id} no aparece en la lista.");
+            foreach (var item in items) if (item.GetProperty("id").GetGuid() == id) return item;
+        }
+    }
+
     [Fact]
     public async Task Desactivar_cuenta_revoca_JWT_y_refresh()
     {
@@ -38,7 +50,9 @@ public sealed class SecurityTests(ApiFixture fixture)
         var (admin, _) = await fixture.LoginAsync();
         using (client) using (admin)
         {
-            Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/usuarios/{user.Id}/acceso", new { role = Roles.Viewer, active = false })).StatusCode);
+            var version = (await FindUserAsync(admin, user.Id)).GetProperty("version").GetString();
+            Assert.Equal(HttpStatusCode.BadRequest, (await admin.PutAsJsonAsync($"/api/usuarios/{user.Id}/acceso", new { role = Roles.Viewer, active = false })).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/usuarios/{user.Id}/acceso", new { role = Roles.Viewer, active = false, version })).StatusCode);
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/refresh", new { refreshToken = session.RefreshToken })).StatusCode);
             Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/login", new { email = user.Email, password = user.Password })).StatusCode);
@@ -53,8 +67,7 @@ public sealed class SecurityTests(ApiFixture fixture)
         var (client, _) = await fixture.LoginAsync(user.Email, user.Password);
         using (admin) using (client)
         {
-            var list = await admin.GetFromJsonAsync<JsonElement>("/api/usuarios/");
-            var current = list.GetProperty("items").EnumerateArray().Single(x => x.GetProperty("id").GetGuid() == user.Id);
+            var current = await FindUserAsync(admin, user.Id);
             var version = current.GetProperty("version").GetString();
             var update = new { email = user.Email, displayName = "Perfil corregido", role = Roles.Auditor, active = true, version };
             Assert.Equal(HttpStatusCode.NoContent, (await admin.PutAsJsonAsync($"/api/usuarios/{user.Id}", update)).StatusCode);

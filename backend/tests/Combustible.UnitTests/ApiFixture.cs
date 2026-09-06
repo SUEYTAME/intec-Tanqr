@@ -51,6 +51,7 @@ public sealed class ApiFixture : IAsyncLifetime
         await Task.WhenAll(_postgres.StartAsync(), _mailpit.StartAsync());
         MailpitApi = new Uri($"http://{_mailpit.Hostname}:{_mailpit.GetMappedPublicPort(8025)}/api/v1/");
         using var qrKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var oauthKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var values = new Dictionary<string, string?>
         {
             ["ConnectionStrings:Database"] = _postgres.GetConnectionString(), ["JWT_SIGNING_KEY"] = _key,
@@ -58,6 +59,7 @@ public sealed class ApiFixture : IAsyncLifetime
             ["BOOTSTRAP_PASSWORD"] = Password, ["Logging:LogLevel:Default"] = "Warning",
             ["DATA_ENCRYPTION_KEY"] = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)),
             ["QR_SIGNING_KEY_B64"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(qrKey.ExportPkcs8PrivateKeyPem())),
+            ["OAUTH_SIGNING_KEY_B64"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(oauthKey.ExportPkcs8PrivateKeyPem())),
             ["OUTBOX_DIR"] = OutboxDirectory, ["PUBLIC_BASE_URL"] = "http://localhost:5173", ["Jobs:Enabled"] = "false",
             ["SMTP_HOST"] = _mailpit.Hostname, ["SMTP_PORT"] = _mailpit.GetMappedPublicPort(1025).ToString(CultureInfo.InvariantCulture),
             ["SMTP_FROM"] = "combustible@localhost.test", ["SMTP_REQUIRE_TLS"] = "false",

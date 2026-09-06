@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -14,10 +15,12 @@ using Combustible.Domain;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(TransportSecurity.Configure);
 var connection = builder.Configuration.GetConnectionString("Database")
     ?? throw new InvalidOperationException("Falta ConnectionStrings:Database. Usa scripts/iniciar.ps1.");
 var signingKey = Convert.FromBase64String(builder.Configuration["JWT_SIGNING_KEY"]
@@ -26,7 +29,11 @@ if (signingKey.Length < 32) throw new InvalidOperationException("JWT_SIGNING_KEY
 var jwt = new JwtSettings(builder.Configuration["JWT_ISSUER"] ?? "intec-combustible",
     builder.Configuration["JWT_AUDIENCE"] ?? "intec-combustible", signingKey);
 builder.Services.AddSingleton(jwt);
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connection));
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseNpgsql(connection).ReplaceService<IModelCacheKeyFactory, ProtectorModelCacheKeyFactory>();
+    options.UseOpenIddict();
+});
 builder.Services.AddScoped<AuditWriter>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -66,7 +73,40 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 }).AddRoles<IdentityRole<Guid>>().AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager().AddDefaultTokenProviders().AddPasswordValidator<PassphraseValidator>();
 builder.Services.Configure<PasswordHasherOptions>(options => options.IterationCount = 600000);
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+// RS-05: servidor OAuth 2.0 (client credentials, RFC 6749 §4.4) que emite JWT de acceso (RFC 9068)
+// para sistemas que consumen la API (RF-24). Clave propia: una fuga no permite falsificar QR.
+using var oauthKey = ECDsa.Create();
+oauthKey.ImportFromPem(Encoding.UTF8.GetString(Convert.FromBase64String(builder.Configuration["OAUTH_SIGNING_KEY_B64"]
+    ?? throw new InvalidOperationException("Falta OAUTH_SIGNING_KEY_B64 (clave ECDSA P-256 PEM en base64). Usa scripts/iniciar.ps1."))));
+var oauthSecurityKey = new ECDsaSecurityKey(ECDsa.Create(oauthKey.ExportParameters(true)));
+builder.Services.AddOpenIddict()
+    .AddCore(options => options.UseEntityFrameworkCore().UseDbContext<AppDbContext>())
+    .AddServer(options =>
+    {
+        options.SetTokenEndpointUris("/connect/token");
+        options.AllowClientCredentialsFlow();
+        options.RegisterScopes(OAuthClients.Scope);
+        options.AddSigningKey(oauthSecurityKey);
+        // Ningún token cifrado se emite (solo acceso JWT firmado); la clave efímera satisface el requisito del servidor.
+        options.AddEphemeralEncryptionKey();
+        options.DisableAccessTokenEncryption();
+        options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
+        var aspNet = options.UseAspNetCore().EnableTokenEndpointPassthrough();
+        if (builder.Environment.IsDevelopment()) aspNet.DisableTransportSecurityRequirement();
+    })
+    .AddValidation(options =>
+    {
+        options.UseLocalServer();
+        options.UseAspNetCore();
+        // Revocar o borrar el cliente invalida sus tokens vigentes.
+        options.EnableTokenEntryValidation();
+    });
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "bearer";
+    options.DefaultChallengeScheme = "bearer";
+}).AddPolicyScheme("bearer", "JWT de sesión u OAuth 2.0", options => options.ForwardDefaultSelector = OAuthClients.SelectScheme)
+.AddJwtBearer(options =>
 {
     options.MapInboundClaims = false;
     options.TokenValidationParameters = new TokenValidationParameters
@@ -99,8 +139,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("request-create", p => p.RequireRole(Roles.Administrator, Roles.Supervisor, Roles.Viewer));
     options.AddPolicy("request-approve", p => p.RequireRole(Roles.Administrator, Roles.Supervisor));
     options.AddPolicy("inventory-write", p => p.RequireRole(Roles.Administrator, Roles.Supervisor));
-    options.AddPolicy("dispatch", p => p.RequireRole(Roles.Dispatcher, Roles.Supervisor));
-    options.AddPolicy("close", p => p.RequireRole(Roles.Dispatcher, Roles.Supervisor));
+    // Despacho y cierre exigen persona con sesión (claim sid): H-05 pide confirmar la cédula en persona.
+    options.AddPolicy("dispatch", p => p.RequireRole(Roles.Dispatcher, Roles.Supervisor).RequireClaim("sid"));
+    options.AddPolicy("close", p => p.RequireRole(Roles.Dispatcher, Roles.Supervisor).RequireClaim("sid"));
+    options.AddPolicy("user", p => p.RequireAuthenticatedUser().RequireClaim("sid"));
     options.AddPolicy("reports", p => p.RequireRole(Roles.Administrator, Roles.Supervisor, Roles.Auditor, Roles.Viewer));
 });
 builder.Services.AddRateLimiter(options =>
@@ -135,7 +177,7 @@ app.MapGet("/health/ready", async (AppDbContext db) =>
     await db.Database.CanConnectAsync() ? Results.Ok(new { status = "ready" }) : Results.StatusCode(503));
 app.MapGet("/", () => Results.Ok(new { servicio = "INTEC Combustible", version = "0.3.0", estado = "tickets, inventario y despacho" }));
 app.MapOpenApi();
-app.MapAuth(); app.MapUsers(); app.MapCatalogs(); app.MapTickets(); app.MapInventory(); app.MapReports();
+app.MapAuth(); app.MapUsers(); app.MapCatalogs(); app.MapTickets(); app.MapInventory(); app.MapReports(); app.MapOAuth();
 if (args.Contains("--initialize", StringComparer.Ordinal))
 {
     await DatabaseBootstrap.InitializeAsync(app.Services, builder.Configuration);

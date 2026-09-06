@@ -19,7 +19,11 @@ public sealed class FieldProtector
         if (masterKey.Length != 32) throw new InvalidOperationException("DATA_ENCRYPTION_KEY debe tener exactamente 32 bytes (AES-256).");
         _encryptionKey = HKDF.DeriveKey(HashAlgorithmName.SHA256, masterKey, 32, info: "combustible-aes-gcm-v1"u8.ToArray());
         _indexKey = HKDF.DeriveKey(HashAlgorithmName.SHA256, masterKey, 32, info: "combustible-blind-index-v1"u8.ToArray());
+        KeyId = Convert.ToHexString(SHA256.HashData(_indexKey))[..16];
     }
+
+    // Huella de la clave (no la revela): separa modelos de EF construidos con claves distintas.
+    public string KeyId { get; }
 
     public static bool IsProtected(string value) => value.StartsWith(Prefix, StringComparison.Ordinal);
 
@@ -110,7 +114,7 @@ public sealed class TicketSigner : IDisposable
         return $"{Version}.{ticket.Id:N}.{token}.{ticket.Signature}";
     }
 
-    public static bool TryParse(string payload, out Guid id, out string token, out string signature)
+    public static bool TryParsePayload(string payload, out Guid id, out string token, out string signature)
     {
         id = Guid.Empty; token = string.Empty; signature = string.Empty;
         var parts = (payload ?? string.Empty).Trim().Split('.');
@@ -119,6 +123,20 @@ public sealed class TicketSigner : IDisposable
         token = parts[2]; signature = parts[3];
         return true;
     }
+
+    // Firma separada por dominio: el prefijo impide confundir una firma de QR con otra de otro uso.
+    public string SignDetached(string purpose, string data) =>
+        Base64Url(_key.SignData(Encoding.UTF8.GetBytes(purpose + "|" + data), HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation));
+
+    public bool VerifyDetached(string purpose, string data, string signature)
+    {
+        byte[] raw;
+        try { raw = FromBase64Url(signature ?? string.Empty); }
+        catch (FormatException) { return false; }
+        return _key.VerifyData(Encoding.UTF8.GetBytes(purpose + "|" + data), raw, HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
+    }
+
+    public string PublicKeyPem() => _key.ExportSubjectPublicKeyInfoPem();
 
     public void Dispose() => _key.Dispose();
 

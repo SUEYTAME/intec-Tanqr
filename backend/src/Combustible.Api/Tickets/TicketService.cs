@@ -98,7 +98,7 @@ public sealed class TicketService(AppDbContext db, TicketSigner signer, FieldPro
     // RF-07: firma válida + token correcto + fila sin alterar. La cantidad se lee de la base, nunca del QR.
     public async Task<QrCheck> VerifyQrAsync(string payload, bool forUpdate, DateTimeOffset now, CancellationToken cancellationToken = default)
     {
-        if (!TicketSigner.TryParse(payload, out var id, out var token, out var signature)) return new QrCheck(null, "El código QR no tiene un formato válido.");
+        if (!TicketSigner.TryParsePayload(payload, out var id, out var token, out var signature)) return new QrCheck(null, "El código QR no tiene un formato válido.");
         var ticket = forUpdate
             ? await db.Tickets.FromSqlInterpolated($"SELECT * FROM \"Tickets\" WHERE \"Id\" = {id} FOR UPDATE").SingleOrDefaultAsync(cancellationToken)
             : await db.Tickets.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
