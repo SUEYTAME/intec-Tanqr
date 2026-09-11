@@ -28,6 +28,10 @@ test("MFA: alta, recuperación, regeneración y baja desde Mi cuenta", async ({
   page,
   request,
 }) => {
+  // /api/auth tiene un límite fijo de 60 solicitudes por minuto e IP, compartido por
+  // todas las pruebas. Este flujo es el más intensivo: arranca con una ventana nueva.
+  test.setTimeout(150_000);
+  await page.waitForTimeout(61_000);
   const adminLogin = await request.post("/api/auth/login", {
     data: {
       email: process.env.BOOTSTRAP_EMAIL,
@@ -116,9 +120,20 @@ test("MFA: alta, recuperación, regeneración y baja desde Mi cuenta", async ({
     await page.getByRole("button", { name: "Cerrar sesión" }).click();
     expect(errors).toEqual([]);
   } finally {
+    // /acceso exige la versión actual del usuario (control de concurrencia).
+    let version: string | undefined;
+    for (let p = 1; !version; p++) {
+      const list = await request.get(`/api/usuarios/?page=${p}`, { headers });
+      expect(list.ok()).toBeTruthy();
+      const data = (await list.json()) as {
+        items: { id: string; version: string }[];
+      };
+      expect(data.items.length, "usuario de prueba no encontrado").toBeGreaterThan(0);
+      version = data.items.find((u) => u.id === id)?.version;
+    }
     const disabled = await request.put(`/api/usuarios/${id}/acceso`, {
       headers,
-      data: { role: "Consulta", active: false },
+      data: { role: "Consulta", active: false, version },
     });
     expect(disabled.status()).toBe(204);
     await request.post("/api/auth/logout", { headers });

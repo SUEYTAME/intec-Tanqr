@@ -1,64 +1,41 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { FormEvent } from "react";
 import { api, login, logout, sessionStore } from "./api";
 import { Users, Account } from "./Administration";
+import { Catalog } from "./Catalogs";
+import { DailyClose } from "./DailyClose";
+import { Dashboard } from "./Dashboard";
+import { Dispatch } from "./Dispatch";
+import { Inventory } from "./Inventory";
+import { Notifications } from "./Notifications";
+import { Reports } from "./Reports";
+import { Requests } from "./Requests";
+import { Schedules } from "./Schedules";
+import { Integrations, Settings } from "./Settings";
+import { Tickets } from "./Tickets";
+import { explain, formatDateTime, hasRole, saveBlob, useOnline } from "./lib";
 import "./App.css";
+import "./screens.css";
 
-type Row = Record<string, string | number | boolean> & {
-  id: string;
-  version: string;
-  active: boolean;
-};
-type Field = { key: string; label: string; type?: string; max?: number };
-const sections = {
-  departamentos: {
-    title: "Departamentos",
-    description:
-      "Organiza las unidades a las que pertenecen empleados y vehículos.",
-    fields: [
-      { key: "code", label: "Código", max: 30 },
-      { key: "name", label: "Nombre", max: 150 },
-    ],
-  },
-  empleados: {
-    title: "Empleados",
-    description:
-      "Mantén el registro de las personas autorizadas de la institución.",
-    fields: [
-      { key: "code", label: "Código", max: 30 },
-      { key: "fullName", label: "Nombre completo", max: 200 },
-      { key: "nationalId", label: "Cédula (11 dígitos)", max: 11 },
-      { key: "departmentId", label: "Departamento", type: "department" },
-      { key: "position", label: "Cargo", max: 100 },
-      { key: "email", label: "Correo", type: "email", max: 254 },
-      { key: "mobile", label: "Teléfono móvil", type: "tel", max: 25 },
-    ],
-  },
-  vehiculos: {
-    title: "Vehículos",
-    description:
-      "Identifica cada vehículo y conserva sus datos de capacidad y kilometraje.",
-    fields: [
-      { key: "plate", label: "Placa", max: 20 },
-      { key: "internalCode", label: "Ficha", max: 30 },
-      { key: "make", label: "Marca", max: 80 },
-      { key: "model", label: "Modelo", max: 80 },
-      { key: "year", label: "Año", type: "number" },
-      { key: "kind", label: "Tipo", max: 80 },
-      { key: "departmentId", label: "Departamento", type: "department" },
-      { key: "tankCapacity", label: "Capacidad (galones)", type: "number" },
-      { key: "odometer", label: "Odómetro (km)", type: "number" },
-    ],
-  },
-} satisfies Record<
-  string,
-  { title: string; description: string; fields: Field[] }
->;
-type Section = keyof typeof sections;
-const message = (error: unknown) =>
-  error instanceof Error
-    ? error.message
-    : "No se pudo conectar con el servidor.";
+type Page =
+  | "tablero"
+  | "solicitudes"
+  | "tickets"
+  | "programaciones"
+  | "despacho"
+  | "cierre"
+  | "inventario"
+  | "reportes"
+  | "notificaciones"
+  | "departamentos"
+  | "empleados"
+  | "vehiculos"
+  | "parametros"
+  | "integraciones"
+  | "auditoria"
+  | "usuarios"
+  | "seguridad";
+type NavItem = { page: Page; label: string; visible: boolean };
 
 function Login() {
   const [error, setError] = useState("");
@@ -76,7 +53,7 @@ function Login() {
         String(form.get("recovery") ?? ""),
       );
     } catch (e) {
-      setError(message(e));
+      setError(explain(e));
     } finally {
       setBusy(false);
     }
@@ -95,7 +72,8 @@ function Login() {
             con un buen registro.
           </h1>
           <p>
-            Empleados, vehículos y departamentos, conectados en un solo lugar.
+            Solicitudes, tickets con QR firmado, despacho, inventario y
+            reportes en un solo lugar.
           </p>
         </div>
         <small>Plataforma de tickets digitales de combustible</small>
@@ -151,302 +129,14 @@ function Login() {
   );
 }
 
-function Catalog({
-  section,
-  canWrite,
-}: {
-  section: Section;
-  canWrite: boolean;
-}) {
-  const schema = sections[section];
-  const [rows, setRows] = useState<Row[]>([]);
-  const [departments, setDepartments] = useState<Row[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [editing, setEditing] = useState<Row | null | undefined>(undefined);
-  const [saving, setSaving] = useState(false);
-  const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    api<{ items: Row[]; total: number }>(`/api/${section}/?page=${page}`)
-      .then((data) => {
-        if (alive) {
-          setRows(data.items);
-          setTotal(data.total);
-        }
-      })
-      .catch((e) => {
-        if (alive) setError(message(e));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [section, page, revision]);
-  useEffect(() => {
-    if (section === "departamentos") return;
-    let alive = true;
-    async function loadDepartments() {
-      const all: Row[] = [];
-      for (let p = 1; ; p++) {
-        const data = await api<{ items: Row[]; total: number }>(
-          `/api/departamentos/?page=${p}&pageSize=100`,
-        );
-        all.push(...data.items);
-        if (all.length >= data.total) break;
-      }
-      if (alive) setDepartments(all);
-    }
-    void loadDepartments().catch((e) => {
-      if (alive) setError(message(e));
-    });
-    return () => {
-      alive = false;
-    };
-  }, [section, revision]);
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
-    setNotice("");
-    const data = new FormData(event.currentTarget);
-    const body: Record<string, unknown> = {
-      active: data.get("active") === "on",
-    };
-    for (const field of schema.fields as Field[])
-      body[field.key] =
-        field.type === "number"
-          ? Number(data.get(field.key))
-          : String(data.get(field.key));
-    try {
-      await api(`/api/${section}/${editing?.id ?? ""}`, {
-        method: editing ? "PUT" : "POST",
-        headers: editing ? { "If-Match": `"${editing.version}"` } : {},
-        body: JSON.stringify(body),
-      });
-      setEditing(undefined);
-      setRevision((x) => x + 1);
-      setNotice("Registro guardado. La operación quedó en la auditoría.");
-    } catch (e) {
-      setError(message(e));
-    } finally {
-      setSaving(false);
-    }
-  }
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">CATÁLOGOS / {schema.title.toUpperCase()}</p>
-          <h1>{schema.title}</h1>
-          <p>{schema.description}</p>
-        </div>
-        {canWrite && (
-          <button
-            className="primary"
-            onClick={() => {
-              setEditing(null);
-              setError("");
-              setNotice("");
-            }}
-          >
-            + Nuevo registro
-          </button>
-        )}
-      </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
-      {editing !== undefined && (
-        <section className="editor">
-          <div className="section-heading">
-            <h2>{editing ? "Editar registro" : "Nuevo registro"}</h2>
-            <button
-              className="subtle"
-              onClick={() => setEditing(undefined)}
-              disabled={saving}
-            >
-              Cancelar
-            </button>
-          </div>
-          <form onSubmit={save} key={editing?.id ?? "new"}>
-            <div className="form-grid">
-              {(schema.fields as Field[]).map((field) => (
-                <label key={field.key}>
-                  {field.label}
-                  {field.type === "department" ? (
-                    <select
-                      name={field.key}
-                      required
-                      defaultValue={String(editing?.[field.key] ?? "")}
-                    >
-                      <option value="">Selecciona un departamento</option>
-                      {departments
-                        .filter(
-                          (d) => d.active || d.id === editing?.departmentId,
-                        )
-                        .map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {String(d.name)}
-                            {d.active ? "" : " (inactivo)"}
-                          </option>
-                        ))}
-                    </select>
-                  ) : (
-                    <input
-                      name={field.key}
-                      type={field.type ?? "text"}
-                      required
-                      maxLength={field.max}
-                      defaultValue={String(editing?.[field.key] ?? "")}
-                      min={
-                        field.key === "year"
-                          ? 1900
-                          : field.key === "tankCapacity"
-                            ? 0.001
-                            : field.type === "number"
-                              ? 0
-                              : undefined
-                      }
-                      max={field.key === "year" ? 2200 : undefined}
-                      step={
-                        field.key === "tankCapacity"
-                          ? 0.001
-                          : field.type === "number"
-                            ? 1
-                            : undefined
-                      }
-                    />
-                  )}
-                </label>
-              ))}
-            </div>
-            <div className="form-actions">
-              <label className="check">
-                <input
-                  name="active"
-                  type="checkbox"
-                  defaultChecked={editing?.active ?? true}
-                />{" "}
-                Registro activo
-              </label>
-              <button className="primary" disabled={saving}>
-                {saving ? "Guardando…" : "Guardar registro"}
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
-      <section className="data-panel">
-        <div className="section-heading">
-          <h2>
-            Registros <span className="count">{total}</span>
-          </h2>
-          <button
-            className="subtle"
-            onClick={() => setRevision((x) => x + 1)}
-            disabled={loading}
-          >
-            Actualizar
-          </button>
-        </div>
-        {loading ? (
-          <p className="empty" role="status">
-            Cargando registros…
-          </p>
-        ) : rows.length === 0 ? (
-          <div className="empty">
-            <strong>No hay registros todavía</strong>
-            <p>
-              {canWrite
-                ? "Crea el primer registro para empezar."
-                : "Los registros aparecerán cuando un usuario autorizado los cree."}
-            </p>
-          </div>
-        ) : (
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  {schema.fields.slice(0, 3).map((f) => (
-                    <th key={f.key}>{f.label}</th>
-                  ))}
-                  <th>Estado</th>
-                  {canWrite && <th>Acciones</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    {schema.fields.slice(0, 3).map((f) => (
-                      <td key={f.key}>{String(row[f.key])}</td>
-                    ))}
-                    <td>
-                      <span className={`badge ${row.active ? "" : "inactive"}`}>
-                        {row.active ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    {canWrite && (
-                      <td>
-                        <button
-                          className="text-button"
-                          onClick={() => {
-                            setEditing(row);
-                            setError("");
-                            setNotice("");
-                          }}
-                        >
-                          Editar
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        <div className="pagination">
-          <span>
-            Página {page} · {total} registros
-          </span>
-          <div>
-            <button
-              disabled={page === 1 || loading}
-              onClick={() => setPage((x) => x - 1)}
-            >
-              Anterior
-            </button>
-            <button
-              disabled={page * 50 >= total || loading}
-              onClick={() => setPage((x) => x + 1)}
-            >
-              Siguiente
-            </button>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
-
+// RS-06: bitácora encadenada y ancla firmada para guardar fuera del sistema.
 function Audit() {
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     let alive = true;
     api<{ items: Record<string, string>[]; total: number }>(
@@ -459,24 +149,57 @@ function Audit() {
         }
       })
       .catch((e) => {
-        if (alive) setError(message(e));
+        if (alive) setError(explain(e));
       });
     return () => {
       alive = false;
     };
   }, [page]);
+  async function anchor() {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const data = await api<{ lastId: number; issuedAt: number }>(
+        "/api/auditoria/ancla",
+      );
+      saveBlob(
+        new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        }),
+        `ancla-auditoria-${data.lastId}.json`,
+      );
+      setNotice(
+        `Ancla firmada hasta el evento ${data.lastId} (${formatDateTime(new Date(data.issuedAt).toISOString())}). Guárdala fuera del sistema: correo, papel o almacenamiento de solo escritura.`,
+      );
+    } catch (e) {
+      setError(explain(e));
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
     <>
       <div className="page-heading">
         <div>
           <p className="eyebrow">CONTROL Y SEGUIMIENTO</p>
           <h1>Auditoría</h1>
-          <p>Accesos y cambios registrados por el sistema.</p>
+          <p>
+            Accesos y cambios registrados por el sistema, encadenados con hash.
+          </p>
         </div>
+        <button onClick={() => void anchor()} disabled={busy}>
+          {busy ? "Firmando…" : "Descargar ancla firmada"}
+        </button>
       </div>
       {error && (
         <p role="alert" className="error">
           {error}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="notice">
+          {notice}
         </p>
       )}
       <section className="data-panel">
@@ -494,11 +217,7 @@ function Audit() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id}>
-                  <td>
-                    {new Date(row.occurredAt).toLocaleString("es-DO", {
-                      timeZone: "America/Santo_Domingo",
-                    })}
-                  </td>
+                  <td>{formatDateTime(row.occurredAt)}</td>
                   <td>{row.action}</td>
                   <td>{row.entity}</td>
                   <td className="mono">{row.actor}</td>
@@ -529,83 +248,203 @@ function Audit() {
   );
 }
 
+// Alertas sin leer para el contador del menú; se refresca cada minuto.
+// Si la consulta falla, el contador muestra "?" (la pantalla de notificaciones da el detalle).
+function useUnread(enabled: boolean) {
+  const [unread, setUnread] = useState<number | null>(0);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    const read = () =>
+      api<{ unread: number }>("/api/notificaciones/?unread=true").then(
+        (data) => {
+          if (alive) setUnread(data.unread);
+        },
+        () => {
+          if (alive) setUnread(null);
+        },
+      );
+    void read();
+    const timer = window.setInterval(() => void read(), 60000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, [enabled, revision]);
+  const refresh = useCallback(() => setRevision((x) => x + 1), []);
+  return { unread, refresh };
+}
+
 export default function App() {
   const session = useSyncExternalStore(
     sessionStore.subscribe,
     sessionStore.get,
   );
-  const [section, setSection] = useState<
-    Section | "auditoria" | "usuarios" | "seguridad"
-  >("departamentos");
+  const online = useOnline();
+  const [page, setPage] = useState<Page | null>(null);
   const [error, setError] = useState("");
+  const notifications = useUnread(session !== null);
   if (!session) return <Login />;
-  const canWrite = session.roles.some((role) =>
-    ["Administrador", "Supervisor"].includes(role),
+
+  const roles = session.roles;
+  const admin = hasRole(roles, "Administrador");
+  const manager = hasRole(roles, "Administrador", "Supervisor");
+  const operator = hasRole(roles, "Despachador", "Supervisor");
+  const auditor = hasRole(roles, "Administrador", "Auditor");
+  const reporter = hasRole(
+    roles,
+    "Administrador",
+    "Supervisor",
+    "Auditor",
+    "Consulta",
   );
-  const canAudit = session.roles.some((role) =>
-    ["Administrador", "Auditor"].includes(role),
+  const requester = hasRole(roles, "Administrador", "Supervisor", "Consulta");
+  const unreadLabel =
+    notifications.unread === null
+      ? " (?)"
+      : notifications.unread > 0
+        ? ` (${notifications.unread})`
+        : "";
+
+  const groups: [string, NavItem[]][] = [
+    [
+      "OPERACIÓN",
+      [
+        { page: "tablero", label: "Tablero", visible: true },
+        { page: "solicitudes", label: "Solicitudes", visible: true },
+        { page: "tickets", label: "Tickets", visible: true },
+        { page: "programaciones", label: "Programaciones", visible: true },
+        { page: "despacho", label: "Despacho", visible: operator },
+        { page: "cierre", label: "Cierre diario", visible: true },
+        { page: "inventario", label: "Inventario", visible: true },
+        { page: "reportes", label: "Reportes", visible: reporter },
+        {
+          page: "notificaciones",
+          label: `Notificaciones${unreadLabel}`,
+          visible: true,
+        },
+      ],
+    ],
+    [
+      "CATÁLOGOS",
+      [
+        { page: "departamentos", label: "Departamentos", visible: true },
+        { page: "empleados", label: "Empleados", visible: true },
+        { page: "vehiculos", label: "Vehículos", visible: true },
+      ],
+    ],
+    [
+      "ADMINISTRACIÓN",
+      [
+        { page: "parametros", label: "Parámetros", visible: true },
+        { page: "integraciones", label: "Integraciones", visible: admin },
+        { page: "auditoria", label: "Auditoría", visible: auditor },
+        { page: "usuarios", label: "Usuarios", visible: admin },
+        { page: "seguridad", label: "Mi seguridad", visible: true },
+      ],
+    ],
+  ];
+  const allowed = new Set(
+    groups.flatMap(([, items]) =>
+      items.filter((i) => i.visible).map((i) => i.page),
+    ),
   );
+  // El despachador empieza en el escáner; los demás, en el tablero.
+  const fallback: Page = hasRole(roles, "Despachador")
+    ? "despacho"
+    : "tablero";
+  const current = page && allowed.has(page) ? page : fallback;
+
+  function screen() {
+    switch (current) {
+      case "tablero":
+        return <Dashboard />;
+      case "solicitudes":
+        return <Requests canCreate={requester} canApprove={manager} />;
+      case "tickets":
+        return <Tickets canManage={manager} />;
+      case "programaciones":
+        return <Schedules canWrite={manager} />;
+      case "despacho":
+        return <Dispatch />;
+      case "cierre":
+        return <DailyClose />;
+      case "inventario":
+        return <Inventory canWrite={manager} />;
+      case "reportes":
+        return <Reports />;
+      case "notificaciones":
+        return <Notifications onChange={notifications.refresh} />;
+      case "departamentos":
+      case "empleados":
+      case "vehiculos":
+        return <Catalog key={current} section={current} canWrite={manager} />;
+      case "parametros":
+        return <Settings canWrite={admin} />;
+      case "integraciones":
+        return <Integrations />;
+      case "auditoria":
+        return <Audit />;
+      case "usuarios":
+        return <Users />;
+      case "seguridad":
+        return <Account />;
+    }
+  }
+
   return (
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
           INTEC<span>COMBUSTIBLE</span>
         </div>
-        <p className="nav-label">ADMINISTRACIÓN</p>
         <nav aria-label="Navegación principal">
-          {Object.entries(sections).map(([key, value]) => (
-            <button
-              key={key}
-              aria-current={section === key ? "page" : undefined}
-              onClick={() => setSection(key as Section)}
-            >
-              {value.title}
-            </button>
+          {groups.map(([title, items]) => (
+            <div key={title} className="nav-group">
+              <p className="nav-label">{title}</p>
+              {items
+                .filter((item) => item.visible)
+                .map((item) => (
+                  <button
+                    key={item.page}
+                    aria-current={current === item.page ? "page" : undefined}
+                    onClick={() => setPage(item.page)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+            </div>
           ))}
-          {canAudit && (
-            <button
-              aria-current={section === "auditoria" ? "page" : undefined}
-              onClick={() => setSection("auditoria")}
-            >
-              Auditoría
-            </button>
-          )}
-          {session.roles.includes("Administrador") && (
-            <button
-              aria-current={section === "usuarios" ? "page" : undefined}
-              onClick={() => setSection("usuarios")}
-            >
-              Usuarios
-            </button>
-          )}
-          <button
-            aria-current={section === "seguridad" ? "page" : undefined}
-            onClick={() => setSection("seguridad")}
-          >
-            Mi seguridad
-          </button>
         </nav>
         <div className="sidebar-bottom">
-          <span className="online-dot" /> Entorno de desarrollo
+          <span className="online-dot" />{" "}
+          {online ? "Conectado" : "Sin conexión"}
         </div>
       </aside>
       <div className="workspace">
+        {!online && (
+          <p className="offline-banner app-offline" role="alert">
+            <strong>Sin conexión.</strong> Nada se guarda sin internet: las
+            operaciones fallarán hasta que vuelva la conexión.
+          </p>
+        )}
         <header>
           <span>Plataforma de gestión de combustible</span>
           <div>
             <span>
               {session.displayName}
-              <small>{session.roles.join(" · ")}</small>
+              <small>{roles.join(" · ")}</small>
             </span>
             <button
               className="subtle"
               onClick={() => {
                 void logout()
                   .then(() => {
-                    setSection("departamentos");
+                    setPage(null);
                     setError("");
                   })
-                  .catch((e) => setError(message(e)));
+                  .catch((e) => setError(explain(e)));
               }}
             >
               Cerrar sesión
@@ -618,25 +457,11 @@ export default function App() {
               {error}
             </p>
           )}
-          {section === "usuarios" && session.roles.includes("Administrador") ? (
-            <Users />
-          ) : section === "seguridad" ? (
-            <Account />
-          ) : section === "auditoria" && canAudit ? (
-            <Audit />
-          ) : (
-            <Catalog
-              key={section}
-              section={
-                section in sections ? (section as Section) : "departamentos"
-              }
-              canWrite={canWrite}
-            />
-          )}
+          {screen()}
         </main>
         <footer>
           INTEC · Gestión de combustible
-          <span>Administración y trazabilidad</span>
+          <span>Trazabilidad completa de cada galón</span>
         </footer>
       </div>
     </div>
