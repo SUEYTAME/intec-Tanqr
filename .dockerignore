@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+artifacts/
+vault/
+docs/
+.git/
+.env
+.env.*
+deploy/produccion.env
+**/*.pfx
+**/*.pem
+**/*.key

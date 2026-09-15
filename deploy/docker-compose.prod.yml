@@ -1,0 +1,72 @@
+# Despliegue de PRODUCCIÓN (referencia). Requiere resolver B-02 (SMTP) y B-03 (dominio/certificado).
+# Uso (desde la raíz, con deploy/produccion.env completo; ver docs/despliegue.md):
+#   docker build -t intec-combustible:$APP_VERSION .
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/produccion.env --profile init run --rm init
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/produccion.env up -d app
+# La base NO publica puertos: solo la ve la aplicación por la red interna de compose.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?falta POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Paso único, y en cada actualización: migraciones, rol combustible_app, permisos, cifrado de
+  # datos previos y administrador inicial. Usa el PROPIETARIO de la base; la app no.
+  init:
+    image: intec-combustible:${APP_VERSION:?falta APP_VERSION}
+    profiles: ["init"]
+    command: ["--initialize"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Database: Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?falta APP_DB_PASSWORD}
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:?falta BOOTSTRAP_EMAIL}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:?falta BOOTSTRAP_PASSWORD}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?falta JWT_SIGNING_KEY}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?falta DATA_ENCRYPTION_KEY}
+      QR_SIGNING_KEY_B64: ${QR_SIGNING_KEY_B64:?falta QR_SIGNING_KEY_B64}
+      OAUTH_SIGNING_KEY_B64: ${OAUTH_SIGNING_KEY_B64:?falta OAUTH_SIGNING_KEY_B64}
+
+  app:
+    image: intec-combustible:${APP_VERSION:?falta APP_VERSION}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "443:8443"
+    environment:
+      ConnectionStrings__Database: Host=db;Port=5432;Database=${POSTGRES_DB};Username=combustible_app;Password=${APP_DB_PASSWORD:?falta APP_DB_PASSWORD}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?falta JWT_SIGNING_KEY}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?falta DATA_ENCRYPTION_KEY}
+      QR_SIGNING_KEY_B64: ${QR_SIGNING_KEY_B64:?falta QR_SIGNING_KEY_B64}
+      OAUTH_SIGNING_KEY_B64: ${OAUTH_SIGNING_KEY_B64:?falta OAUTH_SIGNING_KEY_B64}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?falta PUBLIC_BASE_URL (https://dominio)}
+      SMTP_HOST: ${SMTP_HOST:?falta SMTP_HOST (B-02)}
+      SMTP_PORT: ${SMTP_PORT:?falta SMTP_PORT}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:?falta SMTP_FROM}
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /certs/tls.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: ${TLS_PFX_PASSWORD:?falta TLS_PFX_PASSWORD}
+    volumes:
+      - ${TLS_PFX_DIR:?falta TLS_PFX_DIR (carpeta con tls.pfx, B-03)}:/certs:ro
+      - outbox:/app/outbox
+
+volumes:
+  db-data:
+  outbox:

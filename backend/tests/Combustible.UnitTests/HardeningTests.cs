@@ -301,6 +301,49 @@ public sealed class HardeningTests(ApiFixture fixture)
         }
     }
 
+    [Fact]
+    public async Task Un_solo_origen_sirve_la_interfaz_con_CSP_y_la_API_sigue_intacta()
+    {
+        var root = Directory.CreateTempSubdirectory("web-root-").FullName;
+        try
+        {
+            await File.WriteAllTextAsync(Path.Combine(root, "index.html"), "<!doctype html><title>INTEC</title>");
+            Directory.CreateDirectory(Path.Combine(root, "assets"));
+            await File.WriteAllTextAsync(Path.Combine(root, "assets", "app.js"), "console.log(1)");
+            var values = new Dictionary<string, string?>(fixture.Settings) { ["WEB_ROOT"] = root };
+            await using var factory = ApiFixture.CreateFactory(values);
+            using var client = factory.CreateClient();
+
+            foreach (var path in new[] { "/", "/ticket/" + new string('a', 32) + "." + new string('B', 22) })
+            {
+                var page = await client.GetAsync(path);
+                Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+                Assert.Contains("<title>INTEC</title>", await page.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+                var csp = string.Join(';', page.Headers.GetValues("Content-Security-Policy"));
+                Assert.Contains("frame-ancestors 'none'", csp, StringComparison.Ordinal);
+                Assert.Contains("'wasm-unsafe-eval'", csp, StringComparison.Ordinal);
+                Assert.Equal("DENY", page.Headers.GetValues("X-Frame-Options").Single());
+            }
+            var script = await client.GetAsync("/assets/app.js");
+            Assert.Equal(HttpStatusCode.OK, script.StatusCode);
+            Assert.Equal("console.log(1)", await script.Content.ReadAsStringAsync());
+            // Un archivo inexistente no se disfraza de index.html, y la API nunca cae en el SPA.
+            Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/assets/falta.js")).StatusCode);
+            var api = await client.GetAsync("/api/no-existe");
+            Assert.Equal(HttpStatusCode.NotFound, api.StatusCode);
+            Assert.False(api.Headers.Contains("Content-Security-Policy"));
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/tickets/")).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/health")).StatusCode);
+
+            var empty = Directory.CreateTempSubdirectory("web-empty-").FullName;
+            await using var broken = ApiFixture.CreateFactory(new Dictionary<string, string?>(fixture.Settings) { ["WEB_ROOT"] = empty });
+            var error = Assert.ThrowsAny<Exception>(() => broken.CreateClient());
+            Assert.Contains("WEB_ROOT", error.ToString(), StringComparison.Ordinal);
+            Directory.Delete(empty);
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
     private static string Pad(string base64Url)
     {
         var s = base64Url.Replace('-', '+').Replace('_', '/');

@@ -29,5 +29,8 @@ artifacts/outbox/
 Thumbs.db
 .DS_Store
 
+# Secretos de producción (plantilla: deploy/produccion.env.example)
+deploy/produccion.env
+
 # Contexto local de los agentes (Obsidian)
 /vault/
