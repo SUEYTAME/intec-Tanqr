@@ -17,7 +17,7 @@ Notación: `[ ]` pendiente · `[~]` en curso · `[x]` hecho y verificado · `[!]
 
 ---
 
-## Fase 0 — Montaje del entorno (activa)
+## Fase 0 — Montaje del entorno (verificada 2026-09-22)
 
 - [x] Crear estructura del repositorio y git
 - [x] Crear vault de Obsidian dedicado
@@ -27,44 +27,43 @@ Notación: `[ ]` pendiente · `[~]` en curso · `[x]` hecho y verificado · `[!]
 - [x] Revisar el sync del bridge Claude↔Codex. **Hallazgo distinto al esperado**: `mcp=0` era
       correcto (no hay MCP portables que espejar), pero faltaban 10 skills de cuenta. Arreglado
       y verificado — ver [[Entorno de agentes]]
-- [!] PostgreSQL 17: Docker ya está activo (B-06 resuelto), pero faltan `.env` y variables
-      `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` (B-07).
-      Compose preservado en `a6a3e08`; `docker compose config --no-interpolate --quiet`
-      pasa, pero `docker compose config --quiet` falla correctamente por configuración ausente.
-      Pendiente: `up -d`, `ps`, salud y consulta autenticada real; nada marcado hecho por sintaxis.
+- [x] PostgreSQL 17 healthy, `pg_isready` y SQL autenticado por TCP verificados.
+      `.env` generado por delegación; puerto 15432 para no interferir con servicio en 5432.
 - [x] Esqueleto del backend .NET 10 con 5 proyectos. `dotnet test` da 2/2: las pruebas
       levantan la API en memoria y comprueban `/health` y `/`
 - [x] Esqueleto del frontend React+TS+Vite. `npm run build` compila
-- [~] CI en GitHub Actions: `.github/workflows/ci.yml` en `6304270`, validado con
-      `actionlint` 1.7.12 y comandos locales (Release 2/2; `npm ci` + build).
-      **Pendiente ejecución real en GitHub**: no hay remoto configurado (B-08).
-- [ ] Cerrar con el usuario los 7 huecos H-01..H-07 del SRS
-- [ ] Cerrar ADR-006 con el usuario antes de implementar la auditoría de Fase 1
+- [x] CI de Fase 0 ejecutada correctamente en GitHub: run `35759842395`.
+- [x] H-01..H-07 resueltos por delegación explícita del usuario en ADR-007
+- [x] ADR-006 resuelto por ADR-007: hash + permisos SQL, límites documentados
 
 **Criterio de fin de fase:** `dotnet build`, `dotnet test`, `npm run build` y
 `docker compose up` corren los cuatro sin error, PostgreSQL tiene salud y consulta
 autenticada verificadas, CI tiene una ejecución remota correcta y H-01..H-07/ADR-006
 tienen respuesta explícita registrada en las decisiones. Evidencia en la bitácora.
 
-**Estado al 2026-09-22:** build backend, pruebas y build frontend pasan de nuevo.
-Docker está operativo; falta PostgreSQL (B-07), ejecución remota de CI (B-08) y decisiones
-del SRS. La fase **no está cerrada**. No empezar dominio ni inventario saltando esos acuerdos.
+**Estado al 2026-09-22:** entorno ejecutado, PostgreSQL comprobado, CI remota correcta
+y decisiones registradas. Fase 0 cerrada; el desarrollo continúa por delegación.
 
 ---
 
-## Fase 1 — Dominio y autenticación
+## Fase 1 — Dominio y autenticación (activa)
 
 Cubre RF-01 a RF-04, RS-01, RS-02, RS-05, RS-06.
 
-- [ ] Modelo de datos: Usuario, Rol, Empleado, Vehículo, Departamento
-- [ ] Migración inicial de EF Core y datos sembrados de desarrollo
-- [ ] Autenticación con JWT y refresh tokens (RS-01)
-- [ ] MFA opcional por TOTP (RS-01)
-- [ ] RBAC con los 5 roles del SRS (RS-02)
-- [ ] Política de contraseñas — **necesita cerrar H-06 primero**
-- [ ] Registro de auditoría transversal con usuario, fecha, hora e IP (RS-06, RF-21)
-- [ ] CRUD de empleados, vehículos y departamentos (RF-02, RF-03, RF-04)
-- [ ] Pruebas de integración de cada endpoint, incluidos los casos de acceso denegado
+- [x] Modelo de Usuario, Rol, Empleado, Vehículo, Departamento y migración EF Core aplicada
+- [x] Inicialización idempotente: 5 roles y administrador local; sin inventar datos de INTEC
+- [x] JWT y refresh tokens rotativos; revocación por logout, contraseña y cambios de acceso
+- [x] MFA TOTP con confirmación y códigos de recuperación de un solo uso (API probada)
+- [x] RBAC de 5 roles probado con PostgreSQL real
+- [x] Política de contraseñas H-06 implementada con bloqueo 5 fallos/15 minutos
+- [x] Catálogos persistentes con validación, bajas lógicas, duplicados y control de versión
+- [x] Interfaz de login, catálogos y usuarios; pruebas de navegador escritorio/móvil emulado
+- [~] Auditoría transaccional encadenada y permisos SQL; revisar cobertura y recuperación
+- [~] Pruebas de integración: completar casos de concurrencia, MFA disable y endpoints nuevos
+- [ ] Integración OAuth 2.0/OIDC (RS-05); JWT local no cierra este requisito
+- [ ] Interfaz para desactivar MFA y gestionar recuperación después del alta
+- [ ] Revisión de configuración y secretos de producción antes de desplegar
+- [~] CI ampliada de Fase 1 (backend, frontend y navegador): comprobar resultado remoto
 
 ---
 

@@ -6,115 +6,72 @@ actualizado: 2026-09-22
 
 # Estado actual del proyecto
 
-**Empieza aquí.** Esta nota dice qué es cierto hoy. Si algo contradice a otra nota, esta gana
-en lo que toca al estado; las [[Decisiones de arquitectura]] ganan en lo que toca al porqué.
-
-## Qué es el proyecto
-
-Plataforma web + PWA de despacho para el control del inventario y despacho de combustible de
-INTEC mediante tickets digitales con QR firmado criptográficamente y trazabilidad completa.
-
-El documento fuente es `docs/SRS.pdf` (SRS Ticket Digitales v1.0, fechado agosto 2026).
-Define 24 requisitos funcionales y 6 de seguridad. La trazabilidad completa de qué está hecho
-está en [[Trazabilidad de requisitos del SRS]].
+Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decisiones en
+[[Decisiones de arquitectura]], evidencia exacta en [[Bitacora de cambios]].
 
 ## Fase actual
 
-**Fase 0 — Montaje del entorno.** En curso desde 2026-09-22.
+**Fase 1 — Dominio y autenticación, en curso.** Rama `fase-1-dominio`.
+El usuario delegó el 2026-09-22 generar configuración, resolver pendientes y continuar.
+H-01..H-07 tienen decisión explícita en ADR-007; ADR-008 define la primera entrega.
+No volver a pedir esas mismas autorizaciones. No inventar datos reales de INTEC.
 
-Ninguna línea de código de producto escrita todavía. El backlog vive en [[Tareas pendientes]].
+## Acceso sencillo
 
-## Qué está montado y verificado
+- Doble clic en `Iniciar.cmd`, o `./scripts/iniciar.ps1` (PowerShell 7).
+- Web: http://localhost:5173. API: http://127.0.0.1:5080.
+- Usuario y contraseña inicial: `artifacts/acceso-local.txt`, ignorado por Git.
+- Secretos generados en `.env`, ignorado; nunca copiar sus valores al vault ni al chat.
+- `./scripts/iniciar.ps1 -Reiniciar` actualiza; `./scripts/detener.ps1` detiene solo sus servidores.
+- PostgreSQL: `127.0.0.1:15432`. El 5432 estaba ocupado por PID 7424; no se tocó.
 
-Rama activa: `fase-0-entorno`. Base recibida: `0408d59` (posterior al montaje `907f922`).
-Commits de implementación de este bloque: `a6a3e08` (entorno) y `6304270` (CI).
-La actualización de continuidad queda en un commit posterior; consultar `git log -1`.
+## Estado verificado
 
-- Estructura del repositorio en `C:\Dev\intec-combustible`, con git inicializado.
-- Vault de Obsidian dedicado en `vault/`, que es esta carpeta.
-- Contrato de agentes: `AGENTS.md` canónico + punteros `CLAUDE.md` y `CODEX.md`.
-- **Backend**: solución de 5 proyectos en .NET 10 con dependencias en una sola dirección
-  (Api → Infrastructure → Application → Domain). `dotnet test` da **2/2 pasando**.
-- **Frontend**: React + TypeScript + Vite. `npm run build` compila.
-- **Reverificación 2026-09-22 por Astra**: `dotnet build` sin avisos ni errores,
-  `dotnet test` 2/2; también build y pruebas en Release. Frontend compilado tanto en
-  `frontend/` como desde `npm ci` en copia aislada bajo `artifacts/`.
-- **Docker operativo**: `docker info` devuelve servidor 29.6.1. B-06 resuelto.
-- **CI preparada** en `.github/workflows/ci.yml`; `actionlint` 1.7.12 sin errores.
-  Comandos ejecutados localmente en Windows, **no ejecutada todavía en GitHub/Linux**.
-- **Puente con Astra**: 1389 skills espejadas, incluidas las 10 de cuenta que antes faltaban.
+- Docker servidor 29.6.1 operativo. PostgreSQL **17.11 healthy**, `pg_isready` y consulta
+  autenticada por TCP correctos. B-06 y B-07 resueltos. Volumen local persistente.
+- Repositorio **privado**: https://github.com/SUEYTAME/intec-combustible.
+  Fase 0 CI correcta: https://github.com/SUEYTAME/intec-combustible/actions/runs/35759842395.
+- Backend .NET 10.0.401 / runtime 10.0.12, EF Core + Identity + Npgsql 10.
+  Migración inicial aplicada a PostgreSQL. Usuario `combustible_app` separado del propietario;
+  no puede UPDATE/DELETE/TRUNCATE auditoría ni acceder al historial de migraciones.
+- Login JWT, refresh rotativo, sesiones revocables, MFA TOTP y recuperación de un solo uso.
+  Usuarios/roles, departamentos, empleados y vehículos con bajas lógicas y concurrencia.
+  Auditoría SHA-256 encadenada en la misma transacción que la escritura.
+- React: login, catálogos editables, administración de usuarios, MFA y consulta de auditoría.
+  Tokens solo en memoria. No hay datos reales precargados. Las pruebas UI dejan registros
+  `QA-` / `Prueba UI` inactivos, expresamente ficticios.
+- Build Release backend sin avisos/errores; tests PostgreSQL real y navegador registrados
+  en la bitácora. Build/lint frontend correctos. Auditoría NuGet sin vulnerabilidades reportadas.
+- CI ampliada incluye pruebas de navegador en base efímera. Consultar su ejecución de
+  Fase 1 antes de afirmar que el último commit pasó remotamente.
 
-## Qué NO está montado
+## Lo que falta / límites
 
-- **PostgreSQL no se ha levantado.** No existe `.env`; faltan `POSTGRES_USER`,
-  `POSTGRES_PASSWORD` y `POSTGRES_DB` también en el entorno del proceso. Compose aborta
-  correctamente al interpolar. `POSTGRES_PORT` es opcional (5432). Ver B-07.
-- **CI remota sin verificar**: `git remote -v` no devuelve remotos. Ver B-08.
-- Migraciones, persistencia de la API y los 30 requisitos del SRS siguen pendientes.
-  `/health` solo prueba la API en memoria; **no comprueba PostgreSQL**.
-- H-01..H-07 y ADR-006 siguen sin respuesta aprobada. No iniciar Fase 1 aún.
+- **No producción**: OAuth 2.0/OIDC todavía pendiente; JWT local no lo sustituye (RS-05 parcial).
+- MFA está probado vía API; cerrar también interfaz de desactivación/recuperación completa.
+- Auditoría no resiste a un superusuario que reconstruya toda la cadena. Revisión de
+  integridad `/api/auditoria/verificar`; destino externo/anclaje aún no implementado.
+- RS-03: AES-256 de datos sensibles y TLS de producción pendientes.
+- Tickets, QR, inventario, despacho, cierres, reportes, notificaciones y PWA aún no implementados.
+- B-01 SMS, B-02 SMTP, B-03 dominio/TLS y B-04 datos reales siguen abiertos para producción.
+  B-05 cantidad física de tanques sigue sin datos reales, pero el modelo admite N tanques.
+- No se tocó `vault/.obsidian/.obsidian/` preexistente sin rastrear.
 
-## Entorno de la máquina — verificado el 2026-09-22
+## Siguiente bloque
 
-| Herramienta | Estado |
-|---|---|
-| .NET SDK | 9.0.315 y **10.0.401 LTS**, ambos instalados. `backend/global.json` fija el 10 |
-| Node.js | v24.15.0 |
-| npm | 11.12.1 |
-| Docker | Servidor **29.6.1 activo**, Compose v5.3.0; PostgreSQL pendiente de variables |
-| Git | 2.53.0.windows.3 |
-| Python | 3.12.2 |
-| Flutter | **No instalado.** Decisión: no hace falta, vamos con PWA (ADR-004) |
-| psql (cliente) | **No instalado.** PostgreSQL va en contenedor Docker |
-
-## Bloqueos abiertos
-
-Cosas que **no** podemos resolver escribiendo código y que necesitan que una persona actúe.
-Algunas bloquean producción; B-07/B-08 y las decisiones pendientes impiden cerrar Fase 0.
-
-| # | Bloqueo | Requisito afectado | Quién lo desbloquea |
-|---|---|---|---|
-| B-01 | No hay cuenta de pasarela SMS contratada | RF-09 (envío de tickets por SMS) | El usuario. Un agente no puede crear cuentas ni meter datos de pago |
-| B-02 | No hay credenciales SMTP para correo saliente | RF-06, RF-09, RF-23 | El usuario, o TI de INTEC |
-| B-03 | No hay dominio ni certificado TLS para producción | RS-03 (TLS 1.3) | El usuario / TI de INTEC |
-| B-04 | No hay datos reales de INTEC: departamentos, vehículos, empleados, tanques | RF-02, RF-03, RF-04, RF-14 | El usuario. Mientras tanto se trabaja con datos sembrados ficticios |
-| B-05 | Sin definir: ¿cuántas estaciones y tanques físicos hay? El SRS asume "tanque" pero no dice cuántos | RF-14, RF-16 | El usuario debe confirmarlo antes de cerrar el modelo de inventario |
-| B-06 | **RESUELTO 2026-09-22**: `docker info --format '{{json .ServerVersion}}'` devuelve `29.6.1` con salida 0 | Entorno | Docker Desktop abierto por el usuario; verificación de Astra |
-| B-07 | No existe `.env` ni variables de PostgreSQL en el proceso. No se ejecutó `docker compose up -d` | Cierre Fase 0 y persistencia | Usuario: definir `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` localmente; no publicar la contraseña |
-| B-08 | No hay remoto Git configurado: workflow escrito y validado localmente, sin ejecución en GitHub | CI de Fase 0 | Usuario: indicar el repositorio destino y autorizar su publicación |
-
-**Regla:** mientras un bloqueo esté abierto, el código del requisito se escribe contra una
-interfaz con implementación de desarrollo (por ejemplo, un `IEmailSender` que escribe a disco
-en vez de enviar). Así el bloqueo no detiene el desarrollo y el día que llegue la credencial
-solo se cambia el registro de dependencias. Nunca se simula el éxito de un envío real.
-Esta regla no permite inventar credenciales, sustituir PostgreSQL ni decidir H-01..H-07.
-
-## Relevo y siguiente bloque — 2026-09-22
-
-- El cambio local recibido en `docker-compose.yml` se inspeccionó y conservó sin editar:
-  puertos en localhost, variables obligatorias y Adminer en perfil `herramientas`.
-  Está recogido en `a6a3e08` junto a la eliminación de la contraseña de ejemplo.
-- `vault/.obsidian/.obsidian/` ya existía sin rastrear: no se editó ni se comiteó.
-  Había procesos Claude abiertos; los archivos de trabajo permanecieron estables entre
-  comprobaciones. Eso no prueba que otros procesos estén inactivos: comprobar de nuevo al retomar.
-- El PDF `docs/SRS.pdf` coincide por SHA-256 con el original de Descargas.
-- Se preguntó al usuario por `.env`, H-06 (política concreta de contraseñas) y ADR-006
-  (hash + permisos o además destino externo). **Sin respuesta registrada en este bloque**.
-  H-01..H-05/H-07 permanecen pendientes; preguntas exactas en la matriz de trazabilidad.
-- Al continuar: comprobar Git y `.env` sin mostrar valores; si están las tres variables,
-  ejecutar `docker compose config --quiet`, `docker compose up -d` y `docker compose ps`.
-  Solo dar PostgreSQL por verificado tras salud y consulta autenticada `SELECT 1` por TCP.
-  No borrar volúmenes para resolver un fallo de autenticación.
-- Después: primera ejecución de CI en el remoto que indique el usuario y cierre explícito
-  de H-01..H-07/ADR-006. No fijar dominio, reglas de despacho ni auditoría por suposición.
+1. Revisar Git y bitácora; hay checkpoints de código y commits de continuidad separados.
+2. Resolver cualquier fallo real de la CI de Fase 1 antes de seguir.
+3. Completar seguridad y pruebas pendientes de Fase 1 según [[Tareas pendientes]].
+4. No marcar OAuth, cifrado, QR ni inventario como hechos por tener pantallas o interfaces.
 
 ## Qué abrir según la tarea
 
-| Si vas a... | Abre |
+| Tarea | Archivos |
 |---|---|
-| Retomar el trabajo sin más contexto | [[Tareas pendientes]] |
-| Implementar un requisito | [[Trazabilidad de requisitos del SRS]] + `docs/SRS.pdf` |
-| Proponer o cambiar arquitectura | [[Decisiones de arquitectura]] — **incluidas las secciones DESCARTADO** |
-| Saber qué hizo el otro agente | [[Bitacora de cambios]] |
-| Necesitar una capacidad (MCP, skill) que no tienes | [[Entorno de agentes]] |
-| Entender las reglas de colaboración | [[Como trabajamos]] |
+| Continuar | [[Tareas pendientes]] + [[Bitacora de cambios]] |
+| Requisito | [[Trazabilidad de requisitos del SRS]] + `docs/SRS.pdf` |
+| Arquitectura | [[Decisiones de arquitectura]], incluidos DESCARTADO y ADR-007/008 |
+| Backend | `backend/src/Combustible.Api/Program.cs`, `Endpoints/`, `Infrastructure/Data/`, `tests/` |
+| Arranque | `scripts/iniciar.ps1`, `scripts/preparar.ps1`, `scripts/config-local.ps1` |
+| Frontend | `frontend/src/App.tsx`, `Administration.tsx`, `api.ts`, `frontend/e2e/` |
+| Colaboración | [[Como trabajamos]]; comprobar archivos estables antes de escribir |

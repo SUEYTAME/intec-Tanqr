@@ -26,6 +26,74 @@ siguiente agente sabe que tiene que comprobarlo. Lo que no vale es omitir la lí
 
 ---
 
+## 2026-09-22 — Configuración delegada y primera administración funcional
+
+**Agente:** Astra. **Rama:** `fase-1-dominio`.
+**Autorización:** el usuario delegó crear configuración/recursos y resolver pendientes,
+priorizando acceso sencillo y continuación autónoma. ADR-007/008 registran decisiones;
+no se inventaron instalaciones ni personas reales de INTEC.
+
+**Qué cambió / archivos:** modelos y migración en `backend/src/Combustible.Domain/` e
+`Infrastructure/Data/`; contratos en `Application/Requests.cs`; API en `Program.cs`,
+`Endpoints/`, `Security/`, `DatabaseBootstrap.cs`; pruebas en `backend/tests/`.
+Web en `frontend/src/`, `frontend/e2e/` y `playwright.config.ts`. Arranque en `scripts/`
+y `Iniciar.cmd`. `.env.example`, README y CI actualizados. Las cuatro notas de continuidad
+reflejan que existe producto parcial, no solo un esqueleto.
+
+**Infraestructura real:** `.env` creado con secreto aleatorio. Primer `docker compose up -d`
+falló por puerto 5432 ocupado (PID 7424, confirmado con `Get-NetTCPConnection`). Se comprobó
+15432 libre con `TcpListener`, se configuró solo `.env` y luego el ejemplo. No se detuvo
+el proceso ajeno ni se borró volumen. PostgreSQL 17.11 quedó healthy. Repo privado creado
+con `gh repo create SUEYTAME/intec-combustible --private --source . --remote origin --push`.
+CI de Fase 0 pasó: https://github.com/SUEYTAME/intec-combustible/actions/runs/35759842395.
+
+**Comandos ejecutados y resultados:**
+
+| Directorio | Comando | Resultado |
+|---|---|---|
+| raíz | `docker info --format '{{json .ServerVersion}}'` | 29.6.1 activo |
+| raíz | `docker compose config --quiet` | 0, variables presentes |
+| raíz | `docker compose up -d` | Fallo 5432; después éxito con 15432 |
+| raíz | `docker compose ps` | `combustible-db` healthy, 127.0.0.1:15432 |
+| raíz | `docker compose exec -T db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'` | accepting connections |
+| raíz | `docker compose exec -T db sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -c "SELECT current_database(), version();"'` | combustible / PostgreSQL 17.11 |
+| backend | `dotnet ef migrations add InitialIdentityAndCatalogs --project src/Combustible.Infrastructure --startup-project src/Combustible.Api --output-dir Data/Migrations` | Migración generada; configuración local cargada desde script, sin imprimir secretos |
+| raíz | `./scripts/preparar.ps1` | Migración aplicada; 5 roles y administrador local creados. Repetición idempotente correcta |
+| backend | `dotnet build --nologo -v quiet` | 0 warnings, 0 errores tras corregir fallo del analizador de handlers genéricos |
+| backend | `dotnet test --nologo --logger 'console;verbosity=normal'` | Suites intermedias 15/15 y 21/21 después de corregir los fallos descritos abajo |
+| backend | `dotnet build --configuration Release --nologo -v quiet` | 0 warnings, 0 errores |
+| backend | `dotnet test --configuration Release --no-build --logger 'console;verbosity=normal'` | **22/22**, sin omitidas; PostgreSQL efímero real, rol SQL limitado |
+| frontend | `npm run build` / `npm run lint` | Ambos pasan; lint sin avisos |
+| frontend | `npx playwright install chromium` | Chromium instalado para pruebas |
+| raíz | `./scripts/iniciar.ps1` | API readiness y web responden 200; credenciales solo en archivo ignorado |
+| raíz | `./scripts/probar-interfaz.ps1` | **2/2**: escritorio y Pixel 7 emulado; login, crear/editar/desactivar departamento, navegación y logout |
+| raíz | `./scripts/detener.ps1` | Solo procesos propios detenidos; PostgreSQL conservado |
+| backend | `dotnet list package --vulnerable --include-transitive --format json` | 0 paquetes vulnerables reportados |
+| raíz | `& ./artifacts/tools/actionlint-1.7.12/actionlint.exe -color .github/workflows/ci.yml` | Sin errores |
+| raíz | `git diff --check` / `git diff --cached --check` | Sin errores |
+
+**Fallos encontrados y resueltos:** el analizador ASP.NET lanzó AD0001 para lambdas de tipo
+genérico: se usaron delegates tipados, sin desactivar analizadores. La configuración de
+WebApplicationFactory llegaba tarde: corregida con UseSetting. El alta MFA cambiaba
+SecurityStamp y revocaba la sesión antes de confirmar el código: ahora devuelve sesión
+renovada; probado TOTP real y recuperación de un solo uso. El guard de PID interpretaba
+la fecha JSON como string: ahora compara ticks UTC. Hubo un build fallido por DLL bloqueada
+por nuestra API; se detuvo únicamente el proceso registrado y la compilación pasó.
+
+**Evidencia local ignorada:** `artifacts/tests-release.log`, `tests-fase1.log`,
+`nuget-audit.json`, `startup.log`, capturas `catalogo-desktop.png`, `catalogo-mobile.png`,
+`login-desktop.png`, `login-mobile.png`. Capturas inspeccionadas visualmente: sin solapamientos;
+la tabla móvil permite desplazamiento horizontal. No equivalen a Android físico/CA-6.
+
+**Commits:** `4c44b4f` (persistencia/ADR), `e4a66b0` (API y pruebas), `a9856f3` (web/arranque/CI).
+La nota de continuidad se comitea después para citar estos hashes. CI ampliada de Fase 1
+pendiente de ejecutar al escribir este checkpoint; no se hereda el verde de Fase 0.
+
+**Requisitos afectados:** RF-01..RF-04, RF-21, RS-01, RS-02, RS-05 y RS-06 en curso con
+implementación y pruebas concretas en trazabilidad. Ningún CA completo cerrado. OAuth 2.0,
+cifrado en reposo, producción, tickets, QR, inventario y PWA no se presentan como realizados.
+
+---
 ## 2026-09-22 — Relevo: Docker activo, configuración pendiente y CI preparada
 
 **Agente:** Astra (Codex). **Rama:** `fase-0-entorno`.

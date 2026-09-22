@@ -19,7 +19,7 @@ y CI, no implementan ningún RF/RS ni cierran criterios de aceptación. Las dos 
 existentes verifican `/` y `/health` en memoria; no prueban base de datos, seguridad ni
 inventario. SHA-256 de `docs/SRS.pdf` y el PDF original de Descargas coinciden:
 `45391564A81B75863329C76A7529CCF37E49155AB6D717DC6B4BC9A8673CC79E`.
-Comandos y resultados en [[Bitacora de cambios]]. H-01..H-07 y ADR-006 siguen abiertos;
+Comandos y resultados en [[Bitacora de cambios]]. En ese primer bloque H-01..H-07 y ADR-006 seguían abiertos;
 preguntar no constituye aprobación.
 
 ---
@@ -30,10 +30,10 @@ preguntar no constituye aprobación.
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-01 | Gestión de Usuarios | Crear, modificar, desactivar, perfiles y roles, reset de contraseña, políticas de acceso. 5 roles mínimos: Administrador, Supervisor, Despachador, Auditor, Consulta | PENDIENTE | — | — |
-| RF-02 | Gestión de Empleados | Código, nombre, cédula, departamento, cargo, correo, teléfono móvil, estado | PENDIENTE | — | — |
-| RF-03 | Gestión de Vehículos | Placa, ficha, marca, modelo, año, tipo, departamento, capacidad tanque, odómetro, estado | PENDIENTE | — | — |
-| RF-04 | Gestión de Departamentos | Crear, modificar, asociar empleados, asociar vehículos | PENDIENTE | — | — |
+| RF-01 | Gestión de Usuarios | Crear, modificar, desactivar, perfiles y roles, reset de contraseña, políticas de acceso. 5 roles mínimos: Administrador, Supervisor, Despachador, Auditor, Consulta | EN CURSO | API Endpoints/UserEndpoints.cs; frontend/Administration.tsx | SecurityTests: edición, reset y revocación; ProductTests: RBAC |
+| RF-02 | Gestión de Empleados | Código, nombre, cédula, departamento, cargo, correo, teléfono móvil, estado | EN CURSO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: persistencia y relaciones; edición adicional pendiente |
+| RF-03 | Gestión de Vehículos | Placa, ficha, marca, modelo, año, tipo, departamento, capacidad tanque, odómetro, estado | EN CURSO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: precisión, odómetro y relaciones; edición adicional pendiente |
+| RF-04 | Gestión de Departamentos | Crear, modificar, asociar empleados, asociar vehículos | EN CURSO | Endpoints/CatalogEndpoints.cs; frontend/src/App.tsx | ProductTests: persistencia/versiones; Playwright: crear/editar/desactivar |
 
 ### Ciclo de vida del ticket
 
@@ -70,7 +70,7 @@ preguntar no constituye aprobación.
 |---|---|---|---|---|---|
 | RF-19 | Reportes | Filtrables por fecha, empleado, vehículo, departamento, tipo combustible, estado ticket | PENDIENTE | — | — |
 | RF-20 | Exportación | Excel, CSV, PDF | PENDIENTE | — | — |
-| RF-21 | Trazabilidad | Auditoría de creaciones, modificaciones, despachos, ajustes, anulaciones y accesos. Incluye usuario, fecha, hora, dirección IP | PENDIENTE | — | — |
+| RF-21 | Trazabilidad | Auditoría de creaciones, modificaciones, despachos, ajustes, anulaciones y accesos. Incluye usuario, fecha, hora, dirección IP | EN CURSO | Infrastructure/Data/AuditWriter.cs; Endpoints/UserEndpoints.cs | ProductTests: cadena y prohibición SQL; futuro despacho/ajustes pendientes |
 | RF-22 | Dashboard Ejecutivo | Inventario actual, combustible despachado, tickets activos, tickets vencidos, consumo por departamento, consumo por vehículo | PENDIENTE | — | — |
 | RF-23 | Notificaciones | Alertas automáticas: ticket próximo a vencer, ticket vencido, inventario bajo, fallo de integración, ajustes de inventario | PENDIENTE | — | — |
 | RF-24 | API REST | Servicios de generación de tickets, consulta, estado de inventario, despachos, reportes | PENDIENTE | — | — |
@@ -81,12 +81,12 @@ preguntar no constituye aprobación.
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | PENDIENTE | — | — |
-| RS-02 | Autorización | Control RBAC basado en roles | PENDIENTE | — | — |
+| RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | EN CURSO | Endpoints/AuthEndpoints.cs; Security/SessionService.cs | SecurityTests: TOTP, recuperación, bloqueo y sesiones; cobertura disable pendiente |
+| RS-02 | Autorización | Control RBAC basado en roles | EN CURSO | Program.cs; políticas admin/catalog-write/audit-read | ProductTests: los cinco roles y acceso anónimo |
 | RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | BLOQUEADO (B-03) para el tránsito en producción | — | — |
 | RS-04 | Seguridad de QR | Firma digital, hash SHA-256, token de validación | PENDIENTE | — | — |
-| RS-05 | Seguridad de APIs | OAuth 2.0, JWT | PENDIENTE | — | — |
-| RS-06 | Auditoría | Registro **inalterable** de accesos, cambios, despachos y ajustes | PENDIENTE | — | — |
+| RS-05 | Seguridad de APIs | OAuth 2.0, JWT | EN CURSO | Security/SessionService.cs; Program.cs | JWT alterado/revocado rechazado; OAuth 2.0 aún pendiente |
+| RS-06 | Auditoría | Registro **inalterable** de accesos, cambios, despachos y ajustes | EN CURSO | AuditWriter.cs; DatabaseBootstrap.cs | UPDATE/DELETE/TRUNCATE rechazados y hash comprobado; sin protección frente a superusuario |
 
 > **Nota sobre RS-06.** El SRS dice "inalterable". Una tabla normal de base de datos no lo es:
 > quien tenga permiso de escritura puede modificarla. Cómo se consigue realmente esa
@@ -128,3 +128,11 @@ de lectura. Hay que cerrarlos antes de que el código los fije por accidente.
 
 **Ninguno de estos se resuelve adivinando.** Se preguntan al usuario y la respuesta se
 registra como ADR en [[Decisiones de arquitectura]].
+
+
+## Resolución delegada — 2026-09-22
+
+El usuario delegó las decisiones y la configuración. H-01..H-07 y ADR-006 quedan
+resueltos por ADR-007, con autenticación/persistencia en ADR-008. Las preguntas anteriores
+se conservan como origen del contrato, no como bloqueos sin respuesta. Las pruebas de
+Fase 1 y los commits están en la bitácora. Ningún CA de producto completo se cierra aún.
