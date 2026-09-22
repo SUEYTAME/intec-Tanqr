@@ -27,16 +27,19 @@ foreach ($key in @('POSTGRES_PASSWORD','APP_DB_PASSWORD','JWT_SIGNING_KEY','BOOT
         $changed = $true
     }
 }
-if (-not $localValues['QR_SIGNING_KEY_B64']) {
-    # Clave ECDSA P-256 (RS-04) en PKCS#8 PEM. CNG funciona igual en Windows PowerShell 5.1 y 7.
-    # [NullString]::Value: con $null PowerShell pasaría "" y CNG crearía una clave persistente con nombre.
+# Claves ECDSA P-256 en PKCS#8 PEM (base64): firma de QR (RS-04) y de tokens OAuth (RS-05), separadas.
+# CNG funciona igual en Windows PowerShell 5.1 y 7. [NullString]::Value: con $null PowerShell pasaría ""
+# y CNG crearía una clave persistente con nombre en el almacén del usuario.
+function New-EcdsaPem {
     $parameters = [Security.Cryptography.CngKeyCreationParameters]::new()
     $parameters.ExportPolicy = [Security.Cryptography.CngExportPolicies]::AllowPlaintextExport
     $cng = [Security.Cryptography.CngKey]::Create([Security.Cryptography.CngAlgorithm]::ECDsaP256, [NullString]::Value, $parameters)
     try { $der = $cng.Export([Security.Cryptography.CngKeyBlobFormat]::Pkcs8PrivateBlob) } finally { $cng.Dispose() }
     $pem = "-----BEGIN PRIVATE KEY-----`n" + [Convert]::ToBase64String($der, 'InsertLineBreaks') + "`n-----END PRIVATE KEY-----"
-    $localValues['QR_SIGNING_KEY_B64'] = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($pem))
-    $changed = $true
+    [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($pem))
+}
+foreach ($key in @('QR_SIGNING_KEY_B64','OAUTH_SIGNING_KEY_B64')) {
+    if (-not $localValues[$key]) { $localValues[$key] = New-EcdsaPem; $changed = $true }
 }
 if (-not $localValues['BOOTSTRAP_EMAIL']) { $localValues['BOOTSTRAP_EMAIL'] = 'admin@localhost.test'; $changed = $true }
 # Correo local: Mailpit de docker-compose. Para producción se sustituye por el SMTP institucional (B-02).
@@ -59,7 +62,7 @@ if ($changed) {
     [IO.File]::WriteAllLines($configPath, $lines)
 }
 foreach ($key in @('JWT_SIGNING_KEY','JWT_ISSUER','JWT_AUDIENCE','APP_DB_PASSWORD','BOOTSTRAP_EMAIL','BOOTSTRAP_PASSWORD',
-        'DATA_ENCRYPTION_KEY','QR_SIGNING_KEY_B64','SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASSWORD','SMTP_FROM','SMTP_REQUIRE_TLS','SMS_PROVIDER')) {
+        'DATA_ENCRYPTION_KEY','QR_SIGNING_KEY_B64','OAUTH_SIGNING_KEY_B64','SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASSWORD','SMTP_FROM','SMTP_REQUIRE_TLS','SMS_PROVIDER')) {
     [Environment]::SetEnvironmentVariable($key, $localValues[$key], 'Process')
 }
 $env:PUBLIC_BASE_URL = $(if ($localValues['PUBLIC_BASE_URL']) { $localValues['PUBLIC_BASE_URL'] } else { 'http://localhost:5173' })

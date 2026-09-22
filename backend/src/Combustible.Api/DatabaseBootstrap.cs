@@ -1,6 +1,8 @@
 using Combustible.Api.Endpoints;
 using Combustible.Domain;
+using System.Globalization;
 using Combustible.Infrastructure.Data;
+using Combustible.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -16,6 +18,7 @@ public static class DatabaseBootstrap
         await db.Database.MigrateAsync();
         var password = configuration["APP_DB_PASSWORD"] ?? throw new InvalidOperationException("Falta APP_DB_PASSWORD.");
         await ConfigureApplicationRoleAsync(db.Database.GetConnectionString()!, password);
+        var encrypted = await EncryptEmployeesAsync(db.Database.GetConnectionString()!, scope.ServiceProvider.GetRequiredService<FieldProtector>());
         await using var tx = await db.Database.BeginTransactionAsync();
         var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         foreach (var role in Roles.All)
@@ -29,7 +32,38 @@ public static class DatabaseBootstrap
             UserEndpoints.Ensure(await users.AddToRoleAsync(user, Roles.Administrator));
             await scope.ServiceProvider.GetRequiredService<AuditWriter>().WriteAsync("bootstrap", "local", "initialize", "User", user.Id.ToString());
         }
+        if (encrypted > 0)
+            await scope.ServiceProvider.GetRequiredService<AuditWriter>().WriteAsync("bootstrap", "local", "encrypt_backfill", "Employee", encrypted.ToString(CultureInfo.InvariantCulture));
         await tx.CommitAsync();
+    }
+
+    // RS-03: filas anteriores al cifrado. Se leen con ADO (EF ya espera texto cifrado) y se cifran en una transacción.
+    public static async Task<int> EncryptEmployeesAsync(string connectionString, FieldProtector protector)
+    {
+        ArgumentNullException.ThrowIfNull(protector);
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using var tx = await connection.BeginTransactionAsync();
+        var pending = new List<(Guid Id, string NationalId, string Email, string Mobile)>();
+        await using (var select = new NpgsqlCommand(
+            "SELECT \"Id\", \"NationalId\", \"Email\", \"Mobile\" FROM \"Employees\" WHERE \"NationalIdHash\" IS NULL FOR UPDATE", connection, tx))
+        await using (var reader = await select.ExecuteReaderAsync())
+            while (await reader.ReadAsync()) pending.Add((reader.GetGuid(0), reader.GetString(1), reader.GetString(2), reader.GetString(3)));
+        foreach (var (id, nationalId, email, mobile) in pending)
+        {
+            if (FieldProtector.IsProtected(nationalId)) throw new InvalidOperationException($"Empleado {id}: cédula cifrada sin índice ciego; revisar manualmente.");
+            string Protect(string value, string purpose) => FieldProtector.IsProtected(value) ? value : protector.Protect(value, purpose);
+            await using var update = new NpgsqlCommand(
+                "UPDATE \"Employees\" SET \"NationalId\" = @n, \"Email\" = @e, \"Mobile\" = @m, \"NationalIdHash\" = @h WHERE \"Id\" = @id", connection, tx);
+            update.Parameters.AddWithValue("n", Protect(nationalId, AppDbContext.NationalIdPurpose));
+            update.Parameters.AddWithValue("e", Protect(email, AppDbContext.EmailPurpose));
+            update.Parameters.AddWithValue("m", Protect(mobile, AppDbContext.MobilePurpose));
+            update.Parameters.AddWithValue("h", protector.BlindIndex(nationalId, AppDbContext.NationalIdPurpose));
+            update.Parameters.AddWithValue("id", id);
+            await update.ExecuteNonQueryAsync();
+        }
+        await tx.CommitAsync();
+        return pending.Count;
     }
 
     public static async Task ConfigureApplicationRoleAsync(string connectionString, string password)

@@ -1,13 +1,23 @@
 using Combustible.Domain;
+using Combustible.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Combustible.Infrastructure.Data;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options, FieldProtector protector)
     : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
 {
+    // RS-03: cédula, correo y móvil del empleado se guardan cifrados (AES-256-GCM). La unicidad de la
+    // cédula usa un índice ciego (HMAC) porque el texto cifrado es aleatorio.
+    public const string NationalIdPurpose = "Employee.NationalId";
+    public const string EmailPurpose = "Employee.Email";
+    public const string MobilePurpose = "Employee.Mobile";
+    public const string NationalIdHash = "NationalIdHash";
+    public string ProtectorKeyId => protector.KeyId;
+
     public DbSet<Department> Departments => Set<Department>();
     public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
@@ -47,13 +57,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         {
             e.Property(x => x.Code).HasMaxLength(30);
             e.Property(x => x.FullName).HasMaxLength(200);
-            e.Property(x => x.NationalId).HasMaxLength(11);
+            e.Property(x => x.NationalId).HasMaxLength(512)
+                .HasConversion(v => protector.Protect(v, NationalIdPurpose), v => protector.Unprotect(v, NationalIdPurpose));
             e.Property(x => x.Position).HasMaxLength(100);
-            e.Property(x => x.Email).HasMaxLength(254);
-            e.Property(x => x.Mobile).HasMaxLength(25);
+            e.Property(x => x.Email).HasMaxLength(512)
+                .HasConversion(v => protector.Protect(v, EmailPurpose), v => protector.Unprotect(v, EmailPurpose));
+            e.Property(x => x.Mobile).HasMaxLength(512)
+                .HasConversion(v => protector.Protect(v, MobilePurpose), v => protector.Unprotect(v, MobilePurpose));
+            e.Property<string>(NationalIdHash).HasMaxLength(64);
             e.Property(x => x.Version).IsConcurrencyToken();
             e.HasIndex(x => x.Code).IsUnique();
-            e.HasIndex(x => x.NationalId).IsUnique();
+            e.HasIndex(NationalIdHash).IsUnique();
             e.HasOne<Department>().WithMany().HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Restrict);
         });
         builder.Entity<Vehicle>(e =>
@@ -93,6 +107,24 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             e.Property(x => x.PreviousHash).HasMaxLength(64);
             e.Property(x => x.Hash).HasMaxLength(64);
         });
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        StampBlindIndexes();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        StampBlindIndexes();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void StampBlindIndexes()
+    {
+        foreach (var entry in ChangeTracker.Entries<Employee>().Where(x => x.State is EntityState.Added or EntityState.Modified))
+            entry.Property(NationalIdHash).CurrentValue = protector.BlindIndex(entry.Entity.NationalId, NationalIdPurpose);
     }
 
     private static readonly string[] CloseAmounts = ["Opening", "Inputs", "Outputs", "Expected", "Counted", "Difference"];
@@ -321,4 +353,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
             e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
     }
+}
+
+// Los convertidores capturan la clave: modelos distintos para claves distintas en el mismo proceso.
+public sealed class ProtectorModelCacheKeyFactory : IModelCacheKeyFactory
+{
+    public object Create(DbContext context, bool designTime) =>
+        context is AppDbContext app ? (context.GetType(), app.ProtectorKeyId, designTime) : (context.GetType(), designTime);
 }

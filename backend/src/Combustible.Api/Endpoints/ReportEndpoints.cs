@@ -146,7 +146,7 @@ public static class ReportEndpoints
         }).RequireAuthorization();
 
         // RF-23: bandeja de alertas por usuario.
-        var notifications = app.MapGroup("/api/notificaciones").RequireAuthorization();
+        var notifications = app.MapGroup("/api/notificaciones").RequireAuthorization("user");
         notifications.MapGet("/", async (AppDbContext db, HttpContext http, bool unread = false, int page = 1) =>
         {
             if (page is < 1 or > 100000) return Results.BadRequest();

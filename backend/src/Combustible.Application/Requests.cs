@@ -40,7 +40,8 @@ public sealed record UserRequest(
     [property: Required, StringLength(150)] string DisplayName,
     [property: Required] string Role,
     [property: Required, StringLength(128, MinimumLength = 15)] string Password);
-public sealed record UserAccessRequest([property: Required] string Role, bool Active);
+public sealed record UserAccessRequest([property: Required] string Role, bool Active, [property: Required] string Version);
+public sealed record AuditAnchor(long LastId, [property: Required, StringLength(64)] string LastHash, long Count, long IssuedAt, [property: Required, StringLength(100)] string Signature);
 public sealed record UserUpdateRequest(
     [property: Required, EmailAddress, StringLength(254)] string Email,
     [property: Required, StringLength(150)] string DisplayName,
@@ -50,3 +51,6 @@ public sealed record PasswordRequest([property: Required, StringLength(128, Mini
 public sealed record MfaRequest([property: Required, StringLength(128)] string Password,
     [property: StringLength(6)] string? Code = null,
     [property: StringLength(30)] string? RecoveryCode = null);
+public sealed record IntegrationClientRequest(
+    [property: Required, StringLength(100)] string DisplayName,
+    [property: Required] string Role);

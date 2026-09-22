@@ -61,7 +61,7 @@ public static class AuthEndpoints
         {
             var user = (await users.FindByIdAsync(http.Actor()))!;
             return Results.Ok(new { user.Id, user.DisplayName, user.Email, user.TwoFactorEnabled, Roles = await users.GetRolesAsync(user) });
-        }).RequireAuthorization();
+        }).RequireAuthorization("user");
 
         group.MapPost("/logout", async (HttpContext http, AppDbContext db, AuditWriter audit) =>
         {
@@ -72,7 +72,7 @@ public static class AuthEndpoints
             await audit.WriteAsync(http.Actor(), http.Ip(), "logout", "Session", id.ToString());
             await tx.CommitAsync();
             return Results.NoContent();
-        }).RequireAuthorization();
+        }).RequireAuthorization("user");
 
         group.MapPost("/mfa/setup", async (MfaRequest request, HttpContext http, UserManager<AppUser> users, AppDbContext db, AuditWriter audit, SessionService sessions) =>
         {
@@ -88,7 +88,7 @@ public static class AuthEndpoints
             await audit.WriteAsync(http.Actor(), http.Ip(), "mfa_setup", "User", http.Actor());
             await tx.CommitAsync();
             return Results.Ok(new { secret = await users.GetAuthenticatorKeyAsync(user), issuer = "INTEC Combustible", session = renewed });
-        }).RequireAuthorization();
+        }).RequireAuthorization("user");
 
         group.MapPost("/mfa/enable", async (MfaRequest request, HttpContext http, UserManager<AppUser> users, AppDbContext db, AuditWriter audit) =>
         {
@@ -104,7 +104,7 @@ public static class AuthEndpoints
             await audit.WriteAsync(http.Actor(), http.Ip(), "mfa_enabled", "User", http.Actor());
             await tx.CommitAsync();
             return Results.Ok(new { recoveryCodes });
-        }).RequireAuthorization();
+        }).RequireAuthorization("user");
 
         group.MapPost("/mfa/disable", async (MfaRequest request, HttpContext http, UserManager<AppUser> users, AppDbContext db, AuditWriter audit) =>
         {
@@ -117,7 +117,7 @@ public static class AuthEndpoints
             await audit.WriteAsync(http.Actor(), http.Ip(), "mfa_disabled", "User", http.Actor());
             await tx.CommitAsync();
             return Results.NoContent();
-        }).RequireAuthorization();
+        }).RequireAuthorization("user");
 
         group.MapPost("/mfa/recovery-codes", async (MfaRequest request, HttpContext http, UserManager<AppUser> users, AppDbContext db, AuditWriter audit) =>
         {
@@ -131,7 +131,7 @@ public static class AuthEndpoints
             await audit.WriteAsync(http.Actor(), http.Ip(), "mfa_recovery_codes_regenerated", "User", http.Actor());
             await tx.CommitAsync();
             return Results.Ok(new { recoveryCodes });
-        }).RequireAuthorization();
+        }).RequireAuthorization("user");
     }
 
     private static async Task<bool> VerifyMfaAsync(UserManager<AppUser> users, AppUser user, MfaRequest request)

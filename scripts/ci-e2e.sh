@@ -10,8 +10,9 @@ export BOOTSTRAP_PASSWORD="$(openssl rand -base64 32)"
 export BOOTSTRAP_EMAIL=admin@localhost.test
 export DATA_ENCRYPTION_KEY="$(openssl rand -base64 32)"
 export QR_SIGNING_KEY_B64="$(openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -nocrypt | base64 -w0)"
+export OAUTH_SIGNING_KEY_B64="$(openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -topk8 -nocrypt | base64 -w0)"
 export OUTBOX_DIR="$PWD/artifacts/outbox"
-for key in POSTGRES_PASSWORD APP_DB_PASSWORD JWT_SIGNING_KEY BOOTSTRAP_PASSWORD DATA_ENCRYPTION_KEY QR_SIGNING_KEY_B64; do
+for key in POSTGRES_PASSWORD APP_DB_PASSWORD JWT_SIGNING_KEY BOOTSTRAP_PASSWORD DATA_ENCRYPTION_KEY QR_SIGNING_KEY_B64 OAUTH_SIGNING_KEY_B64; do
   echo "::add-mask::${!key}"
 done
 export ASPNETCORE_ENVIRONMENT=Development
