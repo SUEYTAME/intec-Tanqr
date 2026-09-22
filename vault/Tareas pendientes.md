@@ -27,20 +27,28 @@ Notación: `[ ]` pendiente · `[~]` en curso · `[x]` hecho y verificado · `[!]
 - [x] Revisar el sync del bridge Claude↔Codex. **Hallazgo distinto al esperado**: `mcp=0` era
       correcto (no hay MCP portables que espejar), pero faltaban 10 skills de cuenta. Arreglado
       y verificado — ver [[Entorno de agentes]]
-- [~] `docker-compose.yml` con PostgreSQL 17 escrito y validado con `docker compose config`.
-      **No se ha levantado**: el daemon de Docker no arranca (bloqueo B-06). Queda en curso
-      hasta que alguien abra Docker Desktop y se corra `docker compose up -d` de verdad
+- [!] PostgreSQL 17: Docker ya está activo (B-06 resuelto), pero faltan `.env` y variables
+      `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` (B-07).
+      Compose preservado en `a6a3e08`; `docker compose config --no-interpolate --quiet`
+      pasa, pero `docker compose config --quiet` falla correctamente por configuración ausente.
+      Pendiente: `up -d`, `ps`, salud y consulta autenticada real; nada marcado hecho por sintaxis.
 - [x] Esqueleto del backend .NET 10 con 5 proyectos. `dotnet test` da 2/2: las pruebas
       levantan la API en memoria y comprueban `/health` y `/`
 - [x] Esqueleto del frontend React+TS+Vite. `npm run build` compila
-- [ ] CI en GitHub Actions: build de backend y frontend + tests
+- [~] CI en GitHub Actions: `.github/workflows/ci.yml` en `6304270`, validado con
+      `actionlint` 1.7.12 y comandos locales (Release 2/2; `npm ci` + build).
+      **Pendiente ejecución real en GitHub**: no hay remoto configurado (B-08).
 - [ ] Cerrar con el usuario los 7 huecos H-01..H-07 del SRS
+- [ ] Cerrar ADR-006 con el usuario antes de implementar la auditoría de Fase 1
 
 **Criterio de fin de fase:** `dotnet build`, `dotnet test`, `npm run build` y
-`docker compose up` corren los cuatro sin error, y está registrado en la bitácora.
+`docker compose up` corren los cuatro sin error, PostgreSQL tiene salud y consulta
+autenticada verificadas, CI tiene una ejecución remota correcta y H-01..H-07/ADR-006
+tienen respuesta explícita registrada en las decisiones. Evidencia en la bitácora.
 
-**Estado al 2026-09-22:** tres de los cuatro verdes. Falta `docker compose up`, bloqueado por
-B-06. La fase **no está cerrada** hasta que ese cuarto comando se haya corrido de verdad.
+**Estado al 2026-09-22:** build backend, pruebas y build frontend pasan de nuevo.
+Docker está operativo; falta PostgreSQL (B-07), ejecución remota de CI (B-08) y decisiones
+del SRS. La fase **no está cerrada**. No empezar dominio ni inventario saltando esos acuerdos.
 
 ---
 

@@ -14,6 +14,14 @@ Matriz viva de los 24 requisitos funcionales y 6 de seguridad de `docs/SRS.pdf`
 Estados: `PENDIENTE` · `EN CURSO` · `HECHO` · `BLOQUEADO` (con el bloqueo de
 [[Estado actual del proyecto]]).
 
+**Verificación de relevo 2026-09-22:** los commits `a6a3e08` y `6304270` cubren entorno
+y CI, no implementan ningún RF/RS ni cierran criterios de aceptación. Las dos pruebas
+existentes verifican `/` y `/health` en memoria; no prueban base de datos, seguridad ni
+inventario. SHA-256 de `docs/SRS.pdf` y el PDF original de Descargas coinciden:
+`45391564A81B75863329C76A7529CCF37E49155AB6D717DC6B4BC9A8673CC79E`.
+Comandos y resultados en [[Bitacora de cambios]]. H-01..H-07 y ADR-006 siguen abiertos;
+preguntar no constituye aprobación.
+
 ---
 
 ## Requisitos funcionales
