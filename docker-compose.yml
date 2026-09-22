@@ -1,0 +1,41 @@
+# Entorno de desarrollo. ADR-002: PostgreSQL 17 en contenedor.
+# Arranque:  docker compose up -d
+# Comprobar: docker compose ps
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: combustible-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-combustible}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambiar_en_local}
+      POSTGRES_DB: ${POSTGRES_DB:-combustible}
+      # Espanol dominicano para ordenaciones y mensajes; UTF-8 por los acentos
+      # de nombres, departamentos y observaciones de despacho.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # Sin esto, la API arranca antes de que Postgres acepte conexiones y falla
+      # con un error de conexion que parece un bug de la API y no lo es.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-combustible} -d ${POSTGRES_DB:-combustible}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  adminer:
+    image: adminer:5
+    container_name: combustible-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

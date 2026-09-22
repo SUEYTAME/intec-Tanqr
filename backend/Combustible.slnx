@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Combustible.Api/Combustible.Api.csproj" />
+    <Project Path="src/Combustible.Application/Combustible.Application.csproj" />
+    <Project Path="src/Combustible.Domain/Combustible.Domain.csproj" />
+    <Project Path="src/Combustible.Infrastructure/Combustible.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Combustible.UnitTests/Combustible.UnitTests.csproj" />
+  </Folder>
+</Solution>

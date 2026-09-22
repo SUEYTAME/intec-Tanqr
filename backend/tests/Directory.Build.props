@@ -1,0 +1,16 @@
+<Project>
+  <!-- MSBuild solo toma el Directory.Build.props mas cercano, asi que hay que
+       importar el de la raiz a mano o se pierden nullable y warnings-as-errors. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+
+    <!-- CA1707 prohibe guiones bajos en nombres de miembro. En codigo de produccion
+         eso esta bien; en pruebas choca con la convencion de xUnit, donde el nombre
+         del metodo ES la descripcion del fallo. Un fallo que dice
+         "El_endpoint_de_salud_responde_200" se entiende sin abrir el archivo.
+         Se silencia SOLO aqui: en src sigue siendo error. -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+</Project>
