@@ -59,11 +59,13 @@ Cubre RF-01 a RF-04, RS-01, RS-02, RS-05, RS-06.
 - [x] Catálogos persistentes con validación, bajas lógicas, duplicados y control de versión
 - [x] Interfaz de login, catálogos y usuarios; pruebas de navegador escritorio/móvil emulado
 - [~] Auditoría transaccional encadenada y permisos SQL; revisar cobertura y recuperación
-- [~] Pruebas de integración: completar casos de concurrencia, MFA disable y endpoints nuevos
+- [x] Pruebas de concurrencia de refresh/auditoría y ciclo completo de MFA: 24/24 backend,
+      4/4 navegador en escritorio/móvil emulado (`08a91ef`, 2026-09-22)
 - [ ] Integración OAuth 2.0/OIDC (RS-05); JWT local no cierra este requisito
-- [ ] Interfaz para desactivar MFA y gestionar recuperación después del alta
+- [x] Interfaz para desactivar MFA y gestionar recuperación después del alta
+- [ ] Revisar rutas de cambios de acceso para que todas exijan versión y probar auditoría alterada
 - [ ] Revisión de configuración y secretos de producción antes de desplegar
-- [~] CI ampliada de Fase 1 (backend, frontend y navegador): comprobar resultado remoto
+- [x] CI ampliada de Fase 1: run `35764488194` correcto para `70972c7`; verificar cada commit posterior
 
 ---
 

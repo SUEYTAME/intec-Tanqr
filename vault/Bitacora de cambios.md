@@ -240,3 +240,41 @@ sintácticamente pero **nunca se ha ejecutado**. No se asume que funcione.
    hoy no tiene consecuencia. Ambas cosas documentadas en [[Entorno de agentes]].
 3. **Astra es GPT‑6 Astra sobre Codex CLI**, confirmado por la entrada `gpt-6-astra` en
    `~/.codex/config.toml`. Por eso el vault en disco funciona como memoria compartida.
+
+## 2026-09-22 — MFA completo y concurrencia verificada
+
+**Commit de código:** `08a91ef`. **Requisitos:** RS-01/RS-05/RS-06 parciales; no se cierra OAuth ni CA-6.
+Archivos: `AuthEndpoints.cs`, `Requests.cs`, `ApiFixture.cs`, `ProductTests.cs`,
+`SecurityTests.cs`, `SaludDeLaApiTests.cs`, `frontend/src/Administration.tsx`, `frontend/e2e/mfa.spec.ts`.
+
+- Regeneración y baja de MFA requieren contraseña y TOTP o recuperación de un solo uso;
+  revocan sesiones anteriores. Interfaz muestra nuevos códigos una vez y exige nuevo login.
+- Refresh simultáneo: solo uno emite respuesta correcta; el replay revoca también la sesión
+  ganadora. Ocho escrituras concurrentes conservan la cadena de auditoría.
+- Primera ejecución: 20/24 backend; cuatro 429 por compartir IP de TestServer entre casos.
+  Se asignó IP independiente por cliente mediante TestServer.CreateHandler; producción
+  conserva 60 solicitudes/minuto/IP. Prueba específica del límite sigue activa.
+- Primera prueba MFA de navegador falló por selector `Mi cuenta`; UI real dice `Mi seguridad`.
+  Corregido el test; capturas deshabilitadas para este flujo que muestra secretos efímeros.
+- CI previa verificada: `gh run view 35764488194 --json status,conclusion,jobs` → success
+  para `70972c7`. No se atribuye ese resultado a commits posteriores.
+
+Comandos exactos (raíz salvo indicación):
+
+```powershell
+dotnet test backend --nologo --logger 'console;verbosity=normal' > artifacts/tests-security.log 2>&1
+./scripts/iniciar.ps1
+./scripts/probar-interfaz.ps1 > artifacts/browser-security.log 2>&1
+dotnet build backend --configuration Release --nologo
+git diff --check
+# En frontend:
+npx --yes prettier --write e2e/mfa.spec.ts
+npm run build
+npm run lint
+```
+
+Resultado final: backend **24/24**, navegador **4/4**, build Release **0 avisos/0 errores**,
+frontend build/lint correctos. Arranque local PostgreSQL healthy y API/web accesibles.
+Credenciales conservadas en archivos ignorados; cuentas `qa-mfa-...@example.test` usadas
+por el navegador quedan inactivas. No se cambió MFA de la cuenta administradora local.
+Pendiente: revisar rutas de acceso, auditoría alterada, OAuth/OIDC y seguridad de producción.

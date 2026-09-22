@@ -136,3 +136,14 @@ El usuario delegó las decisiones y la configuración. H-01..H-07 y ADR-006 qued
 resueltos por ADR-007, con autenticación/persistencia en ADR-008. Las preguntas anteriores
 se conservan como origen del contrato, no como bloqueos sin respuesta. Las pruebas de
 Fase 1 y los commits están en la bitácora. Ningún CA de producto completo se cierra aún.
+
+## 2026-09-22 — Evidencia incremental de MFA y concurrencia
+
+Commit `08a91ef`: RS-01 y RS-05 parciales en `AuthEndpoints.cs`/`Administration.tsx`:
+regeneración y desactivación MFA, contraseña + segundo factor, revocación de sesiones.
+`SecurityTests.MFA_necesita_codigo_valido_y_revoca_sesiones_anteriores` y
+`frontend/e2e/mfa.spec.ts` verifican el ciclo. `ProductTests` cubre refresh simultáneo
+(RS-05) y ocho escrituras/auditoría concurrentes (RS-06). Comandos/resultados:
+`dotnet test backend --nologo` 24/24; `./scripts/probar-interfaz.ps1` 4/4;
+`dotnet build backend --configuration Release --nologo`, `npm run build` y
+`npm run lint` correctos. OAuth2 permanece pendiente; móvil emulado no cierra CA-6.

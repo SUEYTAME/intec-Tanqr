@@ -47,4 +47,6 @@ public sealed record UserUpdateRequest(
     [property: Required] string Role, bool Active,
     [property: Required] string Version);
 public sealed record PasswordRequest([property: Required, StringLength(128, MinimumLength = 15)] string Password);
-public sealed record MfaRequest([property: Required, StringLength(128)] string Password, string? Code = null);
+public sealed record MfaRequest([property: Required, StringLength(128)] string Password,
+    [property: StringLength(6)] string? Code = null,
+    [property: StringLength(30)] string? RecoveryCode = null);

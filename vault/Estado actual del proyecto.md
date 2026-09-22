@@ -42,13 +42,15 @@ No volver a pedir esas mismas autorizaciones. No inventar datos reales de INTEC.
   `QA-` / `Prueba UI` inactivos, expresamente ficticios.
 - Build Release backend sin avisos/errores; tests PostgreSQL real y navegador registrados
   en la bitácora. Build/lint frontend correctos. Auditoría NuGet sin vulnerabilidades reportadas.
-- CI ampliada incluye pruebas de navegador en base efímera. Consultar su ejecución de
-  Fase 1 antes de afirmar que el último commit pasó remotamente.
+- CI ampliada de Fase 1 correcta para `70972c7`: run `35764488194`, backend, frontend y
+  navegador con base efímera. Commit posterior `08a91ef`: 24/24 pruebas backend y 4/4 de
+  navegador locales; build Release y frontend/lint correctos. Consultar CI de cada commit.
 
 ## Lo que falta / límites
 
 - **No producción**: OAuth 2.0/OIDC todavía pendiente; JWT local no lo sustituye (RS-05 parcial).
-- MFA está probado vía API; cerrar también interfaz de desactivación/recuperación completa.
+- MFA probado vía API e interfaz: alta, recuperación de un solo uso, regeneración y baja.
+  Navegador Chromium escritorio y Pixel 7 emulado; no equivale a Android físico (CA-6).
 - Auditoría no resiste a un superusuario que reconstruya toda la cadena. Revisión de
   integridad `/api/auditoria/verificar`; destino externo/anclaje aún no implementado.
 - RS-03: AES-256 de datos sensibles y TLS de producción pendientes.
