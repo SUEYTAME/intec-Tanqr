@@ -53,6 +53,13 @@ public static class DatabaseBootstrap
             REVOKE ALL ON TABLE "AuditEvents" FROM combustible_app;
             GRANT SELECT, INSERT ON TABLE "AuditEvents" TO combustible_app;
             REVOKE ALL ON TABLE "__EFMigrationsHistory" FROM combustible_app;
+            REVOKE ALL ON TABLE "InventoryMovements", "Dispatches", "DailyCloses", "DailyCloseLines", "TicketDeliveries",
+                "FuelReceipts", "Notifications", "NotificationReads" FROM combustible_app;
+            GRANT SELECT, INSERT ON TABLE "InventoryMovements", "Dispatches", "DailyCloses", "DailyCloseLines", "TicketDeliveries",
+                "FuelReceipts", "Notifications", "NotificationReads" TO combustible_app;
+            REVOKE ALL ON TABLE "Tickets" FROM combustible_app;
+            GRANT SELECT, INSERT ON TABLE "Tickets" TO combustible_app;
+            GRANT UPDATE ("Status", "ConsumedAt", "VoidedAt", "VoidReason", "Version") ON TABLE "Tickets" TO combustible_app;
             """;
         await using var grant = new NpgsqlCommand(grants, connection);
         await grant.ExecuteNonQueryAsync();
