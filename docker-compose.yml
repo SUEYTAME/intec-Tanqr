@@ -38,6 +38,22 @@ services:
       retries: 10
       start_period: 10s
 
+  # Servidor SMTP de DESARROLLO (RF-06/RF-09). Recibe el correo de los tickets de verdad, por
+  # SMTP, y lo muestra en http://127.0.0.1:18025 sin entregarlo a nadie. No sustituye el SMTP
+  # institucional de produccion (bloqueo B-02). Solo en 127.0.0.1, como la base de datos.
+  mailpit:
+    image: axllent/mailpit:v1.31.2
+    container_name: combustible-mail
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-11025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-18025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   # Adminer es una consola de administracion de base de datos sin barrera propia:
   # quien llegue al puerto puede entrar con las credenciales. Por eso vive en el
   # perfil "herramientas" y no se levanta salvo que se pida explicitamente:

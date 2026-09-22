@@ -1,4 +1,4 @@
-param([switch]$Reiniciar)
+﻿param([switch]$Reiniciar)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ($Reiniciar) { & "$PSScriptRoot/detener.ps1" }
@@ -21,7 +21,7 @@ foreach ($port in @(5080,5173)) {
 & "$PSScriptRoot/preparar.ps1"
 . "$PSScriptRoot/config-local.ps1"
 Push-Location (Join-Path $projectRoot 'frontend')
-try { npm ci; if ($LASTEXITCODE -ne 0) { throw 'Falló npm ci.' } } finally { Pop-Location }
+try { Invoke-Native { npm ci } 'Falló npm ci.' } finally { Pop-Location }
 $outputDir = Join-Path $projectRoot 'artifacts'
 $dll = Join-Path $projectRoot 'backend/src/Combustible.Api/bin/Debug/net10.0/Combustible.Api.dll'
 $vite = Join-Path $projectRoot 'frontend/node_modules/vite/bin/vite.js'
@@ -30,17 +30,22 @@ Remove-Item Env:BOOTSTRAP_PASSWORD -ErrorAction SilentlyContinue
 Remove-Item Env:APP_DB_PASSWORD -ErrorAction SilentlyContinue
 $apiProcess = Start-Process -FilePath 'dotnet' -ArgumentList @('exec', ('"' + $dll + '"'), '--urls', 'http://127.0.0.1:5080') -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $outputDir 'api.log') -RedirectStandardError (Join-Path $outputDir 'api-error.log')
 $records = @(@{ Id = $apiProcess.Id; Started = $apiProcess.StartTime.ToUniversalTime().ToString('o'); Name = 'dotnet'; Target = $dll })
-$records | ConvertTo-Json -AsArray | Set-Content -LiteralPath $processFile
+ConvertTo-Json -InputObject @($records) | Set-Content -LiteralPath $processFile
 $webProcess = Start-Process -FilePath 'node' -ArgumentList @(('"' + $vite + '"')) -WorkingDirectory (Join-Path $projectRoot 'frontend') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $outputDir 'web.log') -RedirectStandardError (Join-Path $outputDir 'web-error.log')
 $records += @{ Id = $webProcess.Id; Started = $webProcess.StartTime.ToUniversalTime().ToString('o'); Name = 'node'; Target = $vite }
-$records | ConvertTo-Json -AsArray | Set-Content -LiteralPath $processFile
+ConvertTo-Json -InputObject @($records) | Set-Content -LiteralPath $processFile
 $ready = $false
 for ($attempt = 0; $attempt -lt 30; $attempt++) {
     try {
-        $apiResponse = Invoke-WebRequest 'http://127.0.0.1:5080/health/ready' -TimeoutSec 2
-        $webResponse = Invoke-WebRequest 'http://127.0.0.1:5173' -TimeoutSec 2
+        $apiResponse = Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:5080/health/ready' -TimeoutSec 2
+        $webResponse = Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:5173' -TimeoutSec 2
         if ($apiResponse.StatusCode -eq 200 -and $webResponse.StatusCode -eq 200) { $ready = $true; break }
-    } catch [System.Net.Http.HttpRequestException] { Start-Sleep -Milliseconds 500 }
+    } catch {
+        # Servidor aún sin escuchar: WebException en PowerShell 5.1, HttpRequestException en 7. Otro error se propaga.
+        $kind = $_.Exception.GetType().FullName
+        if ($kind -ne 'System.Net.WebException' -and $kind -ne 'System.Net.Http.HttpRequestException') { throw }
+        Start-Sleep -Milliseconds 500
+    }
 }
 if (-not $ready) { throw 'Los servidores no respondieron. Revisa artifacts/api-error.log y web-error.log.' }
 Write-Output 'Aplicación disponible: http://localhost:5173'
