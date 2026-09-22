@@ -10,6 +10,10 @@ trim_trailing_whitespace = true
 [*.{cs,csproj}]
 indent_size = 4
 
+# Migraciones generadas por dotnet-ef: no se editan a mano, los analizadores no aplican.
+[**/Data/Migrations/*.cs]
+generated_code = true
+
 [*.{ts,tsx,js,jsx,json,yml,yaml}]
 indent_size = 2
 
