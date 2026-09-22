@@ -175,3 +175,53 @@ Evaluado el 2026-09-22. Un QR es texto: cualquiera imprime uno con la cantidad q
 exige "verificación criptográfica" y CA-2 exige que el despacho se valide exclusivamente por QR
 válido. El servidor verifica la firma **siempre**, y la cantidad autorizada se lee de la base de
 datos, nunca del contenido del QR. El QR solo transporta un identificador y su firma.
+
+---
+
+## ADR-007 — Decisiones delegadas para desbloquear el producto
+
+**Fecha:** 2026-09-22. **Estado:** aceptada por delegación explícita del usuario
+("créalos tú mismo, te delego ese trabajo" y continuar). No describe datos reales de INTEC.
+Supersede la exigencia de respuesta individual para H-01..H-07 y resuelve ADR-006.
+
+- H-01: estaciones con N tanques configurables; cada tanque tiene combustible y capacidad.
+  No se inventa el número real ni se siembran instalaciones de INTEC.
+- H-02/H-04: un ticket permite un único despacho, mayor que cero y menor o igual a lo
+  autorizado. Un despacho menor consume el ticket completo; se registra diferencia y motivo.
+  Nunca se permite excedente ni segundo uso; una nueva necesidad requiere otro ticket.
+- H-03: valor inicial configurable de 7 días de vigencia y alerta 24 horas antes.
+  Fechas en UTC; presentación y cierre en America/Santo_Domingo. El vencimiento concreto
+  se persiste al emitir, no cambia retroactivamente al modificar parámetros.
+- H-05: operador confirma visualmente documento de identidad y coincidencia con empleado;
+  registrar confirmación y operador, sin almacenar foto del documento ni firma biométrica.
+- H-06: frases de 15 a 128 caracteres, espacios y pegado permitidos, sin caducidad periódica
+  ni reglas de mezcla de caracteres. Bloquear contraseñas comunes/contextuales; 5 fallos
+  bloquean 15 minutos. Reset y cambio de permisos invalidan sesiones. No guardar contraseñas
+  antiguas. Referencia: https://pages.nist.gov/800-63-4/sp800-63b.html.
+- H-07: el despacho requiere conexión y confirmación del servidor; no encolar consumos
+  offline. La PWA puede mostrar su interfaz sin red, pero no confirmar un despacho ficticio.
+- ADR-006: combinar cadena SHA-256 con usuario SQL de aplicación sin UPDATE/DELETE/TRUNCATE
+  sobre auditoría. Mismo commit/transacción que la operación. Un administrador de base de
+  datos sigue siendo de confianza: no afirmar resistencia frente al superusuario ni cerrar
+  RS-06 como protección externa WORM. Exportación/anclaje externo permanece pendiente.
+
+Acceso sencillo significa un arranque local reproducible y una interfaz clara; no eliminar
+RBAC ni publicar PostgreSQL. Credenciales locales generadas criptográficamente en `.env`
+ignorado. Repositorio privado creado en la cuenta GitHub autenticada del usuario.
+
+## ADR-008 — Persistencia y autenticación de la primera entrega
+
+**Fecha:** 2026-09-22. **Estado:** aceptada por delegación. EF Core + Npgsql 10 y
+ASP.NET Core Identity para usuarios, hashes, bloqueo y TOTP. Roles del SRS exactos.
+Migraciones explícitas; la API normal no migra ni corre con el propietario SQL.
+CRUD con validación, claves únicas y concurrencia optimista. Bajas lógicas conservan historia.
+Auditoría omite contraseñas, tokens y valores de cédula; registra entidad, operación y actor.
+
+JWT de acceso corto (15 min) y sesión revocable; refresh aleatorio de un solo uso, guardado
+como SHA-256, vigencia absoluta 8 horas. Cliente conserva tokens solo en memoria en esta
+primera entrega. Login local no equivale a OAuth 2.0: RS-05 queda parcial hasta integrar
+un proveedor OAuth/OIDC con Authorization Code + PKCE. No usar un password grant como
+sustituto de OAuth. No hay registro público; alta de usuarios solo Administrador.
+
+La delegación permite continuar desarrollo con validación local mientras CI externa se
+resuelve; ninguna ejecución remota fallida se etiqueta como exitosa.
