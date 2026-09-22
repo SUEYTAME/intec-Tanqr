@@ -171,6 +171,19 @@ public static class TicketEndpoints
             return Results.File(pdf, "application/pdf", $"{ticket.Number}.pdf");
         }).RequireAuthorization("request-approve");
 
+        // Mismo QR que ya contiene el PDF, para imprimirlo o mostrarlo en pantalla; también auditado.
+        group.MapGet("/{id:guid}/qr.png", async (Guid id, AppDbContext db, TicketService tickets, AuditWriter audit, HttpContext http) =>
+        {
+            var ticket = await db.Tickets.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id);
+            if (ticket is null) return Results.NotFound();
+            if (!TicketService.Active.Contains(ticket.Status)) return Results.Conflict(new { error = "El ticket no está activo." });
+            var png = DocumentRenderer.QrPng(tickets.Payload(ticket).Payload);
+            await using var tx = await db.Database.BeginTransactionAsync();
+            await audit.WriteAsync(http.Actor(), http.Ip(), "ticket_qr", "Ticket", id.ToString());
+            await tx.CommitAsync();
+            return Results.File(png, "image/png", $"{ticket.Number}.png");
+        }).RequireAuthorization("request-approve");
+
         group.MapPost("/{id:guid}/reenviar", async (Guid id, AppDbContext db, TicketService tickets, HttpContext http) =>
         {
             var ticket = await db.Tickets.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id);
