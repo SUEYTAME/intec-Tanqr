@@ -1,4 +1,39 @@
-# Handoff para Astra (actualizado 2026-09-23)
+# Handoff para Astra (actualizado 2026-09-23, relevo de Claude)
+
+## RELEVO PARA CODEX — LEER PRIMERO (Claude, 2026-09-23)
+
+**Estado: producto desplegado y verificado en Azure.** URL https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
+Rama `fase-2-producto`; código desplegado = `465eaa1` (CI `35862079238` verde: backend 58/58, navegador 6/6).
+Todo lo operativo está en `docs/azure.md`; decisiones en ADR-014/015/016; evidencia en la bitácora.
+
+**Acceso:** usuario `admin@combustible-demo.test`; contraseña SOLO en Key Vault
+(`az keyvault secret show --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --vault-name kv-intec-fuel-dev-b805 -n bootstrap-password --query value -o tsv`).
+Nunca imprimir secretos en el chat ni subirlos.
+
+**Reglas que no cambian:** solo suscripción `44f41884-c42a-4162-898f-d83d8d987ff3` (pasar siempre `--subscription`;
+NO tocar LegatTech-Bot). Si ARM pide MFA con token `amr=pwd`, login con `--claims-challenge` (receta en `docs/azure.md`).
+SSH NO sirve (clave con frase de paso desconocida; no regenerar): administrar con `az vm run-command`.
+Actualizar la VM: `git archive` del commit con CI verde → Blob `deployments/src-<7>.tar.gz` → cambiar `REVISION` y
+`SRC_SHA256` en `deploy/azure/instalar.sh` → `az vm run-command invoke ... --scripts @deploy/azure/instalar.sh`.
+Pruebas locales: `dotnet test backend -c Release` (necesita Docker Desktop encendido).
+
+**Decisiones del usuario ya tomadas (2026-09-23):** máximo poder al Administrador; despacho/cierre solo Despachador;
+OAuth sin escritura; PII (cédula/correo/móvil) solo Administrador y Supervisor; purge protection activada (irreversible);
+correo real de prueba autorizado y entregado (ticket DEMO COM-2026-000001).
+
+**Necesidad del usuario: el proyecto solo debe estar arriba ~1 mes (hasta ~2026-10-23).**
+Crédito: Cost Management (2026-09-23) muestra USD 7.30 gastados en 12 meses (SQL rg-intec-db 7.29, OpenAI 0.004);
+este proyecto aún no aparecía por retraso de facturación. Quedan ≈ USD 92.7. Gasto previsto ≈ USD 41.7/mes
+(proyecto ~36.3 + SQL Basic `db-intec-demo` 5.38) → dura ≈ 2.2 meses. **No hace falta AWS ni cambiar de VM.**
+Saldo oficial: https://www.microsoftazuresponsorships.com/balance (solo el usuario). Si el saldo real fuera menor
+a ~USD 45, pasar a VM gratuita `Standard_B2ats_v2` + Premium SSD P6 64 GiB (app 253 MiB + PG 35 MiB medidos;
+añadir swap 2 GiB y construir la imagen fuera de la VM).
+Al terminar el mes: el usuario decide borrar `rg-intec-fuel-dev-b805` (el agente no borra sin orden explícita;
+Key Vault queda en borrado suave 7 días por purge protection). Correo ACS: secreto de app Entra vence 2027-09-23.
+
+**Pendiente (no simular):** SMS real (B-01), datos reales de INTEC (B-04), prueba en Android físico (CA-6) contra la URL.
+Datos DEMO en producción: catálogos `DEMO*`, ticket consumido, cierre `DEMO-EST` 2026-09-23, usuarios DEMO desactivados.
+No tocar `vault/.obsidian/`. `db-intec-demo` y el OpenAI son del usuario: no tocarlos.
 
 Rama: `fase-2-producto` (creada desde `fase-1-dominio` @4f7635a), **subida a remoto el 2026-09-22**.
 

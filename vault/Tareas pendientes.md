@@ -86,7 +86,7 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] PWA: escáner (cámara, lector externo, foto), confirmación de identidad, instalable, API NetworkOnly (H-07)
 - [x] Pantallas web de todos los módulos, menú por rol, ticket público (RF-09)
 - [ ] Prueba de extremo a extremo en un Android físico (CA-6) — requiere dispositivo y HTTPS (B-03)
-- [ ] Decidir si un cliente OAuth con rol Supervisor puede aprobar/anular/escribir inventario (hoy puede; ver bitácora)
+- [x] Cliente OAuth con rol Supervisor ya no aprueba/anula/escribe (ADR-016, 2026-09-23)
 
 ---
 
@@ -104,9 +104,10 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] Correo ACS entregado en el buzón del usuario (autorizado 2026-09-23, ticket DEMO COM-2026-000001)
 - [x] Prueba de extremo a extremo en Azure: QR→validar→despachar→inventario→reportes→cierre→auditoría (2026-09-23)
 - [x] Prueba de edición de empleados/vehículos (RF-02/RF-03): 53/53 backend
-- [ ] Decidir: restringir `GET /api/empleados` (cédula/correo/móvil visibles para todos los roles)
-- [ ] Decidir: activar *purge protection* en Key Vault (irreversible)
-- [ ] Disponibilidad 24/7 del SRS 1.2: la demo es una sola VM (fuera de alcance de la demo)
+- [x] PII del empleado solo para Administrador/Supervisor (ADR-016, verificado en Azure 2026-09-23)
+- [x] *Purge protection* activada en Key Vault (irreversible, 2026-09-23)
+- [x] OAuth Supervisor sin poder de escritura; despacho/cierre solo Despachador (ADR-016)
+- [ ] **Disponibilidad 24/7 (prioridad del usuario):** el crédito de estudiante (USD 100/12 meses) se agota con ~USD 36/mes y la suscripción se deshabilita. Propuesta: VM gratuita B2ats_v2 + Premium SSD P6 (SLA 99.9 %), imagen construida fuera de la VM. Pendiente de decisión del usuario
 - [ ] Recuperar acceso SSH: el usuario da la frase de paso de `artifacts/azure/id_ed25519` o autoriza una clave nueva
 - [ ] (Baja) Persistir claves de Data Protection: hoy solo las usa el reset de contraseña en una misma petición
 - [ ] Actualizaciones futuras: usar la imagen de GHCR (credencial de lectura en la VM) en vez de construir en la VM

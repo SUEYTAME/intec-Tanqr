@@ -476,3 +476,25 @@ cierra la tarea de despliegue de Fase 6 (B-03 resuelto para la demo con dominio 
 **Verificado con:** `dotnet test backend -c Release --nologo` → **53/53** (PostgreSQL local, Docker
 Desktop arrancado para ello). E2E y correo contra https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com.
 **Commit:** `2511fb3`; CI `35855538217` **success** (backend 53/53, navegador 6/6, frontend, contenedor). **Requisitos afectados:** RF-01..RF-04, RS-01, RS-02 (cierre documental); RF-06/RF-09 correo verificado en producción.
+## 2026-09-23 — ADR-016 desplegado: permisos, privacidad y purge protection (Claude)
+
+**Agente:** Claude. **Decisiones del usuario:** "el máximo poder debería ser del administrador";
+datos personales "solo adm y supervisor"; purge protection "sí, actívala".
+
+- `Program.cs`: `catalog-write`, `request-approve`, `inventory-write` exigen `sid` (persona); nueva
+  política `employee-pii`; `dispatch`/`close` solo Despachador. `CatalogEndpoints`: lectura de
+  empleados sin cédula/correo/móvil para otros roles. Frontend: menú Despacho solo Despachador,
+  columna "Restringido". Pruebas: despacho con Despachador, matriz RBAC con Administrador,
+  OAuth Supervisor sin escritura, nueva `Datos_personales_del_empleado_solo_para_administrador_y_supervisor`.
+- Key Vault: `az keyvault update --enable-purge-protection true` → `purgeProtection: true`; Bicep igual.
+- Desplegado `465eaa1` en Azure (paquete SHA-256 `abfb7d62…af38`), salud ready. Verificado en producción:
+  Administrador ve la cédula del empleado DEMO; usuario Consulta DEMO no (usuario desactivado después).
+- Inventario de la suscripción: además de este proyecto hay `rg-intec-db` (SQL `db-intec-demo` Basic,
+  USD 0.177/día ≈ 5.38/mes, no se puede pausar; `db-intec-schedule` en oferta gratuita, pausada) y
+  `rg-hermes-ai` (Azure OpenAI gpt-5-mini GlobalStandard, cobra por uso). No se tocó ninguno.
+- Memoria real en la VM: app 253 MiB, PostgreSQL 35 MiB (base para evaluar la VM gratuita de 1 GiB).
+- Cost Management devolvió 429 para esta suscripción; el saldo real se ve en microsoftazuresponsorships.com.
+
+**Verificado con:** `dotnet test backend -c Release` **58/58**; `npm run build` y `npm run lint` correctos;
+CI `35862079238` success (58/58, navegador 6/6); instalador en Azure `{"status":"ready"}`.
+**Commit:** `465eaa1` (código) + este registro. **Requisitos afectados:** RS-02, RS-03, RF-24.
