@@ -50,7 +50,8 @@ resource owner 'Microsoft.Insights/actionGroups@2023-01-01' = {
   properties: {
     groupShortName: 'combustible'
     enabled: true
-    emailReceivers: [ { name: 'propietario', emailAddress: alertEmail, useCommonAlertSchema: true } ]
+    // Renombrado 2026-09-23: re-guardar el mismo receptor no reenvía el OTP de verificación de Azure.
+    emailReceivers: [ { name: 'propietario-intec', emailAddress: alertEmail, useCommonAlertSchema: true } ]
   }
 }
 resource down 'Microsoft.Insights/metricAlerts@2018-03-01' = {
