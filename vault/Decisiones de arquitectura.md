@@ -326,3 +326,20 @@ del administrador"; datos personales "solo adm y supervisor").
 
 **DESCARTADO:** dar al Administrador permiso de despacho para que "lo pueda todo": rompe la separación
 de funciones y el SRS asigna el despacho al Despachador; el Administrador puede crear esa cuenta.
+
+## ADR-017 — Vigilancia de disponibilidad y del crédito durante el mes de demo
+
+**Fecha:** 2026-09-23. **Estado:** aceptada (el usuario pidió la demo arriba ~1 mes, 24/7 "MUY importante").
+
+1. **Prueba estándar de Application Insights** a `/health` cada 15 min desde North Central US, con
+   reintento y comprobación de certificado (≥ 14 días). Alerta de métrica → grupo de acciones → correo
+   del propietario. ≈ USD 1.7/mes (precio de la API de Azure, 2026-09-23). Detecta VM caída, app caída,
+   certificado sin renovar y suscripción deshabilitada.
+2. **Presupuesto de la suscripción** USD 45/mes con avisos al 80 %/100 % real y 100 % previsto: el mayor
+   riesgo de la demo es que el crédito de estudiante se agote y Azure deshabilite la suscripción.
+3. **Recuperación ante reinicio** comprobada, no supuesta: `az vm restart` → app de vuelta sin intervención.
+4. El correo de aviso se toma de la sesión `az` al desplegar; no queda en el repositorio.
+
+**DESCARTADO:** chequeo programado en GitHub Actions (repo privado: consume los minutos gratuitos que ya
+usa la CI); prueba desde varias ubicaciones (multiplica el coste para una demo de un mes); alerta de
+métrica de la VM sola (no detecta la app caída con la VM encendida).

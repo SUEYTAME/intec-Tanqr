@@ -31,6 +31,28 @@ añadir swap 2 GiB y construir la imagen fuera de la VM).
 Al terminar el mes: el usuario decide borrar `rg-intec-fuel-dev-b805` (el agente no borra sin orden explícita;
 Key Vault queda en borrado suave 7 días por purge protection). Correo ACS: secreto de app Entra vence 2027-09-23.
 
+**Vigilancia del mes (ADR-017, 2026-09-23):** reinicio de la VM verificado (vuelve sola). Prueba de
+Application Insights a `/health` cada 15 min (+ certificado) → alerta `alerta-demo-caida` → correo del usuario.
+Presupuesto de suscripción `presupuesto-credito-estudiante` USD 45/mes con avisos. Ver disponibilidad:
+`az monitor metrics list --resource <id de appi-intec-fuel-dev-b805> --metric availabilityResults/availabilityPercentage --offset 24h`.
+Falta que el usuario confirme que le llegó el correo de Azure del grupo de acciones.
+
+### Prompt vigente para Codex (lo mantiene al día el agente que trabaja)
+El usuario pega esto en Codex si Claude deja de responder:
+
+> Continúa el proyecto en C:\Dev\intec-combustible (rama fase-2-producto). No reconstruyas el chat.
+> Lee: AGENTS.md → vault/Handoff para Astra.md (sección "RELEVO PARA CODEX", completa) →
+> vault/Estado actual del proyecto.md → vault/Tareas pendientes.md → docs/azure.md.
+> La demo está en Azure y debe seguir arriba hasta ~2026-10-23. Solo la suscripción
+> 44f41884-c42a-4162-898f-d83d8d987ff3 con --subscription explícito; nunca LegatTech-Bot.
+> Si Azure pide MFA, dame el código de dispositivo (receta --claims-challenge en docs/azure.md).
+> No imprimas secretos, no regeneres la clave SSH (usa az vm run-command con --scripts @archivo),
+> no borres recursos sin que yo lo pida, no toques db-intec-demo, el OpenAI ni vault/.obsidian/.
+> Primero verifica el estado real (/health, disponibilidad en Application Insights, último respaldo
+> en Blob) y dime qué encontraste; luego sigue con la primera tarea desbloqueada de Tareas pendientes.
+> Al terminar: bitácora, estado, tareas, este relevo (incluido este prompt), dotnet test backend -c Release,
+> npm run build, commit, push y CI.
+
 **Pendiente (no simular):** SMS real (B-01), datos reales de INTEC (B-04), prueba en Android físico (CA-6) contra la URL.
 Datos DEMO en producción: catálogos `DEMO*`, ticket consumido, cierre `DEMO-EST` 2026-09-23, usuarios DEMO desactivados.
 No tocar `vault/.obsidian/`. `db-intec-demo` y el OpenAI son del usuario: no tocarlos.

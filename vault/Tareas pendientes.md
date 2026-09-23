@@ -107,7 +107,11 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] PII del empleado solo para Administrador/Supervisor (ADR-016, verificado en Azure 2026-09-23)
 - [x] *Purge protection* activada en Key Vault (irreversible, 2026-09-23)
 - [x] OAuth Supervisor sin poder de escritura; despacho/cierre solo Despachador (ADR-016)
-- [ ] **Disponibilidad 24/7 (prioridad del usuario):** el crédito de estudiante (USD 100/12 meses) se agota con ~USD 36/mes y la suscripción se deshabilita. Propuesta: VM gratuita B2ats_v2 + Premium SSD P6 (SLA 99.9 %), imagen construida fuera de la VM. Pendiente de decisión del usuario
+- [x] **Disponibilidad 24/7 durante el mes de demo (hasta ~2026-10-23):** el usuario solo necesita ~1 mes; crédito ≈ USD 92.7 alcanza ≈ 2 meses, se mantiene la VM actual (2026-09-23). Plan B si el saldo real < USD 45: VM gratuita B2ats_v2 + Premium SSD P6
+- [x] Reinicio de la VM verificado: vuelve sola, `/health` y login 200, `RestartCount=0` (2026-09-23)
+- [x] Vigilancia (ADR-017): prueba estándar `/health` cada 15 min + certificado, alerta por correo, presupuesto USD 45/mes; primera ejecución 100 % (2026-09-23)
+- [ ] El usuario confirma que recibió el correo de Azure "agregado al grupo de acciones" `ag-intec-fuel-dev-b805` (sin eso, la entrega de alertas no está probada)
+- [ ] ~2026-10-23: el usuario decide si borra `rg-intec-fuel-dev-b805` y el presupuesto `presupuesto-credito-estudiante` (el agente no borra sin orden)
 - [ ] Recuperar acceso SSH: el usuario da la frase de paso de `artifacts/azure/id_ed25519` o autoriza una clave nueva
 - [ ] (Baja) Persistir claves de Data Protection: hoy solo las usa el reset de contraseña en una misma petición
 - [ ] Actualizaciones futuras: usar la imagen de GHCR (credencial de lectura en la VM) en vez de construir en la VM

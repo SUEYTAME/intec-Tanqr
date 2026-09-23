@@ -66,7 +66,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - El job de GHCR publica la imagen privada tras backend, frontend y navegador correctos.
   La imagen publicada no equivale a una aplicación alojada.
 - Despliegue probado con imagen Docker (`docs/despliegue.md`); carga, manual e informe hechos.
-- Decisión abierta: permisos de escritura de clientes OAuth con rol Supervisor.
+- Permisos OAuth, separación de funciones y PII del empleado: resueltos por el usuario (ADR-016, `465eaa1`).
 - B-01 SMS, B-02 SMTP institucional, B-03 dominio/certificado, B-04 datos reales: pendientes
   para operación real. Una demo puede usar datos ficticios y correo de prueba, identificados
   como tales; no necesita esperar recursos institucionales.
@@ -83,6 +83,9 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - Correo ACS **entregado** en el buzón del usuario (autorizado; ticket DEMO `COM-2026-000001`).
 - Revisión completa contra el SRS 2026-09-23: flujo extremo a extremo verificado en Azure; hallazgos abiertos en [[Trazabilidad de requisitos del SRS]].
 - Login Azure: si ARM pide MFA con token `amr=pwd`, usar `--claims-challenge` (ver `docs/azure.md`).
+- **Mes de demo (hasta ~2026-10-23), ADR-017:** reinicio de la VM verificado (vuelve sola); prueba de
+  disponibilidad de `/health` cada 15 min con alerta por correo; presupuesto de la suscripción USD 45/mes
+  con avisos. Crédito ≈ USD 92.7 → ≈ 2 meses. Al terminar, el usuario decide borrar el grupo.
 - No se tocó `vault/.obsidian/` preexistente sin rastrear.
 
 ## Qué abrir según la tarea

@@ -498,3 +498,27 @@ datos personales "solo adm y supervisor"; purge protection "sí, actívala".
 **Verificado con:** `dotnet test backend -c Release` **58/58**; `npm run build` y `npm run lint` correctos;
 CI `35862079238` success (58/58, navegador 6/6); instalador en Azure `{"status":"ready"}`.
 **Commit:** `465eaa1` (código) + este registro. **Requisitos afectados:** RS-02, RS-03, RF-24.
+
+## 2026-09-23 — Mes de demo: reinicio verificado, vigilancia y presupuesto (Claude, ADR-017)
+
+**Agente:** Claude. **Pedido:** demo arriba ~1 mes (hasta ~2026-10-23), 24/7 "MUY importante";
+"continúa con lo que creas que falte".
+
+- Crédito: Cost Management mostró USD 7.30 gastados en 12 meses (SQL 7.29, OpenAI 0.004); quedan
+  ≈ USD 92.7 → ≈ 2 meses. Se mantiene la VM actual; no hace falta AWS.
+- Revisión en la VM: `docker`/`containerd` habilitados en el arranque, timers de respaldo y certbot
+  activos, disco 12 %, 2.9 GiB de RAM disponibles, `unattended-upgrades` sin reinicio automático.
+- `az vm restart`: arranque 13:05:51 UTC; `/health` 200 y login 200 sin intervención, `RestartCount=0`.
+- Nuevo `infra/monitoreo.bicep` (Log Analytics con tope 0.1 GB/día, Application Insights, prueba
+  estándar `wt-intec-fuel-health` a `/health` cada 15 min con certificado ≥ 14 días, grupo de acciones
+  `ag-intec-fuel-dev-b805`, alerta `alerta-demo-caida`), `infra/presupuesto.bicep` (suscripción,
+  USD 45/mes, avisos 80 %/100 % real y 100 % previsto) y `scripts/azure-monitoreo.ps1` (what-if / `-Deploy`).
+  Precios de la API oficial: USD 0.00056 por ejecución, USD 0.10/mes la alerta → ≈ USD 1.7/mes.
+- `docs/azure.md`: recursos, paso 6, reinicio, vigilancia, crédito; corregida la revisión de la imagen (`465eaa1`).
+
+**Verificado con:** `az bicep build` de ambos archivos sin errores; what-if: 5 `Create` en el grupo, el resto
+`Ignore`, presupuesto `Create`; despliegue correcto; `az rest` del presupuesto (45, Monthly); alerta
+`enabled`, `PT15M`; prueba `Enabled`, 900 s; métrica `availabilityResults` 13:10 UTC = 1 ejecución, **100 %**.
+**No verificado:** la entrega del correo de alerta (exigiría tumbar la demo); el usuario debe confirmar el
+aviso de Azure "agregado al grupo de acciones". El presupuesto mostró USD 0 del mes por retraso de facturación.
+**Commit:** ver el siguiente push. **Requisitos afectados:** ninguno del SRS (operación de la demo).
