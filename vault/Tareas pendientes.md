@@ -110,7 +110,9 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] **Disponibilidad 24/7 durante el mes de demo (hasta ~2026-10-23):** el usuario solo necesita ~1 mes; crédito ≈ USD 92.7 alcanza ≈ 2 meses, se mantiene la VM actual (2026-09-23). Plan B si el saldo real < USD 45: VM gratuita B2ats_v2 + Premium SSD P6
 - [x] Reinicio de la VM verificado: vuelve sola, `/health` y login 200, `RestartCount=0` (2026-09-23)
 - [x] Vigilancia (ADR-017): prueba estándar `/health` cada 15 min + certificado, alerta por correo, presupuesto USD 45/mes; primera ejecución 100 % (2026-09-23)
-- [~] El usuario recibió el correo de verificación (OTP) del grupo de acciones `ag-intec-fuel-dev-b805` el 2026-09-23 pero no lo completó; debe verificarlo él (sin eso las alertas no llegan)
+- [!] Verificación de alertas por correo: OTP original vencido; re-guardar (CLI y portal) no reenvía; prueba de notificación bloqueada ("Free subscription not supported"). Opción: push de la app móvil de Azure en el mismo grupo de acciones (decisión del usuario)
+- [x] Datos DEMO ficticios para que la demo no se vea vacía (2026-09-23, ver bitácora)
+- [ ] **Rediseño de la UI** (el usuario la ve genérica): decisión pendiente del usuario; no empezar sin ella
 - [x] Galones legibles ("10" y no "10.000") en correo/SMS/PDF/acta/mensajes; desplegado `9fed40e` (2026-09-23)
 - [x] QR: se mantiene payload firmado + texto junto al código y enlace para el teléfono (ADR-018, decisión delegada, 2026-09-23)
 - [x] Saldo real informado por el usuario 2026-09-23: **USD 92.68** restantes (7.32 usados de 100); pronóstico del mes USD 5.31 aún sin la VM facturada

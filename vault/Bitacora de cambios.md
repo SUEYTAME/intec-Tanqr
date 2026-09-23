@@ -559,4 +559,29 @@ instalador en Azure `{"status":"ready"}`, imagen `intec-combustible:0.4.0-9fed40
 `35873609215` success (backend, frontend, navegador escritorio/móvil, contenedor); Azure: imagen
 `intec-combustible:0.4.0-ea54529`, `/health` 200, login 200, bundle servido con `maximumFractionDigits:3}`.
 **No verificado:** que Azure enviara un OTP nuevo tras re-guardar (depende del usuario).
+**Seguimiento:** el usuario no recibió OTP al re-guardar igual; se renombró el receptor a `propietario-intec`
+en `infra/monitoreo.bicep` y se desplegó (what-if: solo recursos de monitoreo; VM `Ignore`; `/health` 200).
+
+## 2026-09-23 — Datos DEMO para que la demo no se vea vacía; verificación de alertas sin resolver (Claude)
+
+**Agente:** Claude. **Pedido:** "lo veo medio vacío… arregla lo que no es el UI" (la UI se decide después).
+
+- Carga por la API como administrador (script en el scratchpad de la sesión, idempotente por código; no en el repo
+  porque depende de `decode-qr.mjs` del scratchpad). Todo ficticio y marcado: prefijo `DEMO`, cédulas `000…`,
+  móviles 809-555, correos `@combustible-demo.test`. Creado: combustibles `DEMO-GP/GR/GO` (+ `DEMO-DSL` previo),
+  departamentos `DEMO-TRA/MAN/SEG/ADM`, empleados `DEMO-E02..E07`, vehículos `DEMO-V2..V7`, estación `DEMO-CAMPUS`
+  con 4 tanques y recepciones, tickets `COM-2026-000002..000007` (4 despachados por un Despachador DEMO temporal,
+  ya desactivado), 1 solicitud rechazada, 1 pendiente, programación semanal "DEMO - Ruta semanal de transporte".
+- Correo a `@combustible-demo.test`: ACS devuelve `Failed` → 6 notificaciones `IntegrationFailure` y tickets en
+  estado pendiente de envío. Es el comportamiento correcto de la app; no se ocultaron.
+- Tanque `DEMO-C-GP` queda en 497.3 < 500 (crítico) → notificación `LowInventory` real.
+- Alertas de Azure: el receptor aparece "Subscribed" en el portal; se re-guardó el grupo desde el portal
+  (Claude in Chrome, sesión del usuario) y Azure respondió "Action group updated successfully", pero no llegó
+  un OTP nuevo (búsqueda en el buzón INTEC vía conector de Outlook, incluida la carpeta de spam).
+  `az monitor action-group test-notifications create` → `Conflict: Free subscription not supported`.
+  Entrega de alertas **no verificada**. Destino confirmado: 1128305@est.intec.edu.do (no Gmail).
+
+**Verificado con:** salida del script (todas las altas HTTP 2xx, despachos 16.2/19.8/13.5/2.7 gal, despachador
+desactivado HTTP 204); `/api/dashboard` con los 4 tanques y `DEMO-C-GP` `critical: true`; `/api/notificaciones`
+7 (6 `IntegrationFailure`, 1 `LowInventory`). **Commit:** este registro. **Requisitos afectados:** ninguno (datos de demo).
 **Commit:** `ea54529` (código) + este registro. **Requisitos afectados:** RF-06, RF-09 (presentación).

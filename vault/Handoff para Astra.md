@@ -8,7 +8,13 @@ contenedor), imagen `intec-combustible:0.4.0-ea54529`, paquete SHA-256 `7992a235
 **El QR es un payload firmado, no una URL** (ADR-018, decidido): correo y PDF lo explican junto al código
 y dan el enlace para el teléfono. Saldo real confirmado por el usuario: **USD 92.68** (2026-09-23).
 Regla del usuario: "decide por mí" = leyes de UX/UI + práctica real, explicado y con ADR (AGENTS.md).
-**Grupo de acciones:** Azure pide al usuario verificar su correo con OTP; hasta que lo haga, las alertas no llegan.
+**Grupo de acciones:** receptor `propietario-intec` → 1128305@est.intec.edu.do, "Subscribed" en el portal, pero el
+OTP original venció y re-guardar (CLI y portal) no envió otro; la prueba de notificación está bloqueada en esta
+suscripción ("Free subscription not supported"). Entrega de alertas NO verificada. Alternativa propuesta al usuario:
+notificación push de la app móvil de Azure (sin OTP).
+**Datos DEMO cargados 2026-09-23** (ver bitácora): 4 combustibles, 4 departamentos, 6 empleados, 6 vehículos, estación
+`DEMO-CAMPUS`, tickets COM-2026-000002..7. Correos de empleados DEMO no son entregables (6 avisos de envío fallido, a propósito).
+**UI:** el usuario la ve genérica y quiere rediseñarla; **decisión pendiente, no tocar la UI hasta que la tome**.
 Todo lo operativo está en `docs/azure.md`; decisiones en ADR-014/015/016; evidencia en la bitácora.
 
 **Acceso:** usuario `admin@combustible-demo.test`; contraseña SOLO en Key Vault
