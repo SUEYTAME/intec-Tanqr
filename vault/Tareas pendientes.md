@@ -112,8 +112,8 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] Vigilancia (ADR-017): prueba estándar `/health` cada 15 min + certificado, alerta por correo, presupuesto USD 45/mes; primera ejecución 100 % (2026-09-23)
 - [~] El usuario recibió el correo de verificación (OTP) del grupo de acciones `ag-intec-fuel-dev-b805` el 2026-09-23 pero no lo completó; debe verificarlo él (sin eso las alertas no llegan)
 - [x] Galones legibles ("10" y no "10.000") en correo/SMS/PDF/acta/mensajes; desplegado `9fed40e` (2026-09-23)
-- [ ] **Decisión del usuario:** ¿el QR debe ser una URL que abra la página pública del ticket en cualquier cámara? Hoy es payload firmado (RS-04); cambiarlo exige ADR, escáner y pruebas
-- [ ] El usuario informa el saldo real (portal Azure → Education → Overview)
+- [x] QR: se mantiene payload firmado + texto junto al código y enlace para el teléfono (ADR-018, decisión delegada, 2026-09-23)
+- [x] Saldo real informado por el usuario 2026-09-23: **USD 92.68** restantes (7.32 usados de 100); pronóstico del mes USD 5.31 aún sin la VM facturada
 - [ ] ~2026-10-23: el usuario decide si borra `rg-intec-fuel-dev-b805` y el presupuesto `presupuesto-credito-estudiante` (el agente no borra sin orden)
 - [ ] Recuperar acceso SSH: el usuario da la frase de paso de `artifacts/azure/id_ed25519` o autoriza una clave nueva
 - [ ] (Baja) Persistir claves de Data Protection: hoy solo las usa el reset de contraseña en una misma petición

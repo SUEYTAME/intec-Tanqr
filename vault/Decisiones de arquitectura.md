@@ -343,3 +343,22 @@ de funciones y el SRS asigna el despacho al Despachador; el Administrador puede 
 **DESCARTADO:** chequeo programado en GitHub Actions (repo privado: consume los minutos gratuitos que ya
 usa la CI); prueba desde varias ubicaciones (multiplica el coste para una demo de un mes); alerta de
 métrica de la VM sola (no detecta la app caída con la VM encendida).
+
+## ADR-018 — El QR sigue siendo payload firmado; se explica junto al código
+
+**Fecha:** 2026-09-23. **Estado:** aceptada (el usuario delegó: "decide por mí", con leyes de UX/UI
+y datos reales). **Origen:** el usuario escaneó el QR del correo con la cámara del iPhone y "no lleva a nada".
+
+1. **Se mantiene** el QR como payload firmado ECDSA (RS-04), leído por el escáner de la PWA. Precedente
+   real: tarjetas de embarque (IATA BCBP) y entradas de eventos: el código es para el lector y los
+   datos se imprimen en texto al lado.
+2. **Se corrige el problema de fondo**, que es de expectativa (ley de Jakob; *gulf of evaluation* de
+   Norman: sin retroalimentación parece roto): un significante pegado al QR (proximidad, Gestalt) en
+   correo y PDF: "Este código lo lee el escáner de la estación; con la cámara del teléfono no abre
+   ninguna página", seguido de "Para ver el ticket en su teléfono: <enlace>".
+3. Cantidades para personas sin ceros de relleno en backend y web ("10.000 gal" se leía diez mil).
+
+**DESCARTADO:** codificar una URL en el QR (`/ticket/<id>.<token>#<firma>`): +~60 caracteres → QR más
+denso y peor lectura con reflejos o pantallas dañadas en la estación; cambia el formato firmado, el
+escáner y sus pruebas a un mes de la demo; beneficio pequeño porque el empleado no necesita escanear
+su propio ticket (el correo ya trae datos y enlace).

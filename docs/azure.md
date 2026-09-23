@@ -127,10 +127,10 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** construida en la VM desde `9fed40e`, no descargada de GHCR (paquete privado sin credencial en la VM).
+- **Imagen:** construida en la VM desde `ea54529`, no descargada de GHCR (paquete privado sin credencial en la VM).
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
-- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `9fed40e` (ADR-016 + galones sin ceros de relleno).
+- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `ea54529` (ADR-016, galones legibles, QR explicado: ADR-018).
 - **Alertas:** Azure exige que el titular verifique su correo en el grupo de acciones (OTP de 30 min);
   sin eso la alerta `alerta-demo-caida` no se entrega.
 - Data Protection guarda sus claves dentro del contenedor (aviso en el arranque). Solo afecta al token de restablecimiento de contraseña, que se genera y consume en la misma petición.

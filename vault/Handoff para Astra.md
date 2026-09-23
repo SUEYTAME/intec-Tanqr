@@ -3,10 +3,11 @@
 ## RELEVO PARA CODEX — LEER PRIMERO (Claude, 2026-09-23)
 
 **Estado: producto desplegado y verificado en Azure.** URL https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
-Rama `fase-2-producto`; código desplegado = `9fed40e` (CI `35870837976` verde: backend 58/58, navegador, frontend,
-contenedor), imagen `intec-combustible:0.4.0-9fed40e`, paquete SHA-256 `677f782e…b9cf`.
-**El QR es un payload firmado, no una URL** (la cámara de un iPhone no lo abre; el correo trae el enlace
-público). Hacerlo URL es un cambio de diseño (RS-04, escáner, ADR) pendiente de decisión del usuario.
+Rama `fase-2-producto`; código desplegado = `ea54529` (CI `35873609215` verde: backend 58/58, navegador, frontend,
+contenedor), imagen `intec-combustible:0.4.0-ea54529`, paquete SHA-256 `7992a235…d8d6`.
+**El QR es un payload firmado, no una URL** (ADR-018, decidido): correo y PDF lo explican junto al código
+y dan el enlace para el teléfono. Saldo real confirmado por el usuario: **USD 92.68** (2026-09-23).
+Regla del usuario: "decide por mí" = leyes de UX/UI + práctica real, explicado y con ADR (AGENTS.md).
 **Grupo de acciones:** Azure pide al usuario verificar su correo con OTP; hasta que lo haga, las alertas no llegan.
 Todo lo operativo está en `docs/azure.md`; decisiones en ADR-014/015/016; evidencia en la bitácora.
 

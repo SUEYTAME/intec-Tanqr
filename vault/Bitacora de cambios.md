@@ -542,3 +542,21 @@ dijo "no active Sponsorship".
 instalador en Azure `{"status":"ready"}`, imagen `intec-combustible:0.4.0-9fed40e`, `/health` 200, login 200.
 **No verificado:** el PDF en producción (no se extrajo su texto); el formato lo cubre el mismo método.
 **Commit:** `9fed40e` (código) + este registro. **Requisitos afectados:** RF-06, RF-09 (presentación).
+
+## 2026-09-23 — QR explicado (ADR-018), galones legibles en la web y despliegue de `ea54529` (Claude)
+
+**Agente:** Claude. **Decisión delegada:** "decide por mí… basado en UX/UI laws y real world data".
+
+- ADR-018: el QR sigue siendo payload firmado (modelo tarjeta de embarque); correo y PDF agregan junto
+  al código "Este código lo lee el escáner de la estación; con la cámara del teléfono no abre ninguna
+  página" y "Para ver el ticket en su teléfono: <enlace>". Regla nueva en AGENTS.md para "decide por mí".
+- `frontend/src/lib.ts`: `formatGallons` sin `minimumFractionDigits: 3` (es-DO mostraba "10.000 gal";
+  comprobado con Node: ahora "10", "12.5", "12,000.125").
+- Saldo real informado por el usuario (portal → Education): **USD 92.68**, 7.32 usados.
+- Grupo de acciones re-guardado (`azure-monitoreo.ps1 -Deploy`) para pedir un OTP nuevo; el primero venció.
+
+**Verificado con:** `dotnet test backend -c Release` **58/58**; `npm run build` y `oxlint` exit 0; CI
+`35873609215` success (backend, frontend, navegador escritorio/móvil, contenedor); Azure: imagen
+`intec-combustible:0.4.0-ea54529`, `/health` 200, login 200, bundle servido con `maximumFractionDigits:3}`.
+**No verificado:** que Azure enviara un OTP nuevo tras re-guardar (depende del usuario).
+**Commit:** `ea54529` (código) + este registro. **Requisitos afectados:** RF-06, RF-09 (presentación).
