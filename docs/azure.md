@@ -118,7 +118,8 @@ impuestos, tráfico saliente adicional ni correo (ACS cobra por mensaje). La vig
 
 **Crédito (2026-09-23):** Cost Management mostraba USD 7.30 gastados en 12 meses (casi todo el SQL
 `db-intec-demo`, ajeno a este proyecto); quedan ≈ USD 92.7. Con ≈ USD 43/mes de toda la suscripción
-alcanza ≈ 2 meses. El saldo oficial solo se ve en https://www.microsoftazuresponsorships.com/balance.
+alcanza ≈ 2 meses. El saldo oficial de Azure for Students lo ve el titular en el portal de Azure →
+**Education** → Overview (microsoftazuresponsorships.com responde "no active Sponsorship": es otro programa).
 Si el crédito se agota Azure deshabilita la suscripción y la demo cae. Apagar la VM (`az vm deallocate`) detiene el cargo de cómputo, no el de
 disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
@@ -126,10 +127,12 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** construida en la VM desde `465eaa1`, no descargada de GHCR (paquete privado sin credencial en la VM).
+- **Imagen:** construida en la VM desde `9fed40e`, no descargada de GHCR (paquete privado sin credencial en la VM).
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
-- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `465eaa1` (ADR-016).
+- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `9fed40e` (ADR-016 + galones sin ceros de relleno).
+- **Alertas:** Azure exige que el titular verifique su correo en el grupo de acciones (OTP de 30 min);
+  sin eso la alerta `alerta-demo-caida` no se entrega.
 - Data Protection guarda sus claves dentro del contenedor (aviso en el arranque). Solo afecta al token de restablecimiento de contraseña, que se genera y consume en la misma petición.
 - Key Vault con *purge protection* activada (2026-09-23, irreversible).
 - Datos DEMO en producción: departamento/empleado/vehículo/combustible/estación/tanque `DEMO*`, ticket `COM-2026-000001` consumido, cierre del 2026-09-23 de `DEMO-EST` y usuario `despacho@combustible-demo.test` desactivado.

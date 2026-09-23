@@ -9,8 +9,8 @@ exec > >(tee -a /var/log/combustible-instalar.log) 2>&1
 FQDN=intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
 VAULT=kv-intec-fuel-dev-b805
 STORAGE=stintecfueldevb805
-REVISION=465eaa15988f0e4db70957e2b75d8f96ea04a17e
-SRC_SHA256=abfb7d624e7cc3a5730d925b24e1e0f6938b2173ee62ff081619b8b8ee89af38
+REVISION=9fed40e889e168895b13caea3e773e73aba08b9c
+SRC_SHA256=677f782e11955a22189c6505b90ee03e3bb5630d52f122c3eb252017fcdab9cf
 APP_VERSION=0.4.0-${REVISION:0:7}
 # Cuenta inicial ficticia (demo). No es un dato de INTEC.
 BOOTSTRAP_EMAIL=admin@combustible-demo.test
