@@ -521,4 +521,24 @@ CI `35862079238` success (58/58, navegador 6/6); instalador en Azure `{"status":
 `enabled`, `PT15M`; prueba `Enabled`, 900 s; métrica `availabilityResults` 13:10 UTC = 1 ejecución, **100 %**.
 **No verificado:** la entrega del correo de alerta (exigiría tumbar la demo); el usuario debe confirmar el
 aviso de Azure "agregado al grupo de acciones". El presupuesto mostró USD 0 del mes por retraso de facturación.
-**Commit:** ver el siguiente push. **Requisitos afectados:** ninguno del SRS (operación de la demo).
+**Commit:** `b0a843f`. **Requisitos afectados:** ninguno del SRS (operación de la demo).
+
+## 2026-09-23 — Galones legibles, revisión del correo real y despliegue de `9fed40e` (Claude)
+
+**Agente:** Claude. **Origen:** el usuario reenvió el correo del ticket DEMO: "Cantidad autorizada: 10.000
+galones" (eran 10), el QR "no lleva a nada" en su iPhone, y el saldo en microsoftazuresponsorships.com
+dijo "no active Sponsorship".
+
+- `DocumentRenderer.Gallons` ("0.###") en correo, SMS, PDF del ticket, acta de cierre y 7 mensajes de
+  inventario. Sin cambio: forma canónica firmada (`Crypto.cs`) y exportaciones CSV/XLSX.
+  Prueba ampliada: la entrega por SMTP exige "12.5 gal" en el SMS.
+- El correo no era duplicado: `TicketDeliveries` tiene un solo envío (2026-09-23 11:27 UTC).
+- QR: es el payload firmado (id.token.firma), no una URL; por diseño la cámara no lo abre. Se explicó
+  y se dejó como decisión del usuario convertirlo en URL (requiere ADR).
+- Saldo: la URL de sponsorships era errónea para Azure for Students; corregido a portal → Education.
+- Grupo de acciones: Azure envió al usuario un OTP de verificación; debe completarlo él.
+
+**Verificado con:** `dotnet test backend -c Release` **58/58**; CI `35870837976` success (4 jobs);
+instalador en Azure `{"status":"ready"}`, imagen `intec-combustible:0.4.0-9fed40e`, `/health` 200, login 200.
+**No verificado:** el PDF en producción (no se extrajo su texto); el formato lo cubre el mismo método.
+**Commit:** `9fed40e` (código) + este registro. **Requisitos afectados:** RF-06, RF-09 (presentación).

@@ -110,7 +110,10 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] **Disponibilidad 24/7 durante el mes de demo (hasta ~2026-10-23):** el usuario solo necesita ~1 mes; crédito ≈ USD 92.7 alcanza ≈ 2 meses, se mantiene la VM actual (2026-09-23). Plan B si el saldo real < USD 45: VM gratuita B2ats_v2 + Premium SSD P6
 - [x] Reinicio de la VM verificado: vuelve sola, `/health` y login 200, `RestartCount=0` (2026-09-23)
 - [x] Vigilancia (ADR-017): prueba estándar `/health` cada 15 min + certificado, alerta por correo, presupuesto USD 45/mes; primera ejecución 100 % (2026-09-23)
-- [ ] El usuario confirma que recibió el correo de Azure "agregado al grupo de acciones" `ag-intec-fuel-dev-b805` (sin eso, la entrega de alertas no está probada)
+- [~] El usuario recibió el correo de verificación (OTP) del grupo de acciones `ag-intec-fuel-dev-b805` el 2026-09-23 pero no lo completó; debe verificarlo él (sin eso las alertas no llegan)
+- [x] Galones legibles ("10" y no "10.000") en correo/SMS/PDF/acta/mensajes; desplegado `9fed40e` (2026-09-23)
+- [ ] **Decisión del usuario:** ¿el QR debe ser una URL que abra la página pública del ticket en cualquier cámara? Hoy es payload firmado (RS-04); cambiarlo exige ADR, escáner y pruebas
+- [ ] El usuario informa el saldo real (portal Azure → Education → Overview)
 - [ ] ~2026-10-23: el usuario decide si borra `rg-intec-fuel-dev-b805` y el presupuesto `presupuesto-credito-estudiante` (el agente no borra sin orden)
 - [ ] Recuperar acceso SSH: el usuario da la frase de paso de `artifacts/azure/id_ed25519` o autoriza una clave nueva
 - [ ] (Baja) Persistir claves de Data Protection: hoy solo las usa el reset de contraseña en una misma petición
