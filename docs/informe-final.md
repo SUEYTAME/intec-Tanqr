@@ -11,6 +11,12 @@ institucionales que el código no puede suplir: SMTP (B-02), pasarela SMS (B-01)
 certificado (B-03), datos reales (B-04). El único criterio de aceptación sin cumplir es **CA-6**
 (prueba en un Android físico), que necesita el despliegue con certificado real.
 
+Esos recursos corresponden a la operación institucional real. Para una demostración se
+pueden usar datos ficticios y un buzón de prueba, identificados como tales. INTEC es el
+contexto del SRS; no es necesario que la institución provea infraestructura para alojar
+una demo. Falta acordar su destino de alojamiento. El código y el contenedor publicados
+en GitHub son entregables, no un servicio web ya desplegado.
+
 ## 2. Arquitectura
 
 - **Backend:** .NET 10 LTS, API mínima, EF Core 10 + PostgreSQL 17, ASP.NET Identity, OpenIddict 7.7.1.

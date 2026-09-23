@@ -2,6 +2,9 @@
 
 Web + PWA para tickets con QR firmado, inventario y despacho. Versión 0.4.0: funcionalmente
 completa; producción pendiente de SMTP, SMS, dominio/certificado y datos reales (B-01..B-04).
+INTEC es el contexto del documento de requisitos. Una demo puede usar datos ficticios y
+correo de prueba; no necesita esperar recursos institucionales. Publicar el repositorio o
+su contenedor en GitHub no pone automáticamente la aplicación en internet.
 El estado verificable y los pendientes están en `vault/Estado actual del proyecto.md`.
 Agentes: leer `AGENTS.md` primero. Requisitos: `docs/SRS.pdf`.
 
