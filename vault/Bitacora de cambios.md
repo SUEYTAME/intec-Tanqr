@@ -400,3 +400,49 @@ https://github.com/users/SUEYTAME/packages/container/package/intec-combustible.
 Digest final `sha256:5e9e7f1d61b1b73407a52234cd9761491161ade095fdb265be748f31f4b6af64`.
 Las notas de continuidad se subieron en `d8a653f`; este añadido solo registra el resultado
 final y usa `[skip ci]` porque no modifica código ni infraestructura. Azure sigue pendiente de MFA.
+
+## 2026-09-23 — Aplicación desplegada y verificada en Azure INTEC (Claude)
+
+**Agente:** Claude. **Rama:** `fase-2-producto`. Autorización del usuario: crear/desplegar
+todo lo necesario solo en la suscripción INTEC `44f41884-…`. LegatTech-Bot no se tocó.
+
+**Qué cambió:** la aplicación funciona en https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
+con certificado Let's Encrypt, PostgreSQL privado, secretos en Key Vault, correo ACS y respaldo
+diario a Blob. Detalle operativo en `docs/azure.md`; decisiones en ADR-015.
+
+- **MFA:** el primer device-code emitió token `amr=pwd` y ARM volvió a rechazar. Segundo login con
+  `--claims-challenge` que exige `amr=mfa` → token `amr=pwd,mfa`. No se eludió nada.
+- **Infra:** `scripts/azure-infra.ps1` what-if `Succeeded` (15 Create, 0 Modify/Delete) y
+  `-Deploy` correcto. IP `130.131.46.104`. cloud-init terminó 08:22 UTC.
+- **Secretos:** `scripts/azure-secretos.ps1` creó 8 secretos en `kv-intec-fuel-dev-b805` sin imprimirlos.
+- **Correo:** `scripts/azure-correo.ps1` + `infra/correo.bicep`: app Entra
+  `intec-combustible-smtp-b805` (tenant permite `allowedToCreateApps`), ACS + dominio administrado
+  por Azure, SMTP username `combustible-smtp` (el primer intento `combustible-app` falló: no puede
+  igualar el nombre del recurso). Secreto de cliente en Key Vault, vence 2027-09-23.
+  Remitente `DoNotReply@d6fbd5cf-2eba-4d89-b532-3ff863a8420e.azurecomm.net`.
+  **No se ha enviado ningún correo real**: entrega pendiente de prueba con permiso del usuario.
+- **SSH inutilizable:** `artifacts/azure/id_ed25519` está cifrada con frase de paso no registrada
+  (`ssh-keygen -y -P ""` → incorrect passphrase). No se regeneró. Se instaló con
+  `az vm run-command` (`deploy/azure/instalar.sh`); el código de `345e623` viajó por Blob privado
+  `deployments/src-345e623.tar.gz` (SHA-256 `9f68c8cd…c3efa2`, comprobado en la VM).
+- **Imagen:** construida en la VM desde `345e623` (`intec-combustible:0.4.0-345e623`), no descargada
+  de GHCR (el `gh` local no tiene `read:packages`). Mismo código que pasó CI `35818197956`.
+- `.gitattributes` fuerza LF en `*.sh` (`core.autocrlf=true` rompería el script en la VM).
+
+**Verificado con (desde internet, 2026-09-23):**
+- `openssl s_client -tls1_3` → `TLSv1.3`, `TLS_AES_256_GCM_SHA384`, `Verify return code: 0 (ok)`,
+  emisor Let's Encrypt YE1, vence 2026-12-22. `-tls1_2` → alerta 70 `protocol version`, sin cifrado.
+- `GET /health/ready` → 200 `{"status":"ready"}`; `/` → 200 `text/html`. Puertos 5432/15432/80 cerrados.
+- `POST /api/auth/login` con el administrador inicial (clave leída de Key Vault a variable) → tokens;
+  `GET /api/auth/me` → rol Administrador; clave incorrecta → 401.
+- Navegador: contexto seguro, manifest 200, service worker registrado, sin errores de consola.
+- `systemctl start combustible-backup` → `combustible-20260923T085017Z.dump` (100653 bytes) en Blob.
+  `combustible-restore-test` → 33 tablas restauradas en PostgreSQL aislado, filas idénticas.
+- `certbot renew --dry-run` → correcto. Timers: backup 07:30 UTC diario, `certbot.timer` activo.
+
+**No verificado / pendiente:** entrega real de correo; SMS (B-01); datos reales (B-04);
+Android físico (CA-6); decisión OAuth Supervisor. El hook de renovación convirtió el PFX en la
+instalación inicial, pero una renovación real aún no ha ocurrido.
+**Commit:** `79d3233`. CI `35840116261` **success**: backend 52/52, navegador 6/6, frontend y
+contenedor GHCR. **Requisitos afectados:** ninguno nuevo en código;
+cierra la tarea de despliegue de Fase 6 (B-03 resuelto para la demo con dominio `cloudapp.azure.com`).

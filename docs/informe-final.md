@@ -14,8 +14,9 @@ certificado (B-03), datos reales (B-04). El único criterio de aceptación sin c
 Esos recursos corresponden a la operación institucional real. Para una demostración se
 pueden usar datos ficticios y un buzón de prueba, identificados como tales. INTEC es el
 contexto del SRS; no es necesario que la institución provea infraestructura para alojar
-una demo. Falta acordar su destino de alojamiento. El código y el contenedor publicados
-en GitHub son entregables, no un servicio web ya desplegado.
+una demo. La demo está desplegada y verificada en Azure (cuenta INTEC del estudiante,
+2026-09-23): https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com, con datos
+ficticios. Acceso y evidencia en `docs/azure.md`.
 
 ## 2. Arquitectura
 

@@ -83,7 +83,7 @@ preguntar no constituye aprobación.
 |---|---|---|---|---|---|
 | RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | EN CURSO | Endpoints/AuthEndpoints.cs; Security/SessionService.cs | SecurityTests: TOTP, recuperación, bloqueo y sesiones; cobertura disable pendiente |
 | RS-02 | Autorización | Control RBAC basado en roles | EN CURSO | Program.cs; políticas admin/catalog-write/audit-read | ProductTests: los cinco roles y acceso anónimo |
-| RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | HECHO en código (AES-256-GCM, TLS 1.3); certificado real BLOQUEADO (B-03) | Security/Crypto.cs FieldProtector; Security/TransportSecurity.cs | HardeningTests: cifrado, backfill, Kestrel_rechaza_TLS_1_2... |
+| RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | HECHO en código (AES-256-GCM, TLS 1.3); **verificado en Azure 2026-09-23** con certificado Let's Encrypt del FQDN de demo (TLS 1.3 ok, TLS 1.2 rechazado, `docs/azure.md`); dominio institucional sigue B-03 | Security/Crypto.cs FieldProtector; Security/TransportSecurity.cs | HardeningTests: cifrado, backfill, Kestrel_rechaza_TLS_1_2... |
 | RS-04 | Seguridad de QR | Firma digital, hash SHA-256, token de validación | HECHO | Security/Crypto.cs TicketSigner | FuelTests: QR_alterado...; Solo_existe_una_ruta_de_despacho... |
 | RS-05 | Seguridad de APIs | OAuth 2.0, JWT | HECHO | OAuthEndpoints.cs (OpenIddict, client credentials, ADR-011) | HardeningTests: OAuth2_* (2) |
 | RS-06 | Auditoría | Registro **inalterable** de accesos, cambios, despachos y ajustes | HECHO (hash encadenado + permisos SQL + ancla externa) | AuditWriter.cs; UserEndpoints.cs /api/auditoria/ancla | HardeningTests: Ancla_externa_detecta_cadena_reconstruida_por_un_superusuario |
@@ -106,7 +106,7 @@ Los 7 criterios de la sección 7. El proyecto no está terminado mientras uno si
 | CA-3 | El inventario se actualiza en tiempo real | Prueba de integración: despacho → el saldo del tanque refleja el cambio en la misma transacción | HECHO — Despacho_atomico...; Despachos_concurrentes_no_sobregiran_el_tanque |
 | CA-4 | Existe trazabilidad completa de las operaciones | Prueba de que toda operación de escritura deja registro de auditoría | HECHO — auditoría en la misma transacción de cada escritura |
 | CA-5 | Los reportes son exportables | Prueba de generación de Excel, CSV y PDF con datos reales | HECHO — Reportes_filtran_y_exportan_excel_csv_y_pdf |
-| CA-6 | La app móvil opera correctamente en producción | Prueba de extremo a extremo de la PWA en Android real, incluido el escaneo | PENDIENTE — requiere Android físico y HTTPS (B-03) |
+| CA-6 | La app móvil opera correctamente en producción | Prueba de extremo a extremo de la PWA en Android real, incluido el escaneo | PENDIENTE — requiere Android físico; HTTPS válido ya disponible en Azure (2026-09-23) |
 | CA-7 | Se cumplen los requisitos de seguridad establecidos | RS-01 a RS-06 todos en `HECHO` + revisión de seguridad | HECHO (revisión manual 2026-09-22; ver bitácora; una decisión abierta) |
 
 ---

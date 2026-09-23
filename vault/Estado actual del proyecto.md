@@ -13,8 +13,9 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 **Producto en rama `fase-2-producto`, subida a GitHub (Claude `09d740d`; publicación `4c105d7`; Azure IaC `345e623`).**
 Fases 1-5 con código y pruebas; Fase 6 con contenedor local, carga, manual e informe.
-CI de `345e623` correcta y contenedor privado publicado. Infraestructura Azure preparada;
-**MFA de Microsoft bloquea validación/despliegue**, aún no hay servidor público.
+**Desplegada y verificada en Azure INTEC (2026-09-23):**
+https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com — demo con datos ficticios.
+Acceso, operación y evidencia en `docs/azure.md`; decisiones ADR-014/015.
 Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 ## Acceso sencillo
@@ -73,9 +74,14 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - Usuario autorizó **todo lo necesario en su cuenta Azure INTEC**. Cuenta
   `1128305@est.intec.edu.do`, suscripción `44f41884-c42a-4162-898f-d83d8d987ff3` (Azure for Students).
   No usar `LegatTech-Bot`. Plan en `docs/azure.md`: B2als_v2,4GiB,northcentralus,~USD36.29/mes.
-- `infra/main.bicep` compila sin avisos; conformance correcto. `scripts/azure-infra.ps1`
-  what-if rechazado por MFA. `az group exists rg-intec-fuel-dev-b805` → false.
-  Hay autorización; falta que el usuario complete la reautenticación personal de Microsoft.
+- **Azure desplegado 2026-09-23** en `rg-intec-fuel-dev-b805`: VM B2als_v2, Key Vault, Blob,
+  ACS Email. Verificado desde internet: TLS 1.3 aceptado con Let's Encrypt, TLS 1.2 rechazado,
+  salud 200, login real, PostgreSQL cerrado, respaldo a Blob y restauración con filas idénticas.
+- Administración sin SSH (`az vm run-command`): la clave `artifacts/azure/id_ed25519` tiene frase
+  de paso desconocida (ADR-015). Usuario inicial `admin@combustible-demo.test`; su contraseña solo
+  en Key Vault (`bootstrap-password`).
+- Correo ACS configurado pero **entrega real sin probar** (pedir permiso antes de enviar).
+- Login Azure: si ARM pide MFA con token `amr=pwd`, usar `--claims-challenge` (ver `docs/azure.md`).
 - No se tocó `vault/.obsidian/` preexistente sin rastrear.
 
 ## Qué abrir según la tarea

@@ -28,6 +28,13 @@ main generó/revisó IaC localmente. No se atribuye una revisión independiente 
 Runtime pendiente: certificados ACME/renovación, secretos KeyVault, Docker app/PG, correo,
 backupBlob+restauración y smoke login/TLS. ACS SMTP investigado, sin recursos Entra/correo creados.
 
+## Azure — DESPLEGADO Y VERIFICADO (Claude, 2026-09-23)
+URL https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com. Usuario `admin@combustible-demo.test`,
+contraseña solo en Key Vault `kv-intec-fuel-dev-b805` → `bootstrap-password`. Todo en `docs/azure.md`
+y ADR-015. SSH NO sirve (clave con frase de paso desconocida): administrar con `az vm run-command`.
+Si ARM rechaza por MFA con token `amr=pwd`: login con `--claims-challenge` (receta en `docs/azure.md`).
+Pendiente: envío real de correo (con permiso), SSH, Data Protection persistente, OAuth Supervisor, B-01/B-04/CA-6.
+
 ## Hecho y verificado (backend)
 | Commit | Contenido |
 |---|---|

@@ -285,3 +285,25 @@ B2ats_v2 tiene solo1GiB. B2als_v2 (2CPU/4GiB) tiene cuota y disponibilidad verif
 
 La autorización está concedida; el bloqueo operativo es MFA de Azure, no falta de permiso
 del usuario. La infraestructura preparada no debe describirse como desplegada.
+
+## ADR-015 — Operación en Azure sin SSH y correo con Azure Communication Services
+
+**Fecha:** 2026-09-23. **Estado:** aceptada (despliegue autorizado por el usuario).
+
+1. **Administración por `az vm run-command` + Blob privado, no SSH.** La clave
+   `artifacts/azure/id_ed25519` tiene una frase de paso que no quedó registrada. Regenerarla estaba
+   expresamente prohibido. Run-command ejecuta como root a través del agente de la VM, autorizado
+   por RBAC de Azure con MFA; el código llega por el contenedor `deployments` y los secretos desde
+   Key Vault, siempre con la identidad administrada de la VM. `allowSharedKeyAccess: false` se
+   mantiene: no existen claves de cuenta. SSH sigue abierto solo a la IP de administración.
+2. **Imagen construida en la VM desde el commit probado** (`345e623`, SHA-256 del paquete verificado),
+   porque la VM no tiene credencial de GHCR y el paquete es privado. Mismo código que CI.
+3. **Correo con ACS Email (dominio administrado por Azure) vía SMTP 587 STARTTLS**, autenticado con
+   una app Entra y secreto en Key Vault. No requiere cambios de código (`SmtpEmailSender` existente).
+   Es correo de **demo**; B-02 (SMTP institucional) sigue pendiente para operación real.
+4. **Certificado Let's Encrypt en modo standalone** sobre el FQDN de Azure; un hook de despliegue
+   convierte a PFX y reinicia la app. Kestrel sigue terminando TLS 1.3 directamente (ADR-014).
+
+**DESCARTADO:** regenerar la clave SSH (prohibido por el usuario); dejar `SMTP_HOST` vacío con la
+bandeja local, porque exigía cambiar el compose de producción y ACS estaba permitido; proxy
+inverso para TLS (rompe la IP real de cliente, ADR-014).

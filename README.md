@@ -39,6 +39,8 @@ Los scripts solo detienen PID, fecha de inicio y comando que coincidan con su re
 - Auditoría encadenada con ancla firmada externa; OAuth 2.0 client credentials para integraciones.
 
 Manual: `docs/manual-usuario.md`. Despliegue en producción: `docs/despliegue.md`.
+Demo en Azure (datos ficticios): https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com —
+acceso y operación en `docs/azure.md`.
 
 ## Requisitos locales
 

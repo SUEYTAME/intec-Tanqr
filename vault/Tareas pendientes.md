@@ -99,8 +99,12 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] Publicar contenedor en GHCR tras CI — digest `daa6cbab29efa116317bbff111ca9afa849e08580948c414ad07d499f86aa50b`
 - [x] Verificar privacidad del paquete: CI `35818197956` de `345e623` correcta; API devuelve `visibility: private`
 - [x] Identificar cuenta Azure INTEC, verificar cuotas y precio, preparar IaC (`345e623`; Bicep y conformance correctos)
-- [!] Reautenticar sesión Azure INTEC con MFA: what-if rechazado, usuario ya autorizado a crear/desplegar
-- [ ] Desplegar en Azure INTEC, instalar app/PostgreSQL/secretos/certificado, configurar correo y backups, verificar HTTPS/login/restauración
+- [x] Reautenticar sesión Azure INTEC con MFA (2026-09-23, `--claims-challenge` amr=mfa)
+- [x] Desplegar en Azure INTEC: app/PostgreSQL/secretos/certificado/backups; HTTPS, TLS 1.3/1.2, login y restauración verificados (2026-09-23, `docs/azure.md`)
+- [~] Correo ACS configurado; falta un envío real de prueba autorizado por el usuario
+- [ ] Recuperar acceso SSH: el usuario da la frase de paso de `artifacts/azure/id_ed25519` o autoriza una clave nueva
+- [ ] Persistir las claves de Data Protection fuera del contenedor (hoy se pierden al recrearlo; ver aviso de arranque)
+- [ ] Actualizaciones futuras: usar la imagen de GHCR (credencial de lectura en la VM) en vez de construir en la VM
 - [x] Despliegue de un solo origen (Kestrel TLS 1.3 + CSP), Dockerfile y compose de producción probados (`1c05ca7`)
 - [x] Prueba de carga básica: 250 rps, 0 errores (base casi vacía; repetir con volumen real)
 - [x] Manual de usuario con ejercicios de capacitación (`docs/manual-usuario.md`)
