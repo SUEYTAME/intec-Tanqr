@@ -1,0 +1,2 @@
+# Los scripts de shell se ejecutan en Linux (deploy/azure/instalar.sh vía run-command): siempre LF.
+*.sh text eol=lf
