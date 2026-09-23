@@ -40,8 +40,12 @@ de otra organización que no está autorizada para este despliegue.
 | Storage (sin claves de cuenta) | `stintecfueldevb805` | `backups/` diarios y `deployments/` (código) |
 | Communication Services + Email | `acs-intec-fuel-dev-b805`, `email-intec-fuel-dev-b805` | SMTP de la demo |
 | App Entra | `intec-combustible-smtp-b805` | Credencial SMTP (secreto vence 2027-09-23) |
+| Application Insights + Log Analytics | `appi-intec-fuel-dev-b805`, `log-intec-fuel-dev-b805` | Prueba estándar `wt-intec-fuel-health`: `/health` cada 15 min + certificado ≥ 14 días |
+| Alerta + grupo de acciones | `alerta-demo-caida`, `ag-intec-fuel-dev-b805` | Correo a la cuenta del propietario si la prueba falla |
+| Presupuesto (suscripción) | `presupuesto-credito-estudiante` | USD 45/mes; correo al 80 % real, 100 % real y 100 % previsto |
 
-IaC: `infra/main.bicep`, `infra/modules/resources.bicep`, `infra/correo.bicep`. Decisiones: ADR-014 y ADR-015.
+IaC: `infra/main.bicep`, `infra/modules/resources.bicep`, `infra/correo.bicep`, `infra/monitoreo.bicep`,
+`infra/presupuesto.bicep`. Decisiones: ADR-014, ADR-015 y ADR-017.
 
 ## Cómo se desplegó (y cómo repetirlo)
 
@@ -70,6 +74,8 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
    (0600) desde Key Vault, obtiene el certificado Let's Encrypt, inicializa la base, arranca la app
    e instala respaldo y prueba de restauración. **Para actualizar** a otro commit: cambiar
    `REVISION` y `SRC_SHA256` en el script, subir el nuevo paquete y repetir el paso 5.
+6. `./scripts/azure-monitoreo.ps1` (what-if) y `-Deploy`: prueba de disponibilidad, alerta y presupuesto.
+   El correo de aviso es el de la cuenta con sesión en `az`; no se guarda en el repositorio.
 
 ## Operación
 
@@ -79,7 +85,12 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
   en Blob (versionado y borrado suave 7 días). Copias locales de 7 días en `/var/backups/combustible`.
 - **Prueba de restauración:** `/usr/local/sbin/combustible-restore-test` restaura el último respaldo en
   un PostgreSQL aislado sin red y compara filas por tabla con la base en uso.
-- Ejecutar cualquiera de estos con `az vm run-command invoke ... --scripts "<comando>"`.
+- **Reinicio:** Docker arranca con el sistema y los contenedores tienen `restart: unless-stopped`;
+  tras `az vm restart` la app vuelve sola (verificado 2026-09-23, ~15 s, 0 reinicios fallidos).
+- **Vigilancia:** si `/health` falla o el certificado vence en < 14 días llega un correo (`alerta-demo-caida`);
+  resultados en Application Insights → Disponibilidad.
+- Ejecutar cualquiera de estos con `az vm run-command invoke ... --scripts "@archivo.sh"` (en Windows
+  PowerShell 5.1 un script de varias líneas en línea se corta en el primer salto: usar archivo).
 - **Registros:** `docker compose -p combustible -f /opt/combustible/docker-compose.yml --env-file /opt/combustible/produccion.env logs app`
   y `/var/log/combustible-instalar.log`.
 
@@ -96,20 +107,26 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
 | Respaldo a Blob | `combustible-20260923T085017Z.dump`, 100653 bytes |
 | Restauración | 33 tablas, filas idénticas |
 | Renovación | `certbot renew --dry-run` correcto |
+| Reinicio de la VM | Arranque 13:05:51 UTC; `/health` 200 y login 200 sin intervención; `RestartCount=0` |
 
 ## Costo
 
 Estimación consultada en [Azure Retail Prices API](https://prices.azure.com/api/retail/prices):
 unos **USD 36.29/mes** (VM 27.45, disco 5.00, IPv4 3.65, Blob 0.16, Key Vault 0.03). No incluye
-impuestos, tráfico saliente adicional ni correo (ACS cobra por mensaje). El crédito restante de la
-cuenta no se ha consultado. Apagar la VM (`az vm deallocate`) detiene el cargo de cómputo, no el de
+impuestos, tráfico saliente adicional ni correo (ACS cobra por mensaje). La vigilancia suma
+≈ USD 1.7/mes (USD 0.00056 por ejecución de la prueba, ~2 880/mes, + USD 0.10 la alerta).
+
+**Crédito (2026-09-23):** Cost Management mostraba USD 7.30 gastados en 12 meses (casi todo el SQL
+`db-intec-demo`, ajeno a este proyecto); quedan ≈ USD 92.7. Con ≈ USD 43/mes de toda la suscripción
+alcanza ≈ 2 meses. El saldo oficial solo se ve en https://www.microsoftazuresponsorships.com/balance.
+Si el crédito se agota Azure deshabilita la suscripción y la demo cae. Apagar la VM (`az vm deallocate`) detiene el cargo de cómputo, no el de
 disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 ## Límites conocidos
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** construida en la VM desde `345e623`, no descargada de GHCR (paquete privado sin credencial en la VM).
+- **Imagen:** construida en la VM desde `465eaa1`, no descargada de GHCR (paquete privado sin credencial en la VM).
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
 - SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `465eaa1` (ADR-016).
