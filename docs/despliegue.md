@@ -34,6 +34,28 @@ Servidor: Linux con Docker Engine y Docker Compose v2.
 
 ## Pasos
 
+### Usar la imagen de GitHub
+
+CI publica en `ghcr.io/sueytame/intec-combustible` únicamente después de pasar backend,
+frontend y navegador en la rama `fase-2-producto`. Cada imagen lleva `sha-<commit completo>`;
+`fase-2-producto` apunta a la última publicación correcta. El paquete se conserva privado.
+El código y la imagen publicados no equivalen a un servidor funcionando en internet.
+
+Para usar una revisión publicada, autenticar Docker en `ghcr.io` con una credencial con
+permiso de lectura del paquete (por entrada estándar, nunca pegada en un comando guardado).
+Descargar y asignar la etiqueta local que espera el compose:
+
+```bash
+docker pull ghcr.io/sueytame/intec-combustible:sha-<commit completo>
+docker tag ghcr.io/sueytame/intec-combustible:sha-<commit completo> intec-combustible:0.4.0
+```
+
+Luego continuar desde el paso 2 con `APP_VERSION=0.4.0`. Guardar el SHA o digest descargado
+en el registro del despliegue. La autenticación y visibilidad siguen la
+[documentación de GitHub Container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
+### Construir y configurar el servidor
+
 1. **Construir la imagen** (desde la raíz del repositorio):
 
    ```bash
