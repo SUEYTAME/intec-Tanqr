@@ -72,6 +72,10 @@ evidencia en la bitácora.
 
 **Cambios mínimos.** Nada que no se haya pedido. Nada de "mejoras" de paso.
 
+**"Decide por mí" = factores humanos.** Cuando el usuario delega una decisión, se decide con leyes
+de UX/UI (Jakob, Norman, Gestalt, Fitts, Hick, prevención de errores) y práctica real de la
+industria, se explica con esos principios y se registra en un ADR. Ejemplo: ADR-018.
+
 **Fechas absolutas `AAAA-MM-DD`.** Nunca "ayer" ni "la semana pasada": la nota se lee meses
 después y las fechas relativas se vuelven ruido.
 
