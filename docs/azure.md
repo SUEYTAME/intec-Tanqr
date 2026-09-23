@@ -110,7 +110,9 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
 - **Imagen:** construida en la VM desde `345e623`, no descargada de GHCR (paquete privado sin credencial en la VM).
-- **Correo:** configurado con ACS; **la entrega real aún no se ha probado**. Es correo de demo;
+- **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
 - SMS (B-01), datos reales (B-04), prueba en Android físico (CA-6) y la decisión OAuth Supervisor siguen pendientes.
-- Data Protection guarda sus claves dentro del contenedor (aviso en el arranque); se pierden al recrearlo.
+- Data Protection guarda sus claves dentro del contenedor (aviso en el arranque). Solo afecta al token de restablecimiento de contraseña, que se genera y consume en la misma petición.
+- Key Vault sin *purge protection* (activarla es irreversible; pendiente de decisión).
+- Datos DEMO en producción: departamento/empleado/vehículo/combustible/estación/tanque `DEMO*`, ticket `COM-2026-000001` consumido, cierre del 2026-09-23 de `DEMO-EST` y usuario `despacho@combustible-demo.test` desactivado.

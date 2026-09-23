@@ -446,3 +446,33 @@ instalación inicial, pero una renovación real aún no ha ocurrido.
 **Commit:** `79d3233`. CI `35840116261` **success**: backend 52/52, navegador 6/6, frontend y
 contenedor GHCR. **Requisitos afectados:** ninguno nuevo en código;
 cierra la tarea de despliegue de Fase 6 (B-03 resuelto para la demo con dominio `cloudapp.azure.com`).
+
+## 2026-09-23 — Correo real verificado y revisión completa contra el SRS (Claude)
+
+**Agente:** Claude. **Autorización:** el usuario pidió "correo" (envío de prueba a su buzón) y
+"revisa bien todo el programa para ver si falta algo".
+
+- **Correo real:** datos DEMO en producción (departamento, empleado con el correo del usuario,
+  cédula `00000000001` y móvil ficticios, vehículo, combustible) → solicitud aprobada → ticket
+  `COM-2026-000001`. ACS respondió `2.6.0 Queued mail for delivery`; el conector Outlook confirmó
+  el mensaje en la **bandeja de entrada** (11:29 UTC) con QR en línea, PDF adjunto, código corto y
+  enlace seguro al FQDN de Azure. SMS quedó en bandeja local (B-01), como corresponde.
+- **E2E en Azure** (script local en scratchpad, datos DEMO): QR del ticket decodificado con el
+  zxing-wasm de la PWA; validar 200, QR alterado 422, despacho 201, reuso 422; existencia 500→490;
+  ticket `Consumed`; reportes XLSX/CSV/PDF 200; dashboard 200; cierre diario 201 y acta PDF 200;
+  ajuste posterior 422 "El día operativo ya fue cerrado"; `/api/auditoria/verificar` `valid: true`
+  (28 eventos). Enlace público sin sesión muestra el ticket y oculta el QR consumido.
+  Usuario `despacho@combustible-demo.test` creado para la prueba y **desactivado** al final.
+  Un primer intento falló antes de enviar nada: en PowerShell `$h` y `$H` son la misma variable.
+- **Hueco cerrado:** no había prueba de edición de empleados/vehículos (RF-02/RF-03). Nueva
+  `CatalogTests.Edicion_de_empleado_y_vehiculo_recifra_y_conserva_unicidad`: la cédula editada
+  mueve el índice ciego (la nueva choca con 409, la anterior queda libre), correo descifrado,
+  vehículo editado y versión obsoleta 412.
+- **Matriz:** RF-01..RF-04, RS-01, RS-02 pasan a HECHO con pruebas nombradas; nota RS-06
+  actualizada; sección "Revisión completa" con hallazgos abiertos (lectura de PII por todos los
+  roles, 24/7 con una VM, Key Vault sin purge protection, OAuth Supervisor).
+- Producción: HSTS, CSP de un solo origen, `X-Frame-Options: DENY`, `no-store`; logins auditados.
+
+**Verificado con:** `dotnet test backend -c Release --nologo` → **53/53** (PostgreSQL local, Docker
+Desktop arrancado para ello). E2E y correo contra https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com.
+**Commit:** `2511fb3`; CI `35855538217` **success** (backend 53/53, navegador 6/6, frontend, contenedor). **Requisitos afectados:** RF-01..RF-04, RS-01, RS-02 (cierre documental); RF-06/RF-09 correo verificado en producción.

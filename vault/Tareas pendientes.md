@@ -64,7 +64,7 @@ Cubre RF-01 a RF-04, RS-01, RS-02, RS-05, RS-06.
 - [x] OAuth 2.0 client credentials para integraciones (RS-05, ADR-011): `OAuth2_*` 2 pruebas (`2f3013b`)
 - [x] Interfaz para desactivar MFA y gestionar recuperación después del alta
 - [x] Cambios de acceso exigen versión (`Cambio_de_acceso_de_usuario_exige_la_version_vista`); cadena reconstruida detectada por ancla (ADR-012)
-- [ ] Revisión de configuración y secretos de producción antes de desplegar — **[!] B-03**
+- [x] Revisión de configuración y secretos de producción: Key Vault + env 0600 en la VM (2026-09-23; dominio institucional sigue B-03)
 - [x] CI ampliada de Fase 1: run `35764488194` correcto para `70972c7`. Rama `fase-2-producto` subida el 2026-09-22; CI de entrega en Fase 6.
 
 ---
@@ -101,9 +101,14 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] Identificar cuenta Azure INTEC, verificar cuotas y precio, preparar IaC (`345e623`; Bicep y conformance correctos)
 - [x] Reautenticar sesión Azure INTEC con MFA (2026-09-23, `--claims-challenge` amr=mfa)
 - [x] Desplegar en Azure INTEC: app/PostgreSQL/secretos/certificado/backups; HTTPS, TLS 1.3/1.2, login y restauración verificados (2026-09-23, `docs/azure.md`)
-- [~] Correo ACS configurado; falta un envío real de prueba autorizado por el usuario
+- [x] Correo ACS entregado en el buzón del usuario (autorizado 2026-09-23, ticket DEMO COM-2026-000001)
+- [x] Prueba de extremo a extremo en Azure: QR→validar→despachar→inventario→reportes→cierre→auditoría (2026-09-23)
+- [x] Prueba de edición de empleados/vehículos (RF-02/RF-03): 53/53 backend
+- [ ] Decidir: restringir `GET /api/empleados` (cédula/correo/móvil visibles para todos los roles)
+- [ ] Decidir: activar *purge protection* en Key Vault (irreversible)
+- [ ] Disponibilidad 24/7 del SRS 1.2: la demo es una sola VM (fuera de alcance de la demo)
 - [ ] Recuperar acceso SSH: el usuario da la frase de paso de `artifacts/azure/id_ed25519` o autoriza una clave nueva
-- [ ] Persistir las claves de Data Protection fuera del contenedor (hoy se pierden al recrearlo; ver aviso de arranque)
+- [ ] (Baja) Persistir claves de Data Protection: hoy solo las usa el reset de contraseña en una misma petición
 - [ ] Actualizaciones futuras: usar la imagen de GHCR (credencial de lectura en la VM) en vez de construir en la VM
 - [x] Despliegue de un solo origen (Kestrel TLS 1.3 + CSP), Dockerfile y compose de producción probados (`1c05ca7`)
 - [x] Prueba de carga básica: 250 rps, 0 errores (base casi vacía; repetir con volumen real)

@@ -35,4 +35,48 @@ public sealed class CatalogTests(ApiFixture fixture)
             Assert.Equal(HttpStatusCode.UnprocessableEntity, (await client.PostAsJsonAsync("/api/vehiculos/", vehicle with { plate = "X", internalCode = "X", tankCapacity = 20.1234m })).StatusCode);
         }
     }
+
+    private static string Digits(int length) => string.Concat(Enumerable.Range(0, length).Select(_ => Random.Shared.Next(10)));
+
+    private static Task<HttpResponseMessage> PutAsync(HttpClient client, string path, Guid version, object body)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, path) { Content = JsonContent.Create(body) };
+        request.Headers.IfMatch.Add(new EntityTagHeaderValue($"\"{version}\""));
+        return client.SendAsync(request);
+    }
+
+    // RF-02/RF-03: editar recifra los datos personales y recalcula el índice ciego de la cédula (RS-03).
+    [Fact]
+    public async Task Edicion_de_empleado_y_vehiculo_recifra_y_conserva_unicidad()
+    {
+        var (client, _) = await fixture.LoginAsync();
+        using (client)
+        {
+            var department = (await (await client.PostAsJsonAsync("/api/departamentos/", new { code = Guid.NewGuid().ToString("N")[..12], name = "Prueba edición" }))
+                .Content.ReadFromJsonAsync<Department>())!;
+            object EmployeeBody(string code, string nationalId, string email) => new
+            {
+                code, fullName = "Persona de prueba", nationalId, departmentId = department.Id, position = "Prueba", email, mobile = "+18095550000", active = true,
+            };
+            var (firstId, secondId, newId) = (Digits(11), Digits(11), Digits(11));
+            var first = (await (await client.PostAsJsonAsync("/api/empleados/", EmployeeBody("ED-" + Digits(8), firstId, "a@example.test"))).Content.ReadFromJsonAsync<Employee>())!;
+            var second = (await (await client.PostAsJsonAsync("/api/empleados/", EmployeeBody("ED-" + Digits(8), secondId, "b@example.test"))).Content.ReadFromJsonAsync<Employee>())!;
+
+            var edited = await PutAsync(client, $"/api/empleados/{first.Id}", first.Version, EmployeeBody(first.Code, newId, "nuevo@example.test"));
+            Assert.Equal(HttpStatusCode.OK, edited.StatusCode);
+            var reloaded = (await client.GetFromJsonAsync<Employee>($"/api/empleados/{first.Id}"))!;
+            Assert.Equal(("nuevo@example.test", newId), (reloaded.Email, reloaded.NationalId));
+            // El índice ciego sigue a la cédula editada: la nueva queda ocupada y la anterior libre.
+            Assert.Equal(HttpStatusCode.Conflict, (await PutAsync(client, $"/api/empleados/{second.Id}", second.Version, EmployeeBody(second.Code, newId, "b@example.test"))).StatusCode);
+            Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/empleados/", EmployeeBody("ED-" + Digits(8), firstId, "c@example.test"))).StatusCode);
+
+            var vehicle = new { plate = "E" + Digits(6), internalCode = "E" + Digits(6), make = "Prueba", model = "Prueba", year = 2026, kind = "Camioneta", departmentId = department.Id, tankCapacity = 20m, odometer = 100L, active = true };
+            var saved = (await (await client.PostAsJsonAsync("/api/vehiculos/", vehicle)).Content.ReadFromJsonAsync<Vehicle>())!;
+            var updated = await PutAsync(client, $"/api/vehiculos/{saved.Id}", saved.Version, vehicle with { make = "Corregida", odometer = 150L, active = false });
+            Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+            var vehicleAfter = (await updated.Content.ReadFromJsonAsync<Vehicle>())!;
+            Assert.Equal(("Corregida", 150L, false), (vehicleAfter.Make, vehicleAfter.Odometer, vehicleAfter.Active));
+            Assert.Equal(HttpStatusCode.PreconditionFailed, (await PutAsync(client, $"/api/vehiculos/{saved.Id}", saved.Version, vehicle)).StatusCode);
+        }
+    }
 }

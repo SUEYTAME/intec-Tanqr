@@ -80,7 +80,8 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - Administración sin SSH (`az vm run-command`): la clave `artifacts/azure/id_ed25519` tiene frase
   de paso desconocida (ADR-015). Usuario inicial `admin@combustible-demo.test`; su contraseña solo
   en Key Vault (`bootstrap-password`).
-- Correo ACS configurado pero **entrega real sin probar** (pedir permiso antes de enviar).
+- Correo ACS **entregado** en el buzón del usuario (autorizado; ticket DEMO `COM-2026-000001`).
+- Revisión completa contra el SRS 2026-09-23: flujo extremo a extremo verificado en Azure; hallazgos abiertos en [[Trazabilidad de requisitos del SRS]].
 - Login Azure: si ARM pide MFA con token `amr=pwd`, usar `--claims-challenge` (ver `docs/azure.md`).
 - No se tocó `vault/.obsidian/` preexistente sin rastrear.
 

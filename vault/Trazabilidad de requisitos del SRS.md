@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-22
+actualizado: 2026-09-23
 ---
 
 # Trazabilidad de requisitos del SRS
@@ -30,10 +30,10 @@ preguntar no constituye aprobación.
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-01 | Gestión de Usuarios | Crear, modificar, desactivar, perfiles y roles, reset de contraseña, políticas de acceso. 5 roles mínimos: Administrador, Supervisor, Despachador, Auditor, Consulta | EN CURSO | API Endpoints/UserEndpoints.cs; frontend/Administration.tsx | SecurityTests: edición, reset y revocación; ProductTests: RBAC |
-| RF-02 | Gestión de Empleados | Código, nombre, cédula, departamento, cargo, correo, teléfono móvil, estado | EN CURSO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: persistencia y relaciones; edición adicional pendiente |
-| RF-03 | Gestión de Vehículos | Placa, ficha, marca, modelo, año, tipo, departamento, capacidad tanque, odómetro, estado | EN CURSO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: precisión, odómetro y relaciones; edición adicional pendiente |
-| RF-04 | Gestión de Departamentos | Crear, modificar, asociar empleados, asociar vehículos | EN CURSO | Endpoints/CatalogEndpoints.cs; frontend/src/App.tsx | ProductTests: persistencia/versiones; Playwright: crear/editar/desactivar |
+| RF-01 | Gestión de Usuarios | Crear, modificar, desactivar, perfiles y roles, reset de contraseña, políticas de acceso. 5 roles mínimos: Administrador, Supervisor, Despachador, Auditor, Consulta | HECHO | API Endpoints/UserEndpoints.cs; frontend/Administration.tsx | SecurityTests: Edicion_de_usuario_es_atomica_y_reset_revoca_sesiones, Desactivar_cuenta_revoca_JWT_y_refresh; ProductTests: RBAC_limita_escritura_y_auditoria |
+| RF-02 | Gestión de Empleados | Código, nombre, cédula, departamento, cargo, correo, teléfono móvil, estado | HECHO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: Empleados_y_vehiculos_requieren_departamento...; Edicion_de_empleado_y_vehiculo_recifra_y_conserva_unicidad (2026-09-23) |
+| RF-03 | Gestión de Vehículos | Placa, ficha, marca, modelo, año, tipo, departamento, capacidad tanque, odómetro, estado | HECHO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: precisión, odómetro, relaciones; Edicion_de_empleado_y_vehiculo_recifra_y_conserva_unicidad (2026-09-23) |
+| RF-04 | Gestión de Departamentos | Crear, modificar, asociar empleados, asociar vehículos | HECHO | Endpoints/CatalogEndpoints.cs; frontend/src/App.tsx | ProductTests: Persistencia_versiones_y_auditoria_transaccional; Playwright catalogs.spec.ts; empleados/vehículos asociados por departmentId |
 
 ### Ciclo de vida del ticket
 
@@ -81,8 +81,8 @@ preguntar no constituye aprobación.
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | EN CURSO | Endpoints/AuthEndpoints.cs; Security/SessionService.cs | SecurityTests: TOTP, recuperación, bloqueo y sesiones; cobertura disable pendiente |
-| RS-02 | Autorización | Control RBAC basado en roles | EN CURSO | Program.cs; políticas admin/catalog-write/audit-read | ProductTests: los cinco roles y acceso anónimo |
+| RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | HECHO | Endpoints/AuthEndpoints.cs; Security/SessionService.cs | SecurityTests: MFA_necesita_codigo_valido..., Cinco_fallos_bloquean..., JWT_alterado...; e2e mfa.spec.ts (alta/baja); login real verificado en Azure 2026-09-23 |
+| RS-02 | Autorización | Control RBAC basado en roles | HECHO | Program.cs; políticas por rol | ProductTests: RBAC_limita_escritura_y_auditoria, Sin_token_no_hay_acceso. Ver hallazgos 2026-09-23 (lectura de empleados, OAuth Supervisor) |
 | RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | HECHO en código (AES-256-GCM, TLS 1.3); **verificado en Azure 2026-09-23** con certificado Let's Encrypt del FQDN de demo (TLS 1.3 ok, TLS 1.2 rechazado, `docs/azure.md`); dominio institucional sigue B-03 | Security/Crypto.cs FieldProtector; Security/TransportSecurity.cs | HardeningTests: cifrado, backfill, Kestrel_rechaza_TLS_1_2... |
 | RS-04 | Seguridad de QR | Firma digital, hash SHA-256, token de validación | HECHO | Security/Crypto.cs TicketSigner | FuelTests: QR_alterado...; Solo_existe_una_ruta_de_despacho... |
 | RS-05 | Seguridad de APIs | OAuth 2.0, JWT | HECHO | OAuthEndpoints.cs (OpenIddict, client credentials, ADR-011) | HardeningTests: OAuth2_* (2) |
@@ -90,8 +90,9 @@ preguntar no constituye aprobación.
 
 > **Nota sobre RS-06.** El SRS dice "inalterable". Una tabla normal de base de datos no lo es:
 > quien tenga permiso de escritura puede modificarla. Cómo se consigue realmente esa
-> inalterabilidad es una decisión de arquitectura pendiente — ver ADR-006 en
-> [[Decisiones de arquitectura]]. No se marca `HECHO` con una tabla de auditoría corriente.
+> inalterabilidad se resolvió con hash encadenado, permisos SQL y ancla externa firmada
+> (ADR-006 → ADR-007/ADR-012 en [[Decisiones de arquitectura]]). Límite conocido: el ancla
+> solo protege si un Auditor la descarga y guarda fuera del sistema cada semana.
 
 ---
 
@@ -147,3 +148,28 @@ regeneración y desactivación MFA, contraseña + segundo factor, revocación de
 `dotnet test backend --nologo` 24/24; `./scripts/probar-interfaz.ps1` 4/4;
 `dotnet build backend --configuration Release --nologo`, `npm run build` y
 `npm run lint` correctos. OAuth2 permanece pendiente; móvil emulado no cierra CA-6.
+
+## Revisión completa contra el SRS — 2026-09-23 (Claude)
+
+Relectura íntegra de `docs/SRS.pdf` (12 páginas) contra código, pruebas y la demo en Azure.
+
+**Verificado en producción (Azure, datos DEMO):** correo real entregado en el buzón del
+usuario (ticket `COM-2026-000001`, QR en línea, PDF adjunto, código corto y enlace seguro
+al dominio de Azure); enlace público sin sesión oculta el QR de un ticket consumido;
+QR decodificado con el mismo zxing-wasm de la PWA → validar 200, QR alterado 422,
+despacho 201, reuso 422; existencia 500→490 en la misma transacción; ticket `Consumed`;
+reportes XLSX/CSV/PDF 200; dashboard 200; cierre diario 201 + acta PDF; ajuste posterior
+rechazado ("El día operativo ya fue cerrado"); `/api/auditoria/verificar` → `valid: true`.
+
+**Cubierto aunque la matriz no lo nombraba:** actor Solicitante (3.4) = rol Consulta con
+`request-create`; mermas y compras (RF-14) en `MovementKind`; disponibilidad y consumo
+mensual (RF-15) en `GET /api/inventario`.
+
+**Hallazgos abiertos (requieren decisión del usuario):**
+1. `GET /api/empleados` solo exige autenticación: todos los roles y clientes OAuth ven cédula,
+   correo y móvil descifrados. Mínimo privilegio sugiere restringirlo a Administrador/Supervisor.
+2. Objetivo 1.2 "disponibilidad 24/7": la demo es una sola VM sin redundancia (ADR-014).
+3. Key Vault sin *purge protection*: purgar `data-encryption-key` o `qr-signing-key-b64`
+   inutiliza datos cifrados y respaldos. Activarla es irreversible.
+4. Permisos de clientes OAuth con rol Supervisor (decisión pendiente desde Fase 6).
+5. Siguen fuera de alcance del código: SMS real (B-01), datos reales (B-04), Android físico (CA-6).
