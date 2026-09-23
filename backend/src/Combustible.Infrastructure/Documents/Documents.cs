@@ -26,6 +26,10 @@ public static class DocumentRenderer
     public static byte[] QrPng(string payload) =>
         PngByteQRCodeHelper.GetQRCode(payload, QRCodeGenerator.ECCLevel.M, 8);
 
+    // Texto para personas: "10" y no "10.000", que en español se lee como diez mil.
+    // La firma del QR y las exportaciones conservan sus 3 decimales fijos.
+    public static string Gallons(decimal value) => value.ToString("0.###", CultureInfo.InvariantCulture);
+
     public static byte[] TicketPdf(TicketDocument ticket)
     {
         ArgumentNullException.ThrowIfNull(ticket);
@@ -47,7 +51,7 @@ public static class DocumentRenderer
             ("Vehículo", $"{ticket.VehiclePlate} — ficha {ticket.VehicleCode}"),
             ("Departamento", ticket.Department),
             ("Combustible", ticket.FuelType),
-            ("Cantidad autorizada", ticket.Quantity.ToString("0.000", CultureInfo.InvariantCulture) + " gal"),
+            ("Cantidad autorizada", Gallons(ticket.Quantity) + " gal"),
             ("Emitido", BusinessClock.Format(ticket.IssuedAt)),
             ("Vence", BusinessClock.Format(ticket.ExpiresAt)),
         })

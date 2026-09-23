@@ -27,8 +27,8 @@ public static class InventoryLedger
         if (await db.DailyCloses.AnyAsync(x => x.StationId == tank.StationId && x.Day == day))
             return "El día operativo ya fue cerrado para esta estación.";
         var balance = tank.Balance + signedQuantity;
-        if (balance < 0) return $"Existencia insuficiente en el tanque {tank.Code}: hay {tank.Balance.ToString("0.000", CultureInfo.InvariantCulture)} gal.";
-        if (balance > tank.Capacity) return $"La operación supera la capacidad del tanque {tank.Code} ({tank.Capacity.ToString("0.000", CultureInfo.InvariantCulture)} gal).";
+        if (balance < 0) return $"Existencia insuficiente en el tanque {tank.Code}: hay {DocumentRenderer.Gallons(tank.Balance)} gal.";
+        if (balance > tank.Capacity) return $"La operación supera la capacidad del tanque {tank.Code} ({DocumentRenderer.Gallons(tank.Capacity)} gal).";
         tank.Balance = balance;
         db.InventoryMovements.Add(new InventoryMovement
         {
@@ -37,7 +37,7 @@ public static class InventoryLedger
         });
         if (balance <= tank.CriticalLevel)
             await Notifier.NotifyAsync(db, NotificationKind.LowInventory, $"low:{tank.Id:N}:{day:yyyyMMdd}", tank.Id.ToString(), now,
-                $"El tanque {tank.Code} está en nivel crítico: {balance.ToString("0.000", CultureInfo.InvariantCulture)} gal.");
+                $"El tanque {tank.Code} está en nivel crítico: {DocumentRenderer.Gallons(balance)} gal.");
         return null;
     }
 
@@ -192,7 +192,7 @@ public static class InventoryEndpoints
             if (error is not null) return Results.UnprocessableEntity(new { error });
             var label = kind switch { MovementKind.PositiveAdjustment => "Ajuste positivo", MovementKind.NegativeAdjustment => "Ajuste negativo", _ => "Merma" };
             await Notifier.NotifyAsync(db, NotificationKind.InventoryAdjustment, $"adjustment:{Guid.NewGuid():N}", tank.Id.ToString(), now,
-                $"{label} de {body.Quantity.ToString("0.000", CultureInfo.InvariantCulture)} gal en el tanque {tank.Code}: {body.Reason.Trim()}");
+                $"{label} de {DocumentRenderer.Gallons(body.Quantity)} gal en el tanque {tank.Code}: {body.Reason.Trim()}");
             await audit.WriteAsync(http.Actor(), http.Ip(), "adjustment", "Tank", tank.Id.ToString());
             await tx.CommitAsync();
             return Results.Ok(new { balance = tank.Balance });
@@ -283,7 +283,7 @@ public static class InventoryEndpoints
             }
             var ticket = check.Ticket;
             if (body.Quantity > ticket.AuthorizedQuantity)
-                return Results.UnprocessableEntity(new { error = $"No se puede despachar más de lo autorizado ({ticket.AuthorizedQuantity.ToString("0.000", CultureInfo.InvariantCulture)} gal)." });
+                return Results.UnprocessableEntity(new { error = $"No se puede despachar más de lo autorizado ({DocumentRenderer.Gallons(ticket.AuthorizedQuantity)} gal)." });
             var difference = ticket.AuthorizedQuantity - body.Quantity;
             if (difference > 0 && string.IsNullOrWhiteSpace(body.DifferenceReason))
                 return Results.UnprocessableEntity(new { error = "El despacho es menor que lo autorizado: indica el motivo de la diferencia." });
@@ -438,7 +438,7 @@ public static class InventoryEndpoints
             db.DailyCloses.Add(close);
             foreach (var line in close.Lines.Where(x => x.Difference != 0))
                 await Notifier.NotifyAsync(db, NotificationKind.InventoryAdjustment, $"close-diff:{close.Id:N}:{line.TankId:N}", line.TankId.ToString(), now,
-                    $"Cierre {body.Day:yyyy-MM-dd}: diferencia de {line.Difference.ToString("0.000", CultureInfo.InvariantCulture)} gal en un tanque. Registra un ajuste si corresponde.");
+                    $"Cierre {body.Day:yyyy-MM-dd}: diferencia de {DocumentRenderer.Gallons(line.Difference)} gal en un tanque. Registra un ajuste si corresponde.");
             await audit.WriteAsync(http.Actor(), http.Ip(), "daily_close", "DailyClose", close.Id.ToString());
             await tx.CommitAsync();
             return Results.Created($"/api/cierres/{close.Id}", new { close.Id });
@@ -474,7 +474,7 @@ public static class InventoryEndpoints
             var header = new TableDocument($"Acta de cierre diario — {station.Name} — {close.Day:yyyy-MM-dd}",
                 [("Estación", $"{station.Name} ({station.Code})"), ("Día operativo", close.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
                  ("Despachos confirmados", close.DispatchCount.ToString(CultureInfo.InvariantCulture)),
-                 ("Volumen despachado", close.DispatchedVolume.ToString("0.000", CultureInfo.InvariantCulture) + " gal"),
+                 ("Volumen despachado", DocumentRenderer.Gallons(close.DispatchedVolume) + " gal"),
                  ("Cerrado por", actor), ("Cerrado el", BusinessClock.Format(close.ClosedAt)), ("Observaciones", close.Notes.Length > 0 ? close.Notes : "—")],
                 ["Tanque", "Combustible", "Apertura", "Entradas", "Salidas", "Esperado", "Medido", "Diferencia"],
                 close.Lines.Select(l => (IReadOnlyList<object?>)[tanks[l.TankId].Code, tanks[l.TankId].Fuel, l.Opening, l.Inputs, l.Outputs, l.Expected, l.Counted, l.Difference]).ToList());

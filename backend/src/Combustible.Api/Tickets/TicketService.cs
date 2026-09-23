@@ -143,7 +143,7 @@ public sealed class TicketService(AppDbContext db, TicketSigner signer, FieldPro
         var document = await DocumentAsync(snapshot, cancellationToken);
         var pdf = DocumentRenderer.TicketPdf(document);
         var png = DocumentRenderer.QrPng(document.QrPayload);
-        var quantity = document.Quantity.ToString("0.000", CultureInfo.InvariantCulture);
+        var quantity = DocumentRenderer.Gallons(document.Quantity);
         var expires = BusinessClock.Format(document.ExpiresAt);
         static string H(string value) => WebUtility.HtmlEncode(value);
         var html = $"""
