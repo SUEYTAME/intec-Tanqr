@@ -36,6 +36,36 @@ public sealed class CatalogTests(ApiFixture fixture)
         }
     }
 
+    // Cédula, correo y móvil solo para Administrador y Supervisor (ADR-016); los demás ven al empleado sin esos campos.
+    [Theory]
+    [InlineData(Roles.Supervisor, true)]
+    [InlineData(Roles.Dispatcher, false)]
+    [InlineData(Roles.Auditor, false)]
+    [InlineData(Roles.Viewer, false)]
+    public async Task Datos_personales_del_empleado_solo_para_administrador_y_supervisor(string role, bool seesPersonalData)
+    {
+        var (admin, _) = await fixture.LoginAsync();
+        var (client, _) = await fixture.LoginAsRoleAsync(role);
+        using (admin)
+        using (client)
+        {
+            var department = (await (await admin.PostAsJsonAsync("/api/departamentos/", new { code = Guid.NewGuid().ToString("N")[..12], name = "Prueba privacidad" }))
+                .Content.ReadFromJsonAsync<Department>())!;
+            var created = await admin.PostAsJsonAsync("/api/empleados/", new
+            {
+                code = "PII-" + Digits(8), fullName = "Persona privada", nationalId = Digits(11), departmentId = department.Id, position = "Prueba",
+                email = "privada@example.test", mobile = "+18095550000", active = true,
+            });
+            var id = (await created.Content.ReadFromJsonAsync<Employee>())!.Id;
+            var detail = await client.GetFromJsonAsync<System.Text.Json.JsonElement>($"/api/empleados/{id}");
+            Assert.Equal("Persona privada", detail.GetProperty("fullName").GetString());
+            foreach (var field in new[] { "nationalId", "email", "mobile" })
+                Assert.Equal(seesPersonalData, detail.TryGetProperty(field, out _));
+            var list = await client.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/empleados/?pageSize=100");
+            Assert.All(list.GetProperty("items").EnumerateArray(), e => Assert.Equal(seesPersonalData, e.TryGetProperty("email", out _)));
+        }
+    }
+
     private static string Digits(int length) => string.Concat(Enumerable.Range(0, length).Select(_ => Random.Shared.Next(10)));
 
     private static Task<HttpResponseMessage> PutAsync(HttpClient client, string path, Guid version, object body)

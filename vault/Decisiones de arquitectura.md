@@ -307,3 +307,22 @@ del usuario. La infraestructura preparada no debe describirse como desplegada.
 **DESCARTADO:** regenerar la clave SSH (prohibido por el usuario); dejar `SMTP_HOST` vacío con la
 bandeja local, porque exigía cambiar el compose de producción y ACS estaba permitido; proxy
 inverso para TLS (rompe la IP real de cliente, ADR-014).
+
+## ADR-016 — Separación de funciones, integraciones sin poder de escritura y privacidad del empleado
+
+**Fecha:** 2026-09-23. **Estado:** aceptada por decisión del usuario ("el máximo poder debería ser
+del administrador"; datos personales "solo adm y supervisor").
+
+1. **Clientes OAuth** (sin claim `sid`) ya no aprueban/anulan, ni escriben inventario ni catálogos,
+   aunque tengan rol Supervisor: `request-approve`, `inventory-write` y `catalog-write` exigen persona
+   con sesión. Siguen pudiendo consultar y crear solicitudes (RF-24).
+2. **Despacho y cierre solo para Despachador** (SRS §3.3). Antes el Supervisor también despachaba,
+   con lo que tenía un poder que el Administrador no tenía y podía aprobar y despachar su propio ticket.
+   Separación de funciones: quien aprueba no despacha. El Administrador conserva todo lo demás.
+3. **Cédula, correo y móvil** del empleado solo para Administrador y Supervisor con sesión
+   (política `employee-pii`). Los demás roles ven código, nombre, departamento y cargo; la interfaz
+   muestra "Restringido". El despacho sigue mostrando solo los últimos 4 dígitos de la cédula.
+4. Key Vault con *purge protection* (irreversible), también en `infra/modules/resources.bicep`.
+
+**DESCARTADO:** dar al Administrador permiso de despacho para que "lo pueda todo": rompe la separación
+de funciones y el SRS asigna el despacho al Despachador; el Administrador puede crear esa cuenta.

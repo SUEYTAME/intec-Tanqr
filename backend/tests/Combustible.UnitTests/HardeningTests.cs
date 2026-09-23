@@ -268,7 +268,12 @@ public sealed class HardeningTests(ApiFixture fixture)
             using var supervisorClient = fixture.CreateClient();
             supervisorClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", supervisorToken);
             Assert.Equal(HttpStatusCode.Forbidden, (await supervisorClient.PostAsJsonAsync("/api/despachos/validar", new { qr = "IC1.x" })).StatusCode);
-            Assert.NotEqual(HttpStatusCode.Forbidden, (await supervisorClient.PostAsJsonAsync($"/api/solicitudes/{Guid.NewGuid()}/aprobar", new { version = "x" })).StatusCode);
+            // ADR-016: aprobar, anular, inventario y catálogos exigen persona con sesión; la integración solo consulta y solicita.
+            Assert.Equal(HttpStatusCode.Forbidden, (await supervisorClient.PostAsJsonAsync($"/api/solicitudes/{Guid.NewGuid()}/aprobar", new { version = "x" })).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await supervisorClient.PostAsJsonAsync("/api/inventario/ajustes", new { tankId = Guid.NewGuid(), kind = "Shrinkage", quantity = 1, reason = "Prueba" })).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await supervisorClient.PostAsJsonAsync("/api/departamentos/", new { code = "OAUTH", name = "No permitido" })).StatusCode);
+            var employees = await JsonAsync(await supervisorClient.GetAsync("/api/empleados/"));
+            Assert.All(employees.GetProperty("items").EnumerateArray(), e => Assert.False(e.TryGetProperty("nationalId", out _)));
 
             var list = await JsonAsync(await admin.GetAsync("/api/integraciones/"));
             Assert.Contains(list.GetProperty("items").EnumerateArray(), x => x.GetProperty("clientId").GetString() == clientId && x.GetProperty("role").GetString() == Roles.Viewer);

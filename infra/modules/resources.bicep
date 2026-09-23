@@ -151,6 +151,8 @@ resource kv 'Microsoft.KeyVault/vaults@2025-05-01' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
+    // Irreversible (activada 2026-09-23 a pedido del usuario): nadie puede purgar las claves de cifrado.
+    enablePurgeProtection: true
     networkAcls: { defaultAction: 'Allow', bypass: 'AzureServices' }
   }
 }

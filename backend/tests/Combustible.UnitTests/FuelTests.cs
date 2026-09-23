@@ -174,20 +174,20 @@ public sealed class FuelTests(ApiFixture fixture)
     public async Task QR_alterado_o_ticket_modificado_en_la_base_se_rechaza()
     {
         var (admin, _) = await fixture.LoginAsync();
-        var (supervisor, _) = await fixture.LoginAsRoleAsync(Roles.Supervisor);
+        var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
         using (admin)
-        using (supervisor)
+        using (dispatcher)
         {
             var world = await SetupAsync(admin);
             var issued = await IssueAsync(admin, world, 10);
             var (token, payload) = Qr(issued.TicketId);
-            var valid = await JsonAsync(await supervisor.PostAsJsonAsync("/api/despachos/validar", new { qr = payload }));
+            var valid = await JsonAsync(await dispatcher.PostAsJsonAsync("/api/despachos/validar", new { qr = payload }));
             Assert.True(valid.GetProperty("valid").GetBoolean());
             Assert.Equal(issued.Number, valid.GetProperty("ticket").GetProperty("number").GetString());
             var flipped = payload[..^1] + (payload[^1] == 'A' ? 'B' : 'A');
             var otherToken = payload.Replace(token, TicketSigner.NewToken(), StringComparison.Ordinal);
             foreach (var tampered in new[] { flipped, otherToken, "IC1.garbage", issued.Number })
-                Assert.Equal(HttpStatusCode.UnprocessableEntity, (await supervisor.PostAsJsonAsync("/api/despachos/validar", new { qr = tampered })).StatusCode);
+                Assert.Equal(HttpStatusCode.UnprocessableEntity, (await dispatcher.PostAsJsonAsync("/api/despachos/validar", new { qr = tampered })).StatusCode);
 
             // El usuario SQL de la aplicación no puede alterar la cantidad firmada.
             await using (var app = new NpgsqlConnection(fixture.ApplicationConnection))
@@ -203,7 +203,7 @@ public sealed class FuelTests(ApiFixture fixture)
                 await using var command = new NpgsqlCommand($"UPDATE \"Tickets\" SET \"AuthorizedQuantity\" = 500 WHERE \"Id\" = '{issued.TicketId}'", owner);
                 Assert.Equal(1, await command.ExecuteNonQueryAsync());
             }
-            var afterTamper = await supervisor.PostAsJsonAsync("/api/despachos/validar", new { qr = payload });
+            var afterTamper = await dispatcher.PostAsJsonAsync("/api/despachos/validar", new { qr = payload });
             Assert.Equal(HttpStatusCode.UnprocessableEntity, afterTamper.StatusCode);
             Assert.Contains("firma", (await JsonAsync(afterTamper)).GetProperty("error").GetString()!, StringComparison.Ordinal);
         }
@@ -213,20 +213,20 @@ public sealed class FuelTests(ApiFixture fixture)
     public async Task Despacho_atomico_descuenta_inventario_y_consume_el_ticket()
     {
         var (admin, _) = await fixture.LoginAsync();
-        var (supervisor, _) = await fixture.LoginAsRoleAsync(Roles.Supervisor);
+        var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
         using (admin)
-        using (supervisor)
+        using (dispatcher)
         {
             var world = await SetupAsync(admin);
             Assert.Equal(HttpStatusCode.Created, (await ReceiveAsync(admin, world.Tank, 500)).StatusCode);
             var issued = await IssueAsync(admin, world, 12);
             var qr = Qr(issued.TicketId).Payload;
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.Tank, 10, identity: false, reason: "x")).StatusCode);
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.Tank, 12.001m)).StatusCode);
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.Tank, 10)).StatusCode);
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.OtherTank, 10, reason: "Tanque lleno")).StatusCode);
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.Tank, 10, reason: "Tanque lleno", odometer: 10)).StatusCode);
-            var response = await DispatchAsync(supervisor, qr, world.Tank, 10, reason: "Tanque del vehículo lleno", odometer: 1500);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.Tank, 10, identity: false, reason: "x")).StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.Tank, 12.001m)).StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.Tank, 10)).StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.OtherTank, 10, reason: "Tanque lleno")).StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.Tank, 10, reason: "Tanque lleno", odometer: 10)).StatusCode);
+            var response = await DispatchAsync(dispatcher, qr, world.Tank, 10, reason: "Tanque del vehículo lleno", odometer: 1500);
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
             var body = await JsonAsync(response);
             Assert.Equal(490m, body.GetProperty("tankBalance").GetDecimal());
@@ -245,7 +245,7 @@ public sealed class FuelTests(ApiFixture fixture)
             Assert.Equal(TicketStatus.Consumed, ticket.Status);
             Assert.Equal(1500, vehicle.Odometer);
 
-            var reuse = await DispatchAsync(supervisor, qr, world.Tank, 1, reason: "Reintento");
+            var reuse = await DispatchAsync(dispatcher, qr, world.Tank, 1, reason: "Reintento");
             Assert.Equal(HttpStatusCode.UnprocessableEntity, reuse.StatusCode);
             Assert.Contains("consumido", (await JsonAsync(reuse)).GetProperty("error").GetString()!, StringComparison.Ordinal);
             var list = await JsonAsync(await admin.GetAsync($"/api/despachos/?stationId={world.Station}"));
@@ -258,16 +258,16 @@ public sealed class FuelTests(ApiFixture fixture)
     public async Task Despachos_concurrentes_no_sobregiran_el_tanque()
     {
         var (admin, _) = await fixture.LoginAsync();
-        var (supervisor, _) = await fixture.LoginAsRoleAsync(Roles.Supervisor);
+        var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
         using (admin)
-        using (supervisor)
+        using (dispatcher)
         {
             var world = await SetupAsync(admin);
             Assert.Equal(HttpStatusCode.Created, (await ReceiveAsync(admin, world.Tank, 25)).StatusCode);
             var tickets = new List<string>();
             for (var i = 0; i < 3; i++)
                 tickets.Add(Qr((await IssueAsync(admin, world, 10, await AddVehicleAsync(admin, world.Department))).TicketId).Payload);
-            var results = await Task.WhenAll(tickets.Select(qr => DispatchAsync(supervisor, qr, world.Tank, 10)));
+            var results = await Task.WhenAll(tickets.Select(qr => DispatchAsync(dispatcher, qr, world.Tank, 10)));
             Assert.Equal(2, results.Count(x => x.StatusCode == HttpStatusCode.Created));
             Assert.Equal(1, results.Count(x => x.StatusCode == HttpStatusCode.UnprocessableEntity));
             var (balance, sum) = await DbAsync(async db => (
@@ -302,9 +302,9 @@ public sealed class FuelTests(ApiFixture fixture)
     public async Task Proceso_periodico_marca_proximo_a_vencer_y_vencido()
     {
         var (admin, _) = await fixture.LoginAsync();
-        var (supervisor, _) = await fixture.LoginAsRoleAsync(Roles.Supervisor);
+        var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
         using (admin)
-        using (supervisor)
+        using (dispatcher)
         {
             var world = await SetupAsync(admin);
             var now = DateTimeOffset.UtcNow;
@@ -317,9 +317,9 @@ public sealed class FuelTests(ApiFixture fixture)
             Assert.Equal(TicketStatus.Expired, await DbAsync(db => db.Tickets.Where(x => x.Id == issued.TicketId).Select(x => x.Status).SingleAsync()));
             Assert.True(await DbAsync(db => db.Notifications.AnyAsync(x => x.Kind == NotificationKind.TicketExpired && x.EntityId == issued.TicketId.ToString())));
             var qr = Qr(issued.TicketId).Payload;
-            var validation = await JsonAsync(await supervisor.PostAsJsonAsync("/api/despachos/validar", new { qr }));
+            var validation = await JsonAsync(await dispatcher.PostAsJsonAsync("/api/despachos/validar", new { qr }));
             Assert.False(validation.GetProperty("valid").GetBoolean());
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.Tank, 8)).StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.Tank, 8)).StatusCode);
         }
     }
 
@@ -365,9 +365,9 @@ public sealed class FuelTests(ApiFixture fixture)
     public async Task Anulacion_rechazo_y_cancelacion_respetan_version_y_estado()
     {
         var (admin, _) = await fixture.LoginAsync();
-        var (supervisor, _) = await fixture.LoginAsRoleAsync(Roles.Supervisor);
+        var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
         using (admin)
-        using (supervisor)
+        using (dispatcher)
         {
             var world = await SetupAsync(admin);
             var issued = await IssueAsync(admin, world, 6);
@@ -375,9 +375,9 @@ public sealed class FuelTests(ApiFixture fixture)
             var version = (await JsonAsync(await admin.GetAsync($"/api/tickets/{issued.TicketId}"))).GetProperty("ticket").GetProperty("version").GetString();
             Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync($"/api/tickets/{issued.TicketId}/anular", new { version, reason = "Error de captura" })).StatusCode);
             var qr = Qr(issued.TicketId).Payload;
-            var validation = await JsonAsync(await supervisor.PostAsJsonAsync("/api/despachos/validar", new { qr }));
+            var validation = await JsonAsync(await dispatcher.PostAsJsonAsync("/api/despachos/validar", new { qr }));
             Assert.Contains("anulado", validation.GetProperty("error").GetString()!, StringComparison.Ordinal);
-            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(supervisor, qr, world.Tank, 6)).StatusCode);
+            Assert.Equal(HttpStatusCode.UnprocessableEntity, (await DispatchAsync(dispatcher, qr, world.Tank, 6)).StatusCode);
 
             var (rejectId, rejectVersion) = await RequestAsync(admin, world, 3, await AddVehicleAsync(admin, world.Department));
             Assert.Equal(HttpStatusCode.BadRequest, (await admin.PostAsJsonAsync($"/api/solicitudes/{rejectId}/rechazar", new { version = rejectVersion })).StatusCode);
@@ -393,7 +393,8 @@ public sealed class FuelTests(ApiFixture fixture)
     [InlineData(Roles.Viewer, true, false, false, true)]
     [InlineData(Roles.Dispatcher, false, false, true, false)]
     [InlineData(Roles.Auditor, false, false, false, true)]
-    [InlineData(Roles.Supervisor, true, true, true, true)]
+    [InlineData(Roles.Supervisor, true, true, false, true)]
+    [InlineData(Roles.Administrator, true, true, false, true)]
     public async Task RBAC_de_solicitudes_despacho_y_reportes(string role, bool canRequest, bool canApprove, bool canDispatch, bool canReport)
     {
         var (client, _) = await fixture.LoginAsRoleAsync(role);
@@ -530,16 +531,16 @@ public sealed class FuelTests(ApiFixture fixture)
     public async Task Reportes_filtran_y_exportan_excel_csv_y_pdf()
     {
         var (admin, _) = await fixture.LoginAsync();
-        var (supervisor, _) = await fixture.LoginAsRoleAsync(Roles.Supervisor);
+        var (dispatcher, _) = await fixture.LoginAsRoleAsync(Roles.Dispatcher);
         var (auditor, _) = await fixture.LoginAsRoleAsync(Roles.Auditor);
         using (admin)
-        using (supervisor)
+        using (dispatcher)
         using (auditor)
         {
             var world = await SetupAsync(admin);
             Assert.Equal(HttpStatusCode.Created, (await ReceiveAsync(admin, world.Tank, 100)).StatusCode);
             var issued = await IssueAsync(admin, world, 9);
-            Assert.Equal(HttpStatusCode.Created, (await DispatchAsync(supervisor, Qr(issued.TicketId).Payload, world.Tank, 9)).StatusCode);
+            Assert.Equal(HttpStatusCode.Created, (await DispatchAsync(dispatcher, Qr(issued.TicketId).Payload, world.Tank, 9)).StatusCode);
             var filter = $"vehicleId={world.Vehicle}&departmentId={world.Department}&fuelTypeId={world.Fuel}&employeeId={world.Employee}";
             var json = await JsonAsync(await auditor.GetAsync($"/api/reportes/tickets?{filter}&status=Consumed"));
             Assert.Equal(issued.Number, json.GetProperty("items").EnumerateArray().Single().GetProperty("number").GetString());

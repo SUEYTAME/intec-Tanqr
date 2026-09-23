@@ -41,7 +41,7 @@ test("todas las pantallas cargan sin errores y los reportes consultan", async ({
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   await expect(page.getByRole("heading", { name: "Panel", exact: true })).toBeVisible();
   await page.screenshot({ path: `../artifacts/panel-${testInfo.project.name}.png`, fullPage: true });
-  // El administrador no despacha (política dispatch: Despachador/Supervisor).
+  // El administrador no despacha (política dispatch: solo Despachador, ADR-016).
   await expect(page.getByRole("button", { name: "Despacho", exact: true })).toHaveCount(0);
 
   for (const [nav, heading] of screens) {

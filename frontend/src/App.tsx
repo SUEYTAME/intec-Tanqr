@@ -290,7 +290,8 @@ export default function App() {
   const roles = session.roles;
   const admin = hasRole(roles, "Administrador");
   const manager = hasRole(roles, "Administrador", "Supervisor");
-  const operator = hasRole(roles, "Despachador", "Supervisor");
+  // Solo el Despachador despacha: quien aprueba no despacha (ADR-016).
+  const operator = hasRole(roles, "Despachador");
   const auditor = hasRole(roles, "Administrador", "Auditor");
   const reporter = hasRole(
     roles,
