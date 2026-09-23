@@ -112,7 +112,7 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 - **Imagen:** construida en la VM desde `345e623`, no descargada de GHCR (paquete privado sin credencial en la VM).
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
-- SMS (B-01), datos reales (B-04), prueba en Android físico (CA-6) y la decisión OAuth Supervisor siguen pendientes.
+- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `465eaa1` (ADR-016).
 - Data Protection guarda sus claves dentro del contenedor (aviso en el arranque). Solo afecta al token de restablecimiento de contraseña, que se genera y consume en la misma petición.
-- Key Vault sin *purge protection* (activarla es irreversible; pendiente de decisión).
+- Key Vault con *purge protection* activada (2026-09-23, irreversible).
 - Datos DEMO en producción: departamento/empleado/vehículo/combustible/estación/tanque `DEMO*`, ticket `COM-2026-000001` consumido, cierre del 2026-09-23 de `DEMO-EST` y usuario `despacho@combustible-demo.test` desactivado.
