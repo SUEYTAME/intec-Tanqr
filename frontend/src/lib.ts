@@ -27,10 +27,8 @@ const isoDay = new Intl.DateTimeFormat("en-CA", {
   month: "2-digit",
   day: "2-digit",
 });
-const gallons = new Intl.NumberFormat("es-DO", {
-  minimumFractionDigits: 3,
-  maximumFractionDigits: 3,
-});
+// Sin ceros de relleno: "10.000 gal" se lee como diez mil (mismo criterio que el backend).
+const gallons = new Intl.NumberFormat("es-DO", { maximumFractionDigits: 3 });
 const integer = new Intl.NumberFormat("es-DO");
 
 // Fecha y hora absolutas en la zona de la institución.

@@ -40,6 +40,8 @@ public static class DocumentRenderer
         var image = section.AddImage("base64:" + Convert.ToBase64String(QrPng(ticket.QrPayload)));
         image.Width = Unit.FromCentimeter(6.5);
         image.LockAspectRatio = true;
+        section.AddParagraph("Este código lo lee el escáner de la estación; con la cámara del teléfono no abre ninguna página.")
+            .Format.Font.Size = 8;
         var table = section.AddTable();
         table.Borders.Width = 0.5;
         table.AddColumn(Unit.FromCentimeter(5));
@@ -63,7 +65,7 @@ public static class DocumentRenderer
         section.AddParagraph().AddLineBreak();
         section.AddParagraph("Ticket de un solo uso. Presente este código QR y su cédula en la estación. " +
             "El despacho no puede exceder la cantidad autorizada.");
-        section.AddParagraph("Consulta segura: " + ticket.Url).Format.Font.Size = 8;
+        section.AddParagraph("Para ver el ticket en su teléfono: " + ticket.Url).Format.Font.Size = 8;
         section.AddParagraph("Hora de República Dominicana (America/Santo_Domingo).").Format.Font.Size = 8;
         return Render(document);
     }
