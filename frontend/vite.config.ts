@@ -13,8 +13,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
-        name: "INTEC · Combustible",
-        short_name: "Combustible",
+        name: "TanQR · INTEC",
+        short_name: "TanQR",
         description:
           "Tickets digitales de combustible de INTEC: despacho con QR firmado.",
         lang: "es-DO",

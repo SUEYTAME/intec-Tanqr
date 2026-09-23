@@ -40,7 +40,7 @@ export function PublicTicket({ ticketKey }: { ticketKey: string }) {
     <main className="public-ticket">
       <section>
         <div className="brand">
-          INTEC<span>COMBUSTIBLE</span>
+          INTEC<span>TanQR</span>
         </div>
         {ticket.error ? (
           <p className="error" role="alert">
