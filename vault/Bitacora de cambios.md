@@ -311,3 +311,23 @@ Hallazgos y correcciones durante la verificación:
 - `mfa.spec.ts` chocaba con el límite de 60/min/IP de `/api/auth` al correr 6 pruebas seguidas; espera una ventana nueva en lugar de relajar el límite.
 
 Revisión de seguridad CA-7 (manual, 2026-09-22): enlace público con token de 128 bits, comparación en tiempo constante y límite de tasa; sin `innerHTML`/`eval`; tokens solo en memoria; `no-store` y `nosniff` en la API; dependencias sin vulnerabilidades. **Pendiente de decisión del usuario:** un cliente OAuth con rol Supervisor puede aprobar solicitudes, anular tickets y escribir inventario (solo despacho y cierre exigen `sid`).
+
+## 2026-09-22 — Fase 6: despliegue, carga, manual e informe (Claude)
+
+Commit `1c05ca7` + documentación en el commit siguiente.
+
+- Despliegue de un solo origen: la API sirve `frontend/dist` si `WEB_ROOT` está definido (sin proxy:
+  el límite de tasa y la auditoría verían la IP del proxy). CSP, `X-Frame-Options`, `Referrer-Policy`.
+  Prueba nueva `Un_solo_origen_sirve_la_interfaz_con_CSP_y_la_API_sigue_intacta`.
+- `Dockerfile`, `deploy/docker-compose.prod.yml` (paso `init` con propietario, `app` con
+  `combustible_app`), `deploy/produccion.env.example` (real `deploy/produccion.env` ignorado).
+- `docs/despliegue.md`, `docs/manual-usuario.md`, `docs/informe-final.md`, `scripts/prueba-carga.mjs`.
+
+Verificación:
+- `dotnet test backend -c Release` → **52/52**.
+- `docker build` → OK tras copiar `.editorconfig` de la raíz (sin él, CA1861 en migraciones rompía el publish).
+- Imagen ejecutada con proyecto compose aislado `combustible-smoke` y claves efímeras (borradas):
+  init exit 0; `/health/ready` por TLS 1.3; TLS 1.2 rechazado; CSP presente; `/ticket/<clave>` → SPA;
+  `sw.js`, manifiesto y `.wasm` con tipo correcto; `/api/no-existe` → 404; login admin OK.
+  Se añadió `libgssapi-krb5-2` porque Npgsql lo sondeaba y dejaba "Error:" en el log.
+- Carga 50 usuarios × 30 s: 7552 solicitudes, 250,6 rps, 0 errores (base casi vacía).

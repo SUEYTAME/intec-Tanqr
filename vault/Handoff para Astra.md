@@ -11,6 +11,7 @@ Rama: `fase-2-producto` (creada desde `fase-1-dominio` @4f7635a). Nada empujado 
 | e9a2750 | GET /api/tickets/{id}/qr.png (Admin/Supervisor, auditado) |
 | 2f3013b | Cifrado de empleado (RS-03), TLS 1.3, OAuth 2.0 client credentials (RS-05), ancla de auditoría (RS-06), versión en /acceso — **51/51 tests (Release)** |
 
+Estado final 2026-09-22: backend **52/52**, Playwright 6/6, imagen Docker probada.
 Comando de pruebas: `dotnet test backend -c Release` (usar Release: el API en Debug bloquea las DLL).
 
 ## Frontend — HECHO (`d0ac9c7`)
@@ -24,8 +25,8 @@ Vault al día: Bitácora, ADR-009..013, Estado actual, Tareas pendientes, Trazab
 2. **Decisión del usuario pendiente:** cliente OAuth con rol Supervisor hoy puede aprobar solicitudes, anular tickets y
    escribir inventario (solo despacho/cierre exigen `sid`). Si se restringe: añadir `.RequireClaim("sid")` a las políticas
    `request-approve`, `inventory-write`, `catalog-write` en `Program.cs` + prueba.
-3. Despliegue: Dockerfiles (API + estáticos), proxy TLS 1.3 con CSP/frame-ancestors y fallback SPA para `/ticket/...`.
-4. Prueba de carga básica, manual de usuario/capacitación, informe final.
+3. ~~Despliegue, carga, manual, informe~~ HECHO (`1c05ca7` + docs): ver `docs/despliegue.md`, `docs/informe-final.md`.
+4. Con recursos del usuario: B-01..B-04 y CA-6 en Android físico. Repetir carga con volumen real.
 
 ## Bloqueos reales (no los resuelve código)
 B-01 pasarela SMS, B-02 SMTP institucional, B-03 dominio/certificado, B-04 datos reales de INTEC, CA-6 prueba física en Android.

@@ -56,7 +56,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 ## Lo que falta / límites
 
 - Rama `fase-2-producto` **sin push ni CI remota** todavía.
-- Despliegue (Dockerfiles, proxy TLS), prueba de carga, manual de usuario e informe final.
+- Despliegue probado con imagen Docker (`docs/despliegue.md`); carga, manual e informe hechos.
 - Decisión abierta: permisos de escritura de clientes OAuth con rol Supervisor.
 - B-01 SMS, B-02 SMTP institucional, B-03 dominio/certificado, B-04 datos reales: bloquean
   producción, no el desarrollo. CA-6 requiere un Android físico.

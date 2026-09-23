@@ -96,10 +96,10 @@ Evidencia: backend 51/51 (`dotnet test backend -c Release`), Playwright 6/6. Det
 - [x] Kestrel solo TLS 1.3 (`Kestrel_rechaza_TLS_1_2_y_negocia_TLS_1_3`) — certificado real **[!] B-03**
 - [x] Revisión de seguridad CA-7 (manual, 2026-09-22): sin vulnerabilidades en dependencias; un punto de decisión abierto
 - [ ] Empujar `fase-2-producto` y verificar CI remota
-- [ ] Artefactos de despliegue: Dockerfiles, proxy inverso TLS 1.3 con CSP/frame-ancestors y fallback SPA
-- [ ] Prueba de carga básica
-- [ ] Manual de usuario y guía de capacitación
-- [ ] Informe final
+- [x] Despliegue de un solo origen (Kestrel TLS 1.3 + CSP), Dockerfile y compose de producción probados (`1c05ca7`)
+- [x] Prueba de carga básica: 250 rps, 0 errores (base casi vacía; repetir con volumen real)
+- [x] Manual de usuario con ejercicios de capacitación (`docs/manual-usuario.md`)
+- [x] Informe final (`docs/informe-final.md`)
 
 ---
 
