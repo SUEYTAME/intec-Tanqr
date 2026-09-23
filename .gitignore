@@ -32,3 +32,6 @@ vault/.obsidian/workspace-mobile.json
 # Sistema
 Thumbs.db
 .DS_Store
+
+# Secretos de producción (plantilla: deploy/produccion.env.example)
+deploy/produccion.env

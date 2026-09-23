@@ -161,6 +161,14 @@ app.Use(async (context, next) =>
 {
     context.Response.Headers.CacheControl = "no-store";
     context.Response.Headers.XContentTypeOptions = "nosniff";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers.XFrameOptions = "DENY";
+    // Interfaz servida desde este mismo origen (WEB_ROOT): todo 'self'. 'wasm-unsafe-eval' es para el
+    // lector de QR (ZXing en WebAssembly); blob: para las descargas y vistas de PDF/QR.
+    if (!context.Request.Path.StartsWithSegments("/api"))
+        context.Response.Headers.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; " +
+            "img-src 'self' blob: data:; style-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; " +
+            "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
     try { await next(context); }
     catch (DbUpdateConcurrencyException) { await Results.Problem(statusCode: 412, title: "El registro cambió; vuelve a cargarlo.").ExecuteAsync(context); }
     catch (DbUpdateException e) when (e.InnerException is PostgresException { SqlState: "23505" })
@@ -175,9 +183,27 @@ app.UseAuthorization();
 app.MapHealthChecks("/health");
 app.MapGet("/health/ready", async (AppDbContext db) =>
     await db.Database.CanConnectAsync() ? Results.Ok(new { status = "ready" }) : Results.StatusCode(503));
-app.MapGet("/", () => Results.Ok(new { servicio = "INTEC Combustible", version = "0.3.0", estado = "tickets, inventario y despacho" }));
+var webRoot = builder.Configuration["WEB_ROOT"];
+// Con WEB_ROOT, "/" es la interfaz; sin él, la raíz describe el servicio.
+if (string.IsNullOrEmpty(webRoot))
+    app.MapGet("/", () => Results.Ok(new { servicio = "INTEC Combustible", version = "0.4.0", estado = "tickets, inventario y despacho" }));
 app.MapOpenApi();
 app.MapAuth(); app.MapUsers(); app.MapCatalogs(); app.MapTickets(); app.MapInventory(); app.MapReports(); app.MapOAuth();
+// Despliegue de un solo origen: Kestrel (TLS 1.3) sirve también la interfaz compilada. Sin proxy
+// inverso, la IP del cliente que ven el límite de tasa y la auditoría es la real.
+if (!string.IsNullOrEmpty(webRoot))
+{
+    var root = Path.GetFullPath(webRoot);
+    if (!File.Exists(Path.Combine(root, "index.html"))) throw new InvalidOperationException($"WEB_ROOT no contiene index.html: {root}");
+    var files = new StaticFileOptions { FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(root) };
+    app.UseStaticFiles(files);
+    // Rutas del SPA (p. ej. /ticket/<clave>) → index.html; /api, /connect y /health nunca caen aquí.
+    // No se usa :nonfile porque la clave del ticket público lleva punto (<id>.<token>); se excluyen
+    // las extensiones reales para que un archivo inexistente dé 404 y no index.html.
+    app.MapFallbackToFile("/", "index.html", files);
+    app.MapFallbackToFile(@"{*path:regex(^(?!api/|api$|connect/|health)(?!.*\.(js|css|png|svg|ico|wasm|webmanifest|json|map|txt)$).+$)}",
+        "index.html", files);
+}
 if (args.Contains("--initialize", StringComparer.Ordinal))
 {
     await DatabaseBootstrap.InitializeAsync(app.Services, builder.Configuration);
