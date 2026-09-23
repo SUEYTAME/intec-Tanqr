@@ -153,7 +153,8 @@ public sealed class TicketService(AppDbContext db, TicketSigner signer, FieldPro
             <li>Combustible: {H(document.FuelType)}</li><li>Cantidad autorizada: {quantity} galones</li>
             <li>Código corto: {H(document.ShortCode)}</li><li>Vence: {expires} (hora de Santo Domingo)</li></ul>
             <p><img src="cid:qr" alt="Código QR del ticket" width="240" height="240"></p>
-            <p>Consulta segura y QR descargable: <a href="{H(document.Url)}">{H(document.Url)}</a></p>
+            <p>Este código lo lee el escáner de la estación; con la cámara del teléfono no abre ninguna página.</p>
+            <p>Para ver el ticket en su teléfono: <a href="{H(document.Url)}">{H(document.Url)}</a></p>
             <p>Ticket de un solo uso. Presente el QR y su cédula en la estación.</p>
             """;
         var text = $"Ticket {document.Number}: {quantity} gal de {document.FuelType} para {document.VehiclePlate}. " +
