@@ -11,14 +11,13 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 ## Fase actual
 
-**Fase 1 — Dominio y autenticación, en curso.** Rama `fase-1-dominio`.
-El usuario delegó el 2026-09-22 generar configuración, resolver pendientes y continuar.
-H-01..H-07 tienen decisión explícita en ADR-007; ADR-008 define la primera entrega.
-No volver a pedir esas mismas autorizaciones. No inventar datos reales de INTEC.
+**Producto funcionalmente completo en rama `fase-2-producto` (último commit `d0ac9c7`, 2026-09-22).**
+Fases 1-5 con código y pruebas; Fase 6 a medias (despliegue, carga, manual, informe).
+Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 ## Acceso sencillo
 
-- Doble clic en `Iniciar.cmd`, o `./scripts/iniciar.ps1` (PowerShell 7).
+- Doble clic en `Iniciar.cmd`, o `powershell -File scripts/iniciar.ps1` (Windows PowerShell 5.1; no hay pwsh).
 - Web: http://localhost:5173. API: http://127.0.0.1:5080.
 - Usuario y contraseña inicial: `artifacts/acceso-local.txt`, ignorado por Git.
 - Secretos generados en `.env`, ignorado; nunca copiar sus valores al vault ni al chat.
@@ -46,25 +45,22 @@ No volver a pedir esas mismas autorizaciones. No inventar datos reales de INTEC.
   navegador con base efímera. Commit posterior `08a91ef`: 24/24 pruebas backend y 4/4 de
   navegador locales; build Release y frontend/lint correctos. Consultar CI de cada commit.
 
+## Estado verificado de Fase 2-6 (2026-09-22)
+
+- Backend 51/51 en PostgreSQL real (Release). Playwright 6/6 escritorio + Pixel 7 emulado.
+- Tickets numerados sin huecos, QR firmado ECDSA, entrega por correo (Mailpit local), despacho
+  atómico, inventario, cierre diario, reportes CSV/XLSX/PDF, dashboard, alertas, programaciones.
+- RS-03 cifrado de datos personales + TLS 1.3; RS-05 OAuth client credentials; RS-06 ancla firmada.
+- PWA instalable; la API nunca se guarda en caché. Base local migrada y empleados cifrados.
+
 ## Lo que falta / límites
 
-- **No producción**: OAuth 2.0/OIDC todavía pendiente; JWT local no lo sustituye (RS-05 parcial).
-- MFA probado vía API e interfaz: alta, recuperación de un solo uso, regeneración y baja.
-  Navegador Chromium escritorio y Pixel 7 emulado; no equivale a Android físico (CA-6).
-- Auditoría no resiste a un superusuario que reconstruya toda la cadena. Revisión de
-  integridad `/api/auditoria/verificar`; destino externo/anclaje aún no implementado.
-- RS-03: AES-256 de datos sensibles y TLS de producción pendientes.
-- Tickets, QR, inventario, despacho, cierres, reportes, notificaciones y PWA aún no implementados.
-- B-01 SMS, B-02 SMTP, B-03 dominio/TLS y B-04 datos reales siguen abiertos para producción.
-  B-05 cantidad física de tanques sigue sin datos reales, pero el modelo admite N tanques.
-- No se tocó `vault/.obsidian/.obsidian/` preexistente sin rastrear.
-
-## Siguiente bloque
-
-1. Revisar Git y bitácora; hay checkpoints de código y commits de continuidad separados.
-2. Resolver cualquier fallo real de la CI de Fase 1 antes de seguir.
-3. Completar seguridad y pruebas pendientes de Fase 1 según [[Tareas pendientes]].
-4. No marcar OAuth, cifrado, QR ni inventario como hechos por tener pantallas o interfaces.
+- Rama `fase-2-producto` **sin push ni CI remota** todavía.
+- Despliegue (Dockerfiles, proxy TLS), prueba de carga, manual de usuario e informe final.
+- Decisión abierta: permisos de escritura de clientes OAuth con rol Supervisor.
+- B-01 SMS, B-02 SMTP institucional, B-03 dominio/certificado, B-04 datos reales: bloquean
+  producción, no el desarrollo. CA-6 requiere un Android físico.
+- No se tocó `vault/.obsidian/` preexistente sin rastrear.
 
 ## Qué abrir según la tarea
 
@@ -75,5 +71,5 @@ No volver a pedir esas mismas autorizaciones. No inventar datos reales de INTEC.
 | Arquitectura | [[Decisiones de arquitectura]], incluidos DESCARTADO y ADR-007/008 |
 | Backend | `backend/src/Combustible.Api/Program.cs`, `Endpoints/`, `Infrastructure/Data/`, `tests/` |
 | Arranque | `scripts/iniciar.ps1`, `scripts/preparar.ps1`, `scripts/config-local.ps1` |
-| Frontend | `frontend/src/App.tsx`, `Administration.tsx`, `api.ts`, `frontend/e2e/` |
+| Frontend | `frontend/src/App.tsx` (menú/rutas), pantallas `*.tsx`, `lib.ts`, `components.tsx`, `screens.css`, `frontend/e2e/` |
 | Colaboración | [[Como trabajamos]]; comprobar archivos estables antes de escribir |

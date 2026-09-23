@@ -46,7 +46,7 @@ y decisiones registradas. Fase 0 cerrada; el desarrollo continúa por delegació
 
 ---
 
-## Fase 1 — Dominio y autenticación (activa)
+## Fase 1 — Dominio y autenticación (verificada)
 
 Cubre RF-01 a RF-04, RS-01, RS-02, RS-05, RS-06.
 
@@ -61,80 +61,45 @@ Cubre RF-01 a RF-04, RS-01, RS-02, RS-05, RS-06.
 - [~] Auditoría transaccional encadenada y permisos SQL; revisar cobertura y recuperación
 - [x] Pruebas de concurrencia de refresh/auditoría y ciclo completo de MFA: 24/24 backend,
       4/4 navegador en escritorio/móvil emulado (`08a91ef`, 2026-09-22)
-- [ ] Integración OAuth 2.0/OIDC (RS-05); JWT local no cierra este requisito
+- [x] OAuth 2.0 client credentials para integraciones (RS-05, ADR-011): `OAuth2_*` 2 pruebas (`2f3013b`)
 - [x] Interfaz para desactivar MFA y gestionar recuperación después del alta
-- [ ] Revisar rutas de cambios de acceso para que todas exijan versión y probar auditoría alterada
-- [ ] Revisión de configuración y secretos de producción antes de desplegar
-- [x] CI ampliada de Fase 1: run `35764488194` correcto para `70972c7`; verificar cada commit posterior
+- [x] Cambios de acceso exigen versión (`Cambio_de_acceso_de_usuario_exige_la_version_vista`); cadena reconstruida detectada por ancla (ADR-012)
+- [ ] Revisión de configuración y secretos de producción antes de desplegar — **[!] B-03**
+- [x] CI ampliada de Fase 1: run `35764488194` correcto para `70972c7`. **La rama `fase-2-producto` aún no se ha empujado ni pasado por CI.**
 
 ---
 
-## Fase 2 — Tickets y QR
+## Fases 2 a 5 — Tickets, inventario, despacho, PWA, reportes (código completo 2026-09-22, rama `fase-2-producto`)
 
-Cubre RF-05 a RF-11, RS-04. Es el núcleo del sistema.
+Evidencia: backend 51/51 (`dotnet test backend -c Release`), Playwright 6/6. Detalle en [[Bitacora de cambios]].
 
-- [ ] Modelo de Solicitud y Ticket con los 7 estados de RF-10
-- [ ] Secuencia de numeración sin duplicados bajo concurrencia (RF-08, CA-1)
-- [ ] Firma criptográfica del QR y verificación (RF-07, RS-04)
-- [ ] Generación del PDF del ticket (RF-06)
-- [ ] `IEmailSender` con implementación de desarrollo a disco (RF-06) — **[!] B-02 para producción**
-- [ ] `ISmsSender` con implementación de desarrollo a disco (RF-09) — **[!] B-01 para producción**
-- [ ] Solicitudes automáticas y recurrentes (RF-05, RF-11)
-- [ ] Transiciones de estado y vencimiento automático (RF-10) — **necesita cerrar H-03**
-- [ ] Pruebas: QR alterado se rechaza, QR reusado se rechaza, QR vencido se rechaza
-
----
-
-## Fase 3 — Inventario y despacho
-
-Cubre RF-12 a RF-18, CA-2, CA-3.
-
-- [ ] Modelo de Tanque, Movimiento de inventario y Despacho — **necesita cerrar H-01**
-- [ ] Despacho atómico: validar QR, descontar inventario y auditar en una sola transacción (CA-3)
-- [ ] Regla de cantidad despachada contra autorizada — **necesita cerrar H-02 y H-04**
-- [ ] Recepción de combustible con RNC, suplidor y factura (RF-16)
-- [ ] Ajustes positivos y negativos con motivo obligatorio (RF-14)
-- [ ] Cierre diario con acta digital y PDF (RF-18)
-- [ ] Prueba de que no existe ruta de despacho que no pase por verificación de QR (CA-2)
-
----
-
-## Fase 4 — PWA de despacho
-
-Cubre RF-13, CA-6.
-
-- [ ] Login y sesión en la PWA (RF-13)
-- [ ] Escaneo de QR con la API de cámara del navegador
-- [ ] Confirmación visual del ticket antes de despachar
-- [ ] Registro de despacho y sincronización (RF-13)
-- [ ] Service worker e instalabilidad
-- [ ] Comportamiento sin conexión — **necesita cerrar H-07**
-- [ ] Prueba de extremo a extremo en un Android real (CA-6)
-
----
-
-## Fase 5 — Reportes, dashboard y notificaciones
-
-Cubre RF-19, RF-20, RF-22, RF-23, CA-5.
-
-- [ ] Consultas de reportes con los 6 filtros de RF-19
-- [ ] Exportación a Excel, CSV y PDF (RF-20, CA-5)
-- [ ] Dashboard ejecutivo con las 6 métricas de RF-22
-- [ ] Motor de notificaciones con las 5 alertas de RF-23
-- [ ] Trabajos programados de vencimiento e inventario bajo
+- [x] Solicitud y Ticket con los 7 estados (RF-10, ADR-009)
+- [x] Numeración sin huecos bajo concurrencia (CA-1): `Emision_concurrente_no_duplica_ni_salta_numeros`
+- [x] Firma ECDSA del QR; alterado, reusado y vencido se rechazan (RS-04)
+- [x] PDF del ticket; correo real a Mailpit por SMTP; SMS solo a bandeja local — **[!] B-01/B-02 para producción**
+- [x] Solicitudes programadas y recurrentes con aprobación automática opcional (RF-05, RF-11)
+- [x] Vencimiento y aviso automáticos (RF-10)
+- [x] Tanques, movimientos, recepciones con RNC, transferencias, ajustes con motivo (RF-14..RF-17)
+- [x] Despacho atómico y sin sobregiro concurrente (CA-3); única ruta de despacho (CA-2)
+- [x] Cierre diario con acta PDF y bloqueo de movimientos del día (RF-18)
+- [x] Reportes con filtros y exportación Excel/CSV/PDF (RF-19, RF-20, CA-5); dashboard (RF-22); alertas (RF-23)
+- [x] PWA: escáner (cámara, lector externo, foto), confirmación de identidad, instalable, API NetworkOnly (H-07)
+- [x] Pantallas web de todos los módulos, menú por rol, ticket público (RF-09)
+- [ ] Prueba de extremo a extremo en un Android físico (CA-6) — requiere dispositivo y HTTPS (B-03)
+- [ ] Decidir si un cliente OAuth con rol Supervisor puede aprobar/anular/escribir inventario (hoy puede; ver bitácora)
 
 ---
 
 ## Fase 6 — Endurecimiento y entrega
 
-Cubre RS-03, CA-7 y el cierre.
-
-- [ ] Cifrado en reposo AES-256 de los campos sensibles (RS-03)
-- [ ] TLS 1.3 en producción — **[!] B-03**
-- [ ] Revisión de seguridad completa (CA-7)
-- [ ] Pruebas de carga contra el requisito de 24/7
-- [ ] Documentación de despliegue y manual de usuario
-- [ ] Capacitación, que el SRS menciona en su propósito
+- [x] Cifrado AES-256-GCM de cédula/correo/móvil con índice ciego (RS-03, ADR-010)
+- [x] Kestrel solo TLS 1.3 (`Kestrel_rechaza_TLS_1_2_y_negocia_TLS_1_3`) — certificado real **[!] B-03**
+- [x] Revisión de seguridad CA-7 (manual, 2026-09-22): sin vulnerabilidades en dependencias; un punto de decisión abierto
+- [ ] Empujar `fase-2-producto` y verificar CI remota
+- [ ] Artefactos de despliegue: Dockerfiles, proxy inverso TLS 1.3 con CSP/frame-ancestors y fallback SPA
+- [ ] Prueba de carga básica
+- [ ] Manual de usuario y guía de capacitación
+- [ ] Informe final
 
 ---
 

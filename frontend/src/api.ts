@@ -38,11 +38,11 @@ async function renew() {
   sessionStore.set((await response.json()) as Session);
   return true;
 }
-export async function api<T>(
+async function request(
   path: string,
-  init: RequestInit = {},
-  retry = true,
-): Promise<T> {
+  init: RequestInit,
+  retry: boolean,
+): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body) headers.set("Content-Type", "application/json");
   if (current) headers.set("Authorization", `Bearer ${current.accessToken}`);
@@ -56,7 +56,7 @@ export async function api<T>(
     renewal ??= renew().finally(() => {
       renewal = null;
     });
-    if (await renewal) return api<T>(path, init, false);
+    if (await renewal) return request(path, init, false);
   }
   if (!response.ok) {
     const data = (await response.json().catch(() => null)) as {
@@ -81,9 +81,29 @@ export async function api<T>(
         `No se pudo completar la operación (${response.status}).`,
     );
   }
+  return response;
+}
+export async function api<T>(
+  path: string,
+  init: RequestInit = {},
+  retry = true,
+): Promise<T> {
+  const response = await request(path, init, retry);
   return response.status === 204
     ? (undefined as T)
     : ((await response.json()) as T);
+}
+// Archivos protegidos (PDF, QR, reportes): el token vive solo en memoria, así que
+// no sirven enlaces directos; se descargan con Authorization y se usan como blob.
+export async function apiBlob(path: string, init: RequestInit = {}) {
+  const response = await request(path, init, true);
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1];
+  const plain = /filename="?([^";]+)"?/i.exec(disposition)?.[1];
+  return {
+    blob: await response.blob(),
+    filename: encoded ? decodeURIComponent(encoded) : (plain ?? null),
+  };
 }
 export async function login(
   email: string,

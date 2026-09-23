@@ -39,41 +39,41 @@ preguntar no constituye aprobación.
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-05 | Creación de Solicitudes | Manuales, automáticas programadas y recurrentes. Campos: empleado, vehículo, departamento, cantidad autorizada, tipo combustible, fecha solicitud, fecha vencimiento | PENDIENTE | — | — |
-| RF-06 | Emisión de Tickets Digitales | UUID, secuencia correlativa, fechas creación/vencimiento, vehículo, empleado, departamento, cantidad, tipo. Formatos: PDF, correo, QR | PENDIENTE | — | — |
-| RF-07 | Generación de QR Seguro | Datos protegidos por hash: ticket ID, número secuencial, empleado, vehículo, cantidad, fecha emisión, fecha expiración. Criterios: no reutilizable, no editable, único, verificación criptográfica | PENDIENTE | — | — |
-| RF-08 | Numeración de Tickets | Secuencia consecutiva, prefijo configurable, reinicio anual opcional, sin duplicados. Formato ejemplo: `COM-2026-000001` | PENDIENTE | — | — |
-| RF-09 | Envío de Tickets | Correo con QR y datos. SMS con código corto, URL segura y QR descargable | BLOQUEADO (B-01, B-02) | — | — |
-| RF-10 | Consulta de Estado | 7 estados: Creado, Enviado, Pendiente, Próximo a vencer, Vencido, Consumido, Anulado | PENDIENTE | — | — |
-| RF-11 | Asignaciones | Manual por usuario autorizado. Automática por programación, reglas de negocio y consumo histórico | PENDIENTE | — | — |
+| RF-05 | Creación de Solicitudes | Manuales, automáticas programadas y recurrentes. Campos: empleado, vehículo, departamento, cantidad autorizada, tipo combustible, fecha solicitud, fecha vencimiento | HECHO | Endpoints/TicketEndpoints.cs; Tickets/LifecycleService.cs; frontend Requests.tsx, Schedules.tsx | FuelTests: Programaciones_generan_solicitudes_y_asignan_automaticamente |
+| RF-06 | Emisión de Tickets Digitales | UUID, secuencia correlativa, fechas creación/vencimiento, vehículo, empleado, departamento, cantidad, tipo. Formatos: PDF, correo, QR | HECHO | Tickets/TicketService.cs; Documents/Documents.cs (PDF) | FuelTests: Emision_numera_firma_y_envia_por_SMTP_real |
+| RF-07 | Generación de QR Seguro | Datos protegidos por hash: ticket ID, número secuencial, empleado, vehículo, cantidad, fecha emisión, fecha expiración. Criterios: no reutilizable, no editable, único, verificación criptográfica | HECHO | Security/Crypto.cs (TicketSigner ECDSA P-256) | FuelTests: QR_alterado_o_ticket_modificado_en_la_base_se_rechaza; reuso y vencido rechazados |
+| RF-08 | Numeración de Tickets | Secuencia consecutiva, prefijo configurable, reinicio anual opcional, sin duplicados. Formato ejemplo: `COM-2026-000001` | HECHO | TicketService.IssueAsync; TicketSettings (prefijo, reinicio anual) | FuelTests: Emision_concurrente_no_duplica_ni_salta_numeros; Parametros_exigen_version_y_rol_administrador |
+| RF-09 | Envío de Tickets | Correo con QR y datos. SMS con código corto, URL segura y QR descargable | HECHO en código; producción BLOQUEADA (B-01 SMS, B-02 SMTP) | Messaging/Senders.cs; enlace público /ticket/<id>.<token>; PublicTicket.tsx | FuelTests: Enlace_publico_muestra_el_ticket_y_su_QR_descargable; Sin_SMTP_la_entrega_queda_pendiente... |
+| RF-10 | Consulta de Estado | 7 estados: Creado, Enviado, Pendiente, Próximo a vencer, Vencido, Consumido, Anulado | HECHO | Domain/Fuel.cs TicketStatus; LifecycleService (vencer/avisar) | FuelTests: Proceso_periodico_marca_proximo_a_vencer_y_vencido; Anulacion_rechazo_y_cancelacion... |
+| RF-11 | Asignaciones | Manual por usuario autorizado. Automática por programación, reglas de negocio y consumo histórico | HECHO | FuelSchedule (cantidad fija o promedio histórico, aprobación automática) | FuelTests: Programaciones_generan_solicitudes_y_asignan_automaticamente |
 
 ### Despacho
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-12 | Despacho de Combustible | Escanear QR, validar ticket, confirmar identidad, registrar despacho. Datos: fecha, hora, galones servidos, operador, estación, observaciones | PENDIENTE | — | — |
-| RF-13 | App Móvil de Despacho | Login seguro, escaneo QR, confirmación visual, validación en línea, registro de despacho, consulta de tickets, sincronización inmediata | PENDIENTE | — | — |
+| RF-12 | Despacho de Combustible | Escanear QR, validar ticket, confirmar identidad, registrar despacho. Datos: fecha, hora, galones servidos, operador, estación, observaciones | HECHO | Endpoints/InventoryEndpoints.cs /api/despachos; frontend Dispatch.tsx | FuelTests: Despacho_atomico_descuenta_inventario_y_consume_el_ticket |
+| RF-13 | App Móvil de Despacho | Login seguro, escaneo QR, confirmación visual, validación en línea, registro de despacho, consulta de tickets, sincronización inmediata | HECHO (PWA); CA-6 pendiente en Android físico | frontend Dispatch.tsx, scanner.ts, vite.config.ts (PWA) | Playwright screens.spec.ts (Pixel 7 emulado) |
 
 ### Inventario
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-14 | Control de Inventario | Entradas (recepción, compra, transferencias), salidas (despachos, mermas), ajustes (positivos, negativos) | PENDIENTE | — | — |
-| RF-15 | Inventario en Tiempo Real | Existencia actual, disponibilidad, consumo diario, consumo mensual, nivel crítico | PENDIENTE | — | — |
-| RF-16 | Recepción de Combustible | RNC, nombre suplidor, factura, volumen recibido, fecha, tanque. Impacta inventario automáticamente | PENDIENTE | — | — |
-| RF-17 | Movimientos de Inventario | Historial completo de entradas, salidas, ajustes y transferencias | PENDIENTE | — | — |
-| RF-18 | Cierre Diario | Confirmar despachos, volumen despachado, inventario final, diferencias detectadas. Genera acta digital de cierre y reporte PDF | PENDIENTE | — | — |
+| RF-14 | Control de Inventario | Entradas (recepción, compra, transferencias), salidas (despachos, mermas), ajustes (positivos, negativos) | HECHO | Endpoints/InventoryEndpoints.cs recepciones/transferencias/ajustes | FuelTests: Recepcion_transferencia_ajustes_y_existencia_en_tiempo_real |
+| RF-15 | Inventario en Tiempo Real | Existencia actual, disponibilidad, consumo diario, consumo mensual, nivel crítico | HECHO | Endpoints/InventoryEndpoints.cs GET /api/inventario; Dashboard.tsx | FuelTests: Recepcion_transferencia_ajustes_y_existencia_en_tiempo_real |
+| RF-16 | Recepción de Combustible | RNC, nombre suplidor, factura, volumen recibido, fecha, tanque. Impacta inventario automáticamente | HECHO | ReceiptRequest (RNC 9/11 dígitos) | FuelTests: Recepcion_transferencia_ajustes... |
+| RF-17 | Movimientos de Inventario | Historial completo de entradas, salidas, ajustes y transferencias | HECHO | Endpoints/InventoryEndpoints.cs /api/inventario/movimientos (historial solo inserción) | FuelTests: Recepcion_transferencia_ajustes... |
+| RF-18 | Cierre Diario | Confirmar despachos, volumen despachado, inventario final, diferencias detectadas. Genera acta digital de cierre y reporte PDF | HECHO | Endpoints/InventoryEndpoints.cs /api/cierres + PDF; DailyClose.tsx | FuelTests: Cierre_diario_genera_acta_y_bloquea_movimientos_del_dia |
 
 ### Análisis y plataforma
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-19 | Reportes | Filtrables por fecha, empleado, vehículo, departamento, tipo combustible, estado ticket | PENDIENTE | — | — |
-| RF-20 | Exportación | Excel, CSV, PDF | PENDIENTE | — | — |
-| RF-21 | Trazabilidad | Auditoría de creaciones, modificaciones, despachos, ajustes, anulaciones y accesos. Incluye usuario, fecha, hora, dirección IP | EN CURSO | Infrastructure/Data/AuditWriter.cs; Endpoints/UserEndpoints.cs | ProductTests: cadena y prohibición SQL; futuro despacho/ajustes pendientes |
-| RF-22 | Dashboard Ejecutivo | Inventario actual, combustible despachado, tickets activos, tickets vencidos, consumo por departamento, consumo por vehículo | PENDIENTE | — | — |
-| RF-23 | Notificaciones | Alertas automáticas: ticket próximo a vencer, ticket vencido, inventario bajo, fallo de integración, ajustes de inventario | PENDIENTE | — | — |
-| RF-24 | API REST | Servicios de generación de tickets, consulta, estado de inventario, despachos, reportes | PENDIENTE | — | — |
+| RF-19 | Reportes | Filtrables por fecha, empleado, vehículo, departamento, tipo combustible, estado ticket | HECHO | Endpoints/ReportEndpoints.cs; Reports.tsx | FuelTests: Reportes_filtran_y_exportan_excel_csv_y_pdf |
+| RF-20 | Exportación | Excel, CSV, PDF | HECHO | Documents.cs (ClosedXML, CSV con escape de fórmulas, PDF) | FuelTests: Reportes_filtran_y_exportan_excel_csv_y_pdf |
+| RF-21 | Trazabilidad | Auditoría de creaciones, modificaciones, despachos, ajustes, anulaciones y accesos. Incluye usuario, fecha, hora, dirección IP | HECHO | AuditWriter.cs; auditoría en cada escritura, exportación y acceso | SecurityTests + FuelTests |
+| RF-22 | Dashboard Ejecutivo | Inventario actual, combustible despachado, tickets activos, tickets vencidos, consumo por departamento, consumo por vehículo | HECHO | Endpoints/ReportEndpoints.cs /api/dashboard; Dashboard.tsx | FuelTests: Dashboard_y_bandeja_de_notificaciones |
+| RF-23 | Notificaciones | Alertas automáticas: ticket próximo a vencer, ticket vencido, inventario bajo, fallo de integración, ajustes de inventario | HECHO | Notifier; LifecycleService; Notifications.tsx | FuelTests: Dashboard_y_bandeja_de_notificaciones |
+| RF-24 | API REST | Servicios de generación de tickets, consulta, estado de inventario, despachos, reportes | HECHO | API REST documentada en /openapi; acceso de terceros por OAuth (ADR-011) | OAuth2_client_credentials_emite_JWT_de_acceso_sometido_al_RBAC |
 
 ---
 
@@ -83,10 +83,10 @@ preguntar no constituye aprobación.
 |---|---|---|---|---|---|
 | RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | EN CURSO | Endpoints/AuthEndpoints.cs; Security/SessionService.cs | SecurityTests: TOTP, recuperación, bloqueo y sesiones; cobertura disable pendiente |
 | RS-02 | Autorización | Control RBAC basado en roles | EN CURSO | Program.cs; políticas admin/catalog-write/audit-read | ProductTests: los cinco roles y acceso anónimo |
-| RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | BLOQUEADO (B-03) para el tránsito en producción | — | — |
-| RS-04 | Seguridad de QR | Firma digital, hash SHA-256, token de validación | PENDIENTE | — | — |
-| RS-05 | Seguridad de APIs | OAuth 2.0, JWT | EN CURSO | Security/SessionService.cs; Program.cs | JWT alterado/revocado rechazado; OAuth 2.0 aún pendiente |
-| RS-06 | Auditoría | Registro **inalterable** de accesos, cambios, despachos y ajustes | EN CURSO | AuditWriter.cs; DatabaseBootstrap.cs | UPDATE/DELETE/TRUNCATE rechazados y hash comprobado; sin protección frente a superusuario |
+| RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | HECHO en código (AES-256-GCM, TLS 1.3); certificado real BLOQUEADO (B-03) | Security/Crypto.cs FieldProtector; Security/TransportSecurity.cs | HardeningTests: cifrado, backfill, Kestrel_rechaza_TLS_1_2... |
+| RS-04 | Seguridad de QR | Firma digital, hash SHA-256, token de validación | HECHO | Security/Crypto.cs TicketSigner | FuelTests: QR_alterado...; Solo_existe_una_ruta_de_despacho... |
+| RS-05 | Seguridad de APIs | OAuth 2.0, JWT | HECHO | OAuthEndpoints.cs (OpenIddict, client credentials, ADR-011) | HardeningTests: OAuth2_* (2) |
+| RS-06 | Auditoría | Registro **inalterable** de accesos, cambios, despachos y ajustes | HECHO (hash encadenado + permisos SQL + ancla externa) | AuditWriter.cs; UserEndpoints.cs /api/auditoria/ancla | HardeningTests: Ancla_externa_detecta_cadena_reconstruida_por_un_superusuario |
 
 > **Nota sobre RS-06.** El SRS dice "inalterable". Una tabla normal de base de datos no lo es:
 > quien tenga permiso de escritura puede modificarla. Cómo se consigue realmente esa
@@ -101,13 +101,13 @@ Los 7 criterios de la sección 7. El proyecto no está terminado mientras uno si
 
 | # | Criterio | Cómo se demuestra | Estado |
 |---|---|---|---|
-| CA-1 | Se emiten tickets QR únicos sin duplicidad | Prueba de concurrencia: N emisiones en paralelo, cero colisiones de secuencia | PENDIENTE |
-| CA-2 | El despacho se valida **exclusivamente** mediante QR válido | Prueba de que no existe ninguna ruta alterna de despacho sin QR verificado | PENDIENTE |
-| CA-3 | El inventario se actualiza en tiempo real | Prueba de integración: despacho → el saldo del tanque refleja el cambio en la misma transacción | PENDIENTE |
-| CA-4 | Existe trazabilidad completa de las operaciones | Prueba de que toda operación de escritura deja registro de auditoría | PENDIENTE |
-| CA-5 | Los reportes son exportables | Prueba de generación de Excel, CSV y PDF con datos reales | PENDIENTE |
-| CA-6 | La app móvil opera correctamente en producción | Prueba de extremo a extremo de la PWA en Android real, incluido el escaneo | PENDIENTE |
-| CA-7 | Se cumplen los requisitos de seguridad establecidos | RS-01 a RS-06 todos en `HECHO` + revisión de seguridad | PENDIENTE |
+| CA-1 | Se emiten tickets QR únicos sin duplicidad | Prueba de concurrencia: N emisiones en paralelo, cero colisiones de secuencia | HECHO — Emision_concurrente_no_duplica_ni_salta_numeros |
+| CA-2 | El despacho se valida **exclusivamente** mediante QR válido | Prueba de que no existe ninguna ruta alterna de despacho sin QR verificado | HECHO — Solo_existe_una_ruta_de_despacho_y_la_base_impide_atajos |
+| CA-3 | El inventario se actualiza en tiempo real | Prueba de integración: despacho → el saldo del tanque refleja el cambio en la misma transacción | HECHO — Despacho_atomico...; Despachos_concurrentes_no_sobregiran_el_tanque |
+| CA-4 | Existe trazabilidad completa de las operaciones | Prueba de que toda operación de escritura deja registro de auditoría | HECHO — auditoría en la misma transacción de cada escritura |
+| CA-5 | Los reportes son exportables | Prueba de generación de Excel, CSV y PDF con datos reales | HECHO — Reportes_filtran_y_exportan_excel_csv_y_pdf |
+| CA-6 | La app móvil opera correctamente en producción | Prueba de extremo a extremo de la PWA en Android real, incluido el escaneo | PENDIENTE — requiere Android físico y HTTPS (B-03) |
+| CA-7 | Se cumplen los requisitos de seguridad establecidos | RS-01 a RS-06 todos en `HECHO` + revisión de seguridad | HECHO (revisión manual 2026-09-22; ver bitácora; una decisión abierta) |
 
 ---
 

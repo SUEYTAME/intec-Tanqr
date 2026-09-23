@@ -21,6 +21,10 @@ test("login, crear, editar y desactivar un departamento; cerrar sesión", async 
   await page.getByLabel("Contraseña", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   await expect(
+    page.getByRole("heading", { name: "Panel", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Departamentos", exact: true }).click();
+  await expect(
     page.getByRole("heading", { name: "Departamentos", exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Nuevo registro" }).click();

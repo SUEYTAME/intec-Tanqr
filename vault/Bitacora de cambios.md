@@ -278,3 +278,36 @@ frontend build/lint correctos. Arranque local PostgreSQL healthy y API/web acces
 Credenciales conservadas en archivos ignorados; cuentas `qa-mfa-...@example.test` usadas
 por el navegador quedan inactivas. No se cambió MFA de la cuenta administradora local.
 Pendiente: revisar rutas de acceso, auditoría alterada, OAuth/OIDC y seguridad de producción.
+
+## 2026-09-22 — Fase 2-6: tickets, inventario, despacho, seguridad e interfaz completa (Claude)
+
+Rama `fase-2-producto` (desde `fase-1-dominio` @4f7635a). Continúa el trabajo de Astra.
+
+| Commit | Qué |
+|---|---|
+| `804ca44` | Dominio/infra: combustibles, estaciones, tanques, tickets, solicitudes, programaciones, despachos, movimientos, recepciones, cierres, notificaciones. Firma ECDSA P-256 del QR, cifrado AES-256-GCM de campos, PDF/CSV/XLSX |
+| `2db1065` | API: solicitudes→aprobación→ticket numerado sin huecos, entrega correo/SMS tras commit, despacho atómico, cierre diario con bloqueo, reportes, dashboard, alertas, ciclo de vida (vencer/avisar/programaciones/reintentos). 44/44 |
+| `bf60ba1` | Scripts compatibles con Windows PowerShell 5.1 (no hay pwsh), Mailpit local, claves en CI |
+| `e9a2750` | `GET /api/tickets/{id}/qr.png` para Admin/Supervisor, auditado |
+| `2f3013b` | RS-03 cifrado de cédula/correo/móvil con índice ciego + backfill; TLS 1.3 exclusivo; RS-05 OAuth 2.0 client credentials (OpenIddict 7.7.1); RS-06 ancla firmada; versión obligatoria en `/acceso`. **51/51** |
+| `d0ac9c7` | Interfaz completa: panel, solicitudes, tickets, programaciones, despacho con escáner QR, cierre, inventario, reportes, notificaciones, parámetros, integraciones, ticket público; menú por rol; PWA (API NetworkOnly); ícono |
+
+Verificación (2026-09-22/23):
+
+```powershell
+dotnet test backend -c Release                 # 51/51 (antes de d0ac9c7; backend sin cambios después)
+cd frontend; npm run build; npx oxlint          # OK, 0 avisos
+powershell -File scripts/iniciar.ps1 -Reiniciar # migraciones EncryptEmployeePersonalData y OAuthClientCredentials aplicadas; 1/1 empleados cifrados
+powershell -File scripts/probar-interfaz.ps1    # Playwright 6/6 (escritorio + Pixel 7)
+npm audit                                       # 0 vulnerabilidades
+dotnet list package --vulnerable --include-transitive  # ninguno
+```
+
+Hallazgos y correcciones durante la verificación:
+- El agente de frontend (falló por límite de gasto) dejó pantallas sin CSS: añadido `screens.css`.
+- TS2774 en `Dispatch.tsx` (mediaDevices es `undefined` en HTTP) → comprobación con `typeof`.
+- Con todos los módulos el menú lateral no cabía en 720 px: ahora se desplaza dentro de la barra (lo detectó `screens.spec.ts`).
+- `mfa.spec.ts` no enviaba la versión a `/acceso` (400 tras 2f3013b). Corregido.
+- `mfa.spec.ts` chocaba con el límite de 60/min/IP de `/api/auth` al correr 6 pruebas seguidas; espera una ventana nueva en lugar de relajar el límite.
+
+Revisión de seguridad CA-7 (manual, 2026-09-22): enlace público con token de 128 bits, comparación en tiempo constante y límite de tasa; sin `innerHTML`/`eval`; tokens solo en memoria; `no-store` y `nosniff` en la API; dependencias sin vulnerabilidades. **Pendiente de decisión del usuario:** un cliente OAuth con rol Supervisor puede aprobar solicitudes, anular tickets y escribir inventario (solo despacho y cierre exigen `sid`).

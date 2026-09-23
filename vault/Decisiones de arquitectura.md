@@ -225,3 +225,44 @@ sustituto de OAuth. No hay registro público; alta de usuarios solo Administrado
 
 La delegación permite continuar desarrollo con validación local mientras CI externa se
 resuelve; ninguna ejecución remota fallida se etiqueta como exitosa.
+
+## ADR-009 — Estados del ticket y semántica de entrega
+
+**Fecha:** 2026-09-22. Estados: Created, Sent, Pending, NearExpiry, Expired, Consumed, Voided.
+La entrega (correo/SMS) ocurre **después** del commit del ticket (ADR-005): una falla de SMTP
+nunca revierte la emisión. `Pending` = entrega fallida o solo en bandeja local. La bandeja
+local (outbox) **nunca** cuenta como enviada. SMS es solo outbox hasta resolver B-01.
+Numeración sin huecos con fila contador (`INSERT … ON CONFLICT DO UPDATE … RETURNING`), no
+SEQUENCE, porque una SEQUENCE deja huecos al revertir.
+
+## ADR-010 — Cifrado de datos personales del empleado (RS-03 en reposo)
+
+**Fecha:** 2026-09-22. Cédula, correo y móvil se guardan con AES-256-GCM por campo
+(prefijo `v1:`, propósito como datos asociados, subclaves HKDF). La unicidad de cédula usa
+un índice ciego HMAC-SHA256 (`NationalIdHash`). La clave es `DATA_ENCRYPTION_KEY` (32 bytes).
+Los registros anteriores se cifran al inicializar (`encrypt_backfill`, auditado).
+**Advertencia:** el `Down` de la migración no descifra; revertirla deja datos cifrados en
+columnas que la versión anterior lee como texto. Perder la clave = perder esos datos.
+
+## ADR-011 — OAuth 2.0 client credentials para integraciones (reemplaza la redacción de ADR-008)
+
+**Fecha:** 2026-09-22. RS-05 se cumple con OpenIddict 7.7.1 emitiendo JWT `at+jwt` por
+client credentials a sistemas externos, cada cliente atado a un rol (Supervisor, Auditor o
+Consulta; nunca Administrador ni Despachador). Los usuarios interactivos conservan el login
+propio con MFA (ADR-008); Authorization Code + PKCE queda **DESCARTADO por ahora**: no hay
+proveedor de identidad institucional confirmado (B-03/B-04). Despacho y cierre exigen `sid`
+(sesión humana), así que ningún cliente OAuth puede despachar ni cerrar.
+
+## ADR-012 — Ancla externa de la auditoría (RS-06)
+
+**Fecha:** 2026-09-22. `GET /api/auditoria/ancla` firma (ECDSA, dominio `AUDIT-ANCHOR-v1`)
+el último id, hash y conteo de la cadena. Guardada fuera del sistema (correo, papel, WORM),
+`POST /api/auditoria/ancla/verificar` detecta que un superusuario reconstruyó o truncó la
+cadena. La interfaz de Auditoría la descarga en JSON.
+
+## ADR-013 — Entorno local: Windows PowerShell 5.1 y Mailpit
+
+**Fecha:** 2026-09-22. La máquina solo tiene Windows PowerShell 5.1: los scripts evitan
+APIs de PowerShell 7 y usan `Invoke-Native` para ejecutables que escriben en stderr.
+El correo local va a Mailpit (SMTP 127.0.0.1:11025, UI 18025) hasta tener el SMTP
+institucional (B-02). La PWA nunca guarda respuestas de la API (NetworkOnly, H-07).
