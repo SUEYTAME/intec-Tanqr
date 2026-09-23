@@ -134,7 +134,8 @@ public sealed class FuelTests(ApiFixture fixture)
             var message = messages.GetProperty("messages").EnumerateArray().Single(x => x.GetProperty("Subject").GetString() == $"Ticket de combustible {issued.Number}");
             Assert.True(message.GetProperty("Attachments").GetInt32() >= 1);
             var sms = Directory.GetFiles(fixture.OutboxDirectory, "*.sms.txt").Select(File.ReadAllText).Where(x => x.Contains(issued.Number, StringComparison.Ordinal));
-            Assert.Single(sms);
+            // "12.500 gal" se leería como doce mil quinientos: el texto para personas no rellena ceros.
+            Assert.Contains("12.5 gal", Assert.Single(sms), StringComparison.Ordinal);
             var pdf = await admin.GetAsync($"/api/tickets/{issued.TicketId}/pdf");
             Assert.Equal("application/pdf", pdf.Content.Headers.ContentType!.MediaType);
             Assert.StartsWith("%PDF", Encoding.ASCII.GetString((await pdf.Content.ReadAsByteArrayAsync())[..4]), StringComparison.Ordinal);
