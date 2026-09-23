@@ -62,7 +62,7 @@ function Login() {
     <main className="login-layout">
       <section className="login-intro">
         <div className="brand">
-          INTEC<span>COMBUSTIBLE</span>
+          INTEC<span>TanQR</span>
         </div>
         <div>
           <p className="eyebrow">GESTIÓN INSTITUCIONAL</p>
@@ -76,7 +76,7 @@ function Login() {
             reportes en un solo lugar.
           </p>
         </div>
-        <small>Plataforma de tickets digitales de combustible</small>
+        <small>TanQR · Tickets digitales de combustible</small>
       </section>
       <section className="login-panel">
         <form onSubmit={submit}>
@@ -398,7 +398,7 @@ export default function App() {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          INTEC<span>COMBUSTIBLE</span>
+          INTEC<span>TanQR</span>
         </div>
         <nav aria-label="Navegación principal">
           {groups.map(([title, items]) => (
@@ -431,7 +431,7 @@ export default function App() {
           </p>
         )}
         <header>
-          <span>Plataforma de gestión de combustible</span>
+          <span>TanQR · Gestión de combustible</span>
           <div>
             <span>
               {session.displayName}
@@ -461,7 +461,7 @@ export default function App() {
           {screen()}
         </main>
         <footer>
-          INTEC · Gestión de combustible
+          INTEC · TanQR
           <span>Trazabilidad completa de cada galón</span>
         </footer>
       </div>
