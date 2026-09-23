@@ -35,3 +35,4 @@ Thumbs.db
 
 # Secretos de producción (plantilla: deploy/produccion.env.example)
 deploy/produccion.env
+.copilot-azure/

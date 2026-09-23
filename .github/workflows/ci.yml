@@ -100,6 +100,7 @@ jobs:
       - name: Construir y publicar la revisión probada
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
@@ -112,4 +113,8 @@ jobs:
           docker push "$image:sha-$GITHUB_SHA"
           docker tag "$image:sha-$GITHUB_SHA" "$image:fase-2-producto"
           docker push "$image:fase-2-producto"
+          package="users/$GITHUB_REPOSITORY_OWNER/packages/container/${GITHUB_REPOSITORY#*/}"
+          visibility=$(gh api "$package" --jq '.visibility')
+          test "$visibility" = private
+          gh api "$package" --jq '{visibility: .visibility, html_url: .html_url}'
           printf 'Imagen publicada: `%s:sha-%s`\n' "$image" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"

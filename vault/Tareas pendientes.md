@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-22
+actualizado: 2026-09-23
 ---
 
 # Tareas pendientes
@@ -65,13 +65,13 @@ Cubre RF-01 a RF-04, RS-01, RS-02, RS-05, RS-06.
 - [x] Interfaz para desactivar MFA y gestionar recuperación después del alta
 - [x] Cambios de acceso exigen versión (`Cambio_de_acceso_de_usuario_exige_la_version_vista`); cadena reconstruida detectada por ancla (ADR-012)
 - [ ] Revisión de configuración y secretos de producción antes de desplegar — **[!] B-03**
-- [x] CI ampliada de Fase 1: run `35764488194` correcto para `70972c7`. **La rama `fase-2-producto` aún no se ha empujado ni pasado por CI.**
+- [x] CI ampliada de Fase 1: run `35764488194` correcto para `70972c7`. Rama `fase-2-producto` subida el 2026-09-22; CI de entrega en Fase 6.
 
 ---
 
 ## Fases 2 a 5 — Tickets, inventario, despacho, PWA, reportes (código completo 2026-09-22, rama `fase-2-producto`)
 
-Evidencia: backend 51/51 (`dotnet test backend -c Release`), Playwright 6/6. Detalle en [[Bitacora de cambios]].
+Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `35814915846` backend52/52 y Playwright6/6 correctos. Detalle en [[Bitacora de cambios]].
 
 - [x] Solicitud y Ticket con los 7 estados (RF-10, ADR-009)
 - [x] Numeración sin huecos bajo concurrencia (CA-1): `Emision_concurrente_no_duplica_ni_salta_numeros`
@@ -95,7 +95,12 @@ Evidencia: backend 51/51 (`dotnet test backend -c Release`), Playwright 6/6. Det
 - [x] Cifrado AES-256-GCM de cédula/correo/móvil con índice ciego (RS-03, ADR-010)
 - [x] Kestrel solo TLS 1.3 (`Kestrel_rechaza_TLS_1_2_y_negocia_TLS_1_3`) — certificado real **[!] B-03**
 - [x] Revisión de seguridad CA-7 (manual, 2026-09-22): sin vulnerabilidades en dependencias; un punto de decisión abierto
-- [ ] Empujar `fase-2-producto` y verificar CI remota
+- [x] Empujar `fase-2-producto` y verificar CI remota — `35814915846` correcta para `4c105d7`
+- [x] Publicar contenedor en GHCR tras CI — digest `daa6cbab29efa116317bbff111ca9afa849e08580948c414ad07d499f86aa50b`
+- [x] Verificar privacidad del paquete: CI `35818197956` de `345e623` correcta; API devuelve `visibility: private`
+- [x] Identificar cuenta Azure INTEC, verificar cuotas y precio, preparar IaC (`345e623`; Bicep y conformance correctos)
+- [!] Reautenticar sesión Azure INTEC con MFA: what-if rechazado, usuario ya autorizado a crear/desplegar
+- [ ] Desplegar en Azure INTEC, instalar app/PostgreSQL/secretos/certificado, configurar correo y backups, verificar HTTPS/login/restauración
 - [x] Despliegue de un solo origen (Kestrel TLS 1.3 + CSP), Dockerfile y compose de producción probados (`1c05ca7`)
 - [x] Prueba de carga básica: 250 rps, 0 errores (base casi vacía; repetir con volumen real)
 - [x] Manual de usuario con ejercicios de capacitación (`docs/manual-usuario.md`)

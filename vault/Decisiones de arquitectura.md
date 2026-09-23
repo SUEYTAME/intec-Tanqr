@@ -266,3 +266,22 @@ cadena. La interfaz de Auditoría la descarga en JSON.
 APIs de PowerShell 7 y usan `Invoke-Native` para ejecutables que escriben en stderr.
 El correo local va a Mailpit (SMTP 127.0.0.1:11025, UI 18025) hasta tener el SMTP
 institucional (B-02). La PWA nunca guarda respuestas de la API (NetworkOnly, H-07).
+
+## ADR-014 — Primera publicación Azure en la cuenta INTEC
+
+**Fecha:** 2026-09-23. **Estado:** aceptada por autorización explícita del usuario para
+crear todos los recursos necesarios, exclusivamente en su cuenta INTEC.
+
+Suscripción `44f41884-c42a-4162-898f-d83d8d987ff3` (Azure for Students). Una VM Ubuntu con
+Docker Compose preserva el despliegue probado: Kestrel termina TLS 1.3 y ve la IP cliente.
+PostgreSQL17 permanece privado, con volumen persistente. Key Vault guarda secretos;
+Blob privado será el destino de respaldos fuera de la VM. IaC en `infra/`; detalle y costo
+en `docs/azure.md`. Diseño de capacidad pequeña, no alta disponibilidad institucional.
+
+**DESCARTADO en esta entrega:** introducir proxy/PaaS y cambiar el tratamiento de IP/TLS
+sin necesidad para alojar la aplicación. B1ms/B2s no están disponibles para esta suscripción;
+B2ats_v2 tiene solo1GiB. B2als_v2 (2CPU/4GiB) tiene cuota y disponibilidad verificadas en
+`northcentralus`. No se reutilizan recursos de otras cuentas/proyectos.
+
+La autorización está concedida; el bloqueo operativo es MFA de Azure, no falta de permiso
+del usuario. La infraestructura preparada no debe describirse como desplegada.

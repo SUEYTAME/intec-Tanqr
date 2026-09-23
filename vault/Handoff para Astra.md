@@ -1,6 +1,32 @@
-# Handoff para Astra (actualizado 2026-09-22)
+# Handoff para Astra (actualizado 2026-09-23)
 
-Rama: `fase-2-producto` (creada desde `fase-1-dominio` @4f7635a). Nada empujado todavía a remoto.
+Rama: `fase-2-producto` (creada desde `fase-1-dominio` @4f7635a), **subida a remoto el 2026-09-22**.
+
+## Continuación de Astra — publicación
+
+El usuario autorizó subir todo a GitHub y continuar la publicación. Código de Claude `09d740d`
+subido; `4c105d7` añade GHCR condicionado a los tres jobs de CI. Ejecución
+`35814915846` **correcta**: backend52/52, navegador6/6, frontend y contenedor.
+`345e623` prepara IaC Azure y verifica privacidad del paquete. CI `35818197956` **correcta**:
+backend 52/52, navegador 6/6, frontend y contenedor; API confirmó `visibility: private`.
+Imagen: `ghcr.io/sueytame/intec-combustible:sha-345e6231e2fc1d69ec2c99a0fa5300471793da62`.
+Digest: `sha256:5e9e7f1d61b1b73407a52234cd9761491161ade095fdb265be748f31f4b6af64`.
+**Nueva instrucción:** crear todo lo necesario en Azure, exclusivamente en cuenta INTEC.
+Cuenta1128305@est.intec.edu.do; suscripción44f41884-c42a-4162-898f-d83d8d987ff3;
+tenant6856181f-daf8-4725-ac51-dd9f7dfe2f2b. Pasar siempre --subscription: la CLI también
+tiene otra cuenta. Cuotas verificadas B2als_v2/4GiB northcentralus;~USD36.29/mes.
+Leer `docs/azure.md`, `infra/`, `scripts/azure-infra.ps1`. Bicep sin avisos y conformance correctos.
+**Bloqueo exacto:** Azure rechazó what-if por falta de MFA. No se creó el grupo/VM; group exists=false.
+Se inició `az login --tenant ... --use-device-code`; el usuario debe completar Microsoft/MFA.
+Si la sesión expiró, iniciar otra; no intentar esquivar MFA. La autorización de despliegue ya existe.
+OAuth sigue pendiente de decisión: no se cambiaron permisos ni se creó cliente externo.
+INTEC es el contexto del repositorio/SRS; sus recursos reales no son un requisito para una demo.
+
+Continuidad de Azure (ignorada por Git): `.copilot-azure/sessions/b805f7aa-7186-4692-98e7-df81256974cc/`.
+Clave SSH en `artifacts/azure/id_ed25519`; no regenerarla ni subirla. Subagente IaC agotó cuota;
+main generó/revisó IaC localmente. No se atribuye una revisión independiente inexistente.
+Runtime pendiente: certificados ACME/renovación, secretos KeyVault, Docker app/PG, correo,
+backupBlob+restauración y smoke login/TLS. ACS SMTP investigado, sin recursos Entra/correo creados.
 
 ## Hecho y verificado (backend)
 | Commit | Contenido |
@@ -20,8 +46,7 @@ Stack local reiniciado con el backend nuevo (migraciones aplicadas, empleados ci
 Vault al día: Bitácora, ADR-009..013, Estado actual, Tareas pendientes, Trazabilidad.
 
 ## Lo que queda (en orden)
-1. `git push -u origin fase-2-producto` y verificar CI (`.github/workflows/ci.yml`; e2e de CI usa `scripts/ci-e2e.sh`,
-   revisar que `screens.spec.ts` y `mfa.spec.ts` —espera 61 s por el límite de /api/auth— pasen allí).
+1. Completar MFA y desplegar Azure según `docs/azure.md`; verificar CI del último commit.
 2. **Decisión del usuario pendiente:** cliente OAuth con rol Supervisor hoy puede aprobar solicitudes, anular tickets y
    escribir inventario (solo despacho/cierre exigen `sid`). Si se restringe: añadir `.RequireClaim("sid")` a las políticas
    `request-approve`, `inventory-write`, `catalog-write` en `Program.cs` + prueba.

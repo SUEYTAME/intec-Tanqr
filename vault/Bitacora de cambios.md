@@ -331,3 +331,72 @@ Verificación:
   `sw.js`, manifiesto y `.wasm` con tipo correcto; `/api/no-existe` → 404; login admin OK.
   Se añadió `libgssapi-krb5-2` porque Npgsql lo sondeaba y dejaba "Error:" en el log.
 - Carga 50 usuarios × 30 s: 7552 solicitudes, 250,6 rps, 0 errores (base casi vacía).
+
+## 2026-09-22 — Continuación de Astra: GitHub y distribución del contenedor
+
+**Commit de implementación:** `4c105d7`, sobre el relevo de Claude `09d740d`.
+El usuario autorizó subir todo a GitHub y continuar con la publicación.
+
+- Subida `fase-2-producto` al repositorio privado existente. No se incluyeron `.env`,
+  credenciales, certificados, datos locales ni `vault/.obsidian/` preexistente.
+- CI incorpora un job de distribución que depende de backend, frontend y navegador.
+  Construye el Dockerfile y publica en GHCR con `GITHUB_TOKEN`, permiso `packages: write`
+  limitado al job, etiqueta por SHA completo y etiqueta de rama. No se publica desde PR.
+- `docs/despliegue.md` explica cómo descargar una revisión para el compose existente.
+  README/informe/vault distinguen la demo de la operación institucional: no hace falta
+  esperar datos reales ni recursos de INTEC para una demo; sí acordar hosting y finalidad.
+- Se consultó Azure en lectura: suscripción activa con recursos de otros proyectos, sin
+  alojamiento de combustible identificado. No se crearon recursos ni se cambiaron servicios.
+- OAuth conserva los permisos anteriores mientras se resuelve la pregunta al usuario.
+  No se cerró ningún RF/RS ni se atribuyó una nueva revisión de seguridad a esta sesión.
+
+Verificación local repetida:
+
+| Comando | Resultado |
+|---|---|
+| `dotnet test backend -c Release --nologo` | 52/52, PostgreSQL y SMTP de pruebas reales en contenedores |
+| `npm run build` en `frontend` | correcto, incluida generación de PWA |
+| `npm run lint` en `frontend` | correcto |
+| `git diff --check` | correcto |
+
+La primera CI de `09d740d` (`35814838109`) fue cancelada automáticamente al subir
+`4c105d7`; no se cuenta como éxito. CI de publicación: `35814915846`, **success**.
+Backend52/52, frontendbuild/lint, navegador6/6 y Docker publicados. Digest de GHCR:
+`sha256:daa6cbab29efa116317bbff111ca9afa849e08580948c414ad07d499f86aa50b`.
+
+## 2026-09-23 — Azure INTEC autorizado, infraestructura preparada, MFA pendiente
+
+**Commit:** `345e623`. Usuario autorizó crear/desplegar todo lo necesario en cuenta INTEC;
+pidió conservar objetivo/contexto al compactar. Se registró continuidad en este vault y
+sesión local ignorada `.copilot-azure/sessions/b805f7aa-7186-4692-98e7-df81256974cc/`.
+
+- Identificada Azure for Students44f41884-c42a-4162-898f-d83d8d987ff3,
+  cuenta1128305@est.intec.edu.do, tenant6856181f-daf8-4725-ac51-dd9f7dfe2f2b.
+- Registrados proveedores Compute/Network/KeyVault/Storage; solicitada inscripción Communication.
+  Sin recursos de aplicación creados. La suscripción LegatTech-Bot no se modificó.
+- Cuotas REST y restricciones SKU verificadas por subagente: B2als_v2 en northcentralus,
+  2CPU4GiB, totalregional6/0usados, familia10/0, IPStandard3/0. B1ms/B2s restringidos.
+- Precio consultado por subagente en Retail API:36.29USD/mes730h, excluye excesos/impuestos/email.
+- IaC en `infra/`, arranque administrativo `scripts/azure-infra.ps1`, ADR-014, `docs/azure.md`.
+  SSH solo IPadministrador,80ACME/443TLS, disco64GiB, MI, KeyVaultRBAC y Blob privado.
+- `az bicep build --file infra/main.bicep --stdout`: correcto sin avisos tras usar versiones
+  GA disponibles con esquema local (las GA2026 nuevas aún no tenían tipos para varios recursos).
+  `scaffold-conformance.ps1`: `passed:true`, sin fallos. Se ejecutó en PowerShell7.6.5
+  incluido en runtimeCodex; WindowsPowerShell5.1 no interpretó UTF8 del script externo.
+- `scripts/azure-infra.ps1` what-if: **rechazado por Azure por sesión sin MFA**.
+  `az group exists --name rg-intec-fuel-dev-b805 --subscription ...` → false.
+  Se abrió reautenticación device-code para el usuario. No se eludió la exigencia.
+- Subagente IaC agotó cuota antes de escribir; IaC generado/revisado por main. No hay revisión
+  independiente completa ni validación ARM concluida. Aplicación/certificados/backups aún sin desplegar.
+- CLI GitHub sin `read:packages`: consulta de privacidad devolvió403. CI ahora verifica
+  `visibility=private` con `GITHUB_TOKEN`; el push anterior sí terminó correctamente.
+- Código de aplicación sin cambios: se conserva evidencia local52/52, frontendbuild/lint y
+  CI52/52+navegador6/6. `git diff --check` correcto. No se cerraron RF/RS nuevos.
+
+**Cierre de publicación:** CI `35818197956` de `345e623` terminó **success**:
+backend **52/52**, navegador **6/6**, frontend build/lint y Docker. La API de GitHub,
+consultada con el token de Actions, confirmó **`visibility: private`**. Paquete:
+https://github.com/users/SUEYTAME/packages/container/package/intec-combustible.
+Digest final `sha256:5e9e7f1d61b1b73407a52234cd9761491161ade095fdb265be748f31f4b6af64`.
+Las notas de continuidad se subieron en `d8a653f`; este añadido solo registra el resultado
+final y usa `[skip ci]` porque no modifica código ni infraestructura. Azure sigue pendiente de MFA.

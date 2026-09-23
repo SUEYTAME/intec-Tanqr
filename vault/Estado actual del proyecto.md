@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-22
+actualizado: 2026-09-23
 ---
 
 # Estado actual del proyecto
@@ -11,8 +11,10 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 ## Fase actual
 
-**Producto funcionalmente completo en rama `fase-2-producto` (último commit `d0ac9c7`, 2026-09-22).**
-Fases 1-5 con código y pruebas; Fase 6 a medias (despliegue, carga, manual, informe).
+**Producto en rama `fase-2-producto`, subida a GitHub (Claude `09d740d`; publicación `4c105d7`; Azure IaC `345e623`).**
+Fases 1-5 con código y pruebas; Fase 6 con contenedor local, carga, manual e informe.
+CI de `345e623` correcta y contenedor privado publicado. Infraestructura Azure preparada;
+**MFA de Microsoft bloquea validación/despliegue**, aún no hay servidor público.
 Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 ## Acceso sencillo
@@ -47,7 +49,9 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 ## Estado verificado de Fase 2-6 (2026-09-22)
 
-- Backend 51/51 en PostgreSQL real (Release). Playwright 6/6 escritorio + Pixel 7 emulado.
+- Backend **52/52**, repetido por Astra en PostgreSQL real (Release, 2026-09-22).
+  Frontend build/lint repetidos correctamente. CI independiente `35814915846`: backend52/52,
+  navegador6/6, frontend y publicación del contenedor correctos.
 - Tickets numerados sin huecos, QR firmado ECDSA, entrega por correo (Mailpit local), despacho
   atómico, inventario, cierre diario, reportes CSV/XLSX/PDF, dashboard, alertas, programaciones.
 - RS-03 cifrado de datos personales + TLS 1.3; RS-05 OAuth client credentials; RS-06 ancla firmada.
@@ -55,11 +59,23 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 ## Lo que falta / límites
 
-- Rama `fase-2-producto` **sin push ni CI remota** todavía.
+- Rama `fase-2-producto` **subida**. CI `35818197956` correcta para `345e623`:
+  backend 52/52, navegador 6/6, frontend build/lint y publicación. API de GitHub confirmó
+  `visibility: private` del contenedor desde el token de Actions.
+- El job de GHCR publica la imagen privada tras backend, frontend y navegador correctos.
+  La imagen publicada no equivale a una aplicación alojada.
 - Despliegue probado con imagen Docker (`docs/despliegue.md`); carga, manual e informe hechos.
 - Decisión abierta: permisos de escritura de clientes OAuth con rol Supervisor.
-- B-01 SMS, B-02 SMTP institucional, B-03 dominio/certificado, B-04 datos reales: bloquean
-  producción, no el desarrollo. CA-6 requiere un Android físico.
+- B-01 SMS, B-02 SMTP institucional, B-03 dominio/certificado, B-04 datos reales: pendientes
+  para operación real. Una demo puede usar datos ficticios y correo de prueba, identificados
+  como tales; no necesita esperar recursos institucionales.
+  CA-6 requiere un Android físico.
+- Usuario autorizó **todo lo necesario en su cuenta Azure INTEC**. Cuenta
+  `1128305@est.intec.edu.do`, suscripción `44f41884-c42a-4162-898f-d83d8d987ff3` (Azure for Students).
+  No usar `LegatTech-Bot`. Plan en `docs/azure.md`: B2als_v2,4GiB,northcentralus,~USD36.29/mes.
+- `infra/main.bicep` compila sin avisos; conformance correcto. `scripts/azure-infra.ps1`
+  what-if rechazado por MFA. `az group exists rg-intec-fuel-dev-b805` → false.
+  Hay autorización; falta que el usuario complete la reautenticación personal de Microsoft.
 - No se tocó `vault/.obsidian/` preexistente sin rastrear.
 
 ## Qué abrir según la tarea
