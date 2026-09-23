@@ -110,7 +110,11 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] **Disponibilidad 24/7 durante el mes de demo (hasta ~2026-10-23):** el usuario solo necesita ~1 mes; crédito ≈ USD 92.7 alcanza ≈ 2 meses, se mantiene la VM actual (2026-09-23). Plan B si el saldo real < USD 45: VM gratuita B2ats_v2 + Premium SSD P6
 - [x] Reinicio de la VM verificado: vuelve sola, `/health` y login 200, `RestartCount=0` (2026-09-23)
 - [x] Vigilancia (ADR-017): prueba estándar `/health` cada 15 min + certificado, alerta por correo, presupuesto USD 45/mes; primera ejecución 100 % (2026-09-23)
-- [!] Verificación de alertas por correo: OTP original vencido; re-guardar (CLI y portal) no reenvía; prueba de notificación bloqueada ("Free subscription not supported"). Opción: push de la app móvil de Azure en el mismo grupo de acciones (decisión del usuario)
+- [x] Alertas verificadas de punta a punta por **push** (app Microsoft Azure del usuario): prueba sin caída apuntando la prueba a `/health/prueba-alerta`, "Fired" 15:43 UTC y "Resolved" 16:08 UTC recibidos (2026-09-23). El correo no está verificado (OTP vencido, Azure no reenvía) y no llega
+- [ ] SMS real (RF-09 lo pide; la función está programada y prueba en bandeja): contratar proveedor NO es necesario para presentar. Solo si INTEC adopta el sistema
+- [ ] Correo/dominio institucional y datos reales: NO los pide el SRS; solo si INTEC adopta el sistema
+- [ ] Carga masiva (CSV/Excel) de empleados, vehículos y tanques para B-04: hoy solo existe alta uno a uno en Catálogos
+- [ ] Adaptador de SMS real (`ISmsSender`) cuando se elija proveedor (B-01): hoy solo existe `OutboxSmsSender`
 - [x] Datos DEMO ficticios para que la demo no se vea vacía (2026-09-23, ver bitácora)
 - [ ] **Rediseño de la UI** (el usuario la ve genérica): decisión pendiente del usuario; no empezar sin ella
 - [x] Galones legibles ("10" y no "10.000") en correo/SMS/PDF/acta/mensajes; desplegado `9fed40e` (2026-09-23)

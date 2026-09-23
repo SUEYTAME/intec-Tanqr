@@ -10,8 +10,12 @@ y dan el enlace para el teléfono. Saldo real confirmado por el usuario: **USD 9
 Regla del usuario: "decide por mí" = leyes de UX/UI + práctica real, explicado y con ADR (AGENTS.md).
 **Grupo de acciones:** receptor `propietario-intec` → 1128305@est.intec.edu.do, "Subscribed" en el portal, pero el
 OTP original venció y re-guardar (CLI y portal) no envió otro; la prueba de notificación está bloqueada en esta
-suscripción ("Free subscription not supported"). Entrega de alertas NO verificada. Alternativa propuesta al usuario:
-notificación push de la app móvil de Azure (sin OTP).
+suscripción ("Free subscription not supported"). **Alertas verificadas por push** (receptor `propietario-app`, app Microsoft
+Azure del usuario): prueba sin caída → "Fired" y "Resolved" recibidos 2026-09-23. Para repetir la prueba: desplegar
+`infra/monitoreo.bicep` con `healthUrl=.../health/prueba-alerta` (404) y luego `scripts/azure-monitoreo.ps1 -Deploy`.
+**Alcance aclarado con el usuario:** presenta una parte del proyecto pero quiere terminarlo. SMS real, correo/dominio
+institucional y datos reales NO son necesarios para presentar (SMS programado; el resto no lo pide el SRS).
+Android físico queda pendiente hasta que el usuario tenga uno. Extra opcional ofrecido: carga masiva desde Excel/CSV.
 **Datos DEMO cargados 2026-09-23** (ver bitácora): 4 combustibles, 4 departamentos, 6 empleados, 6 vehículos, estación
 `DEMO-CAMPUS`, tickets COM-2026-000002..7. Correos de empleados DEMO no son entregables (6 avisos de envío fallido, a propósito).
 **UI:** el usuario la ve genérica y quiere rediseñarla; **decisión pendiente, no tocar la UI hasta que la tome**.

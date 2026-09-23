@@ -584,4 +584,11 @@ en `infra/monitoreo.bicep` y se desplegó (what-if: solo recursos de monitoreo; 
 **Verificado con:** salida del script (todas las altas HTTP 2xx, despachos 16.2/19.8/13.5/2.7 gal, despachador
 desactivado HTTP 204); `/api/dashboard` con los 4 tanques y `DEMO-C-GP` `critical: true`; `/api/notificaciones`
 7 (6 `IntegrationFailure`, 1 `LowInventory`). **Commit:** este registro. **Requisitos afectados:** ninguno (datos de demo).
+**Seguimiento (usuario: "si"):** receptor push `propietario-app` (app móvil Microsoft Azure, misma cuenta) añadido en
+`infra/monitoreo.bicep` y desplegado; `az monitor action-group show` lo lista; `/health` 200. Entrega no probada (sin prueba en suscripción gratuita).
+**Prueba real de alerta sin caída:** 15:41 UTC la prueba de disponibilidad se apuntó a `/health/prueba-alerta` (404; `/health`
+seguía 200) → AlertsManagement `alerta-demo-caida` **Fired 15:43:21 UTC** → prueba devuelta a `/health` con
+`azure-monitoreo.ps1 -Deploy`. Correo de alerta: **no llegó** (buzón INTEC vía conector Outlook) → el receptor de correo no
+está verificado. **Push a la app de Azure: el usuario confirmó que recibió "Fired" y después "Resolved"** (este último
+16:08:23 UTC según AlertsManagement, por la ventana de 15 min). Vigilancia de punta a punta verificada por push; el correo no sirve de canal.
 **Commit:** `ea54529` (código) + este registro. **Requisitos afectados:** RF-06, RF-09 (presentación).
