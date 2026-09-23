@@ -210,7 +210,8 @@ export function Catalog({
     }
   }
   const display = (field: Field, row: Row) => {
-    if (!field.ref) return String(row[field.key]);
+    // La API omite cédula/correo/móvil a quien no es Administrador ni Supervisor (ADR-016).
+    if (!field.ref) return field.key in row ? String(row[field.key]) : "Restringido";
     const item = refs[field.ref.route]?.find((x) => x.id === row[field.key]);
     return item ? refName(item) : "…";
   };

@@ -132,16 +132,21 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("admin", p => p.RequireRole(Roles.Administrator));
-    options.AddPolicy("catalog-write", p => p.RequireRole(Roles.Administrator, Roles.Supervisor));
+    // ADR-016: escribir catálogos, aprobar/anular e inventario exigen una persona con sesión (claim sid);
+    // un cliente OAuth, aunque tenga rol Supervisor, solo consulta y crea solicitudes.
+    options.AddPolicy("catalog-write", p => p.RequireRole(Roles.Administrator, Roles.Supervisor).RequireClaim("sid"));
     options.AddPolicy("audit-read", p => p.RequireRole(Roles.Administrator, Roles.Auditor));
     // Actores del SRS §3: Consulta hace de solicitante; Supervisor aprueba, recibe y ajusta;
     // Despachador despacha y cierra; Auditor consulta y exporta.
     options.AddPolicy("request-create", p => p.RequireRole(Roles.Administrator, Roles.Supervisor, Roles.Viewer));
-    options.AddPolicy("request-approve", p => p.RequireRole(Roles.Administrator, Roles.Supervisor));
-    options.AddPolicy("inventory-write", p => p.RequireRole(Roles.Administrator, Roles.Supervisor));
-    // Despacho y cierre exigen persona con sesión (claim sid): H-05 pide confirmar la cédula en persona.
-    options.AddPolicy("dispatch", p => p.RequireRole(Roles.Dispatcher, Roles.Supervisor).RequireClaim("sid"));
-    options.AddPolicy("close", p => p.RequireRole(Roles.Dispatcher, Roles.Supervisor).RequireClaim("sid"));
+    options.AddPolicy("request-approve", p => p.RequireRole(Roles.Administrator, Roles.Supervisor).RequireClaim("sid"));
+    options.AddPolicy("inventory-write", p => p.RequireRole(Roles.Administrator, Roles.Supervisor).RequireClaim("sid"));
+    // Datos personales del empleado (cédula, correo, móvil): solo Administrador y Supervisor con sesión.
+    options.AddPolicy("employee-pii", p => p.RequireRole(Roles.Administrator, Roles.Supervisor).RequireClaim("sid"));
+    // Despacho y cierre: solo Despachador con sesión (SRS §3.3). H-05 pide confirmar la cédula en persona,
+    // y quien aprueba tickets no los despacha (separación de funciones, ADR-016).
+    options.AddPolicy("dispatch", p => p.RequireRole(Roles.Dispatcher).RequireClaim("sid"));
+    options.AddPolicy("close", p => p.RequireRole(Roles.Dispatcher).RequireClaim("sid"));
     options.AddPolicy("user", p => p.RequireAuthenticatedUser().RequireClaim("sid"));
     options.AddPolicy("reports", p => p.RequireRole(Roles.Administrator, Roles.Supervisor, Roles.Auditor, Roles.Viewer));
 });

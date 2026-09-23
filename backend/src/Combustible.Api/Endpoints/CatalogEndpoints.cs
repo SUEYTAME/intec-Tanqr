@@ -1,6 +1,7 @@
 using Combustible.Application;
 using Combustible.Domain;
 using Combustible.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Combustible.Api.Endpoints;
@@ -18,7 +19,7 @@ public static class CatalogEndpoints
             e.Code = r.Code.Trim().ToUpperInvariant(); e.FullName = r.FullName.Trim(); e.NationalId = r.NationalId;
             e.DepartmentId = r.DepartmentId; e.Position = r.Position.Trim(); e.Email = r.Email.Trim();
             e.Mobile = r.Mobile.Trim(); e.Active = r.Active;
-        });
+        }, redact: e => new { e.Id, e.Code, e.FullName, e.DepartmentId, e.Position, e.Active, e.Version });
         Map<Vehicle, VehicleRequest>(app, "vehiculos", (e, r) =>
         {
             e.Plate = r.Plate.Trim().ToUpperInvariant(); e.InternalCode = r.InternalCode.Trim().ToUpperInvariant();
@@ -58,23 +59,29 @@ public static class CatalogEndpoints
         await ValidDepartmentAsync(db, entity) ? null : "Departamento inactivo o precisión inválida.";
 
     private static void Map<TEntity, TRequest>(WebApplication app, string route, Action<TEntity, TRequest> apply,
-        Func<AppDbContext, TEntity, TEntity?, Task<string?>>? validate = null)
+        Func<AppDbContext, TEntity, TEntity?, Task<string?>>? validate = null, Func<TEntity, object>? redact = null)
         where TEntity : CatalogEntity, new() where TRequest : class
     {
         validate ??= async (db, entity, previous) => await ValidDepartmentAsync(db, entity, previous);
+        // Sin la política employee-pii, la lectura omite los campos personales (redact).
+        async Task<Func<TEntity, object>> ViewAsync(HttpContext http) =>
+            redact is not null && !(await http.RequestServices.GetRequiredService<IAuthorizationService>().AuthorizeAsync(http.User, "employee-pii")).Succeeded
+                ? redact : entity => entity;
         var group = app.MapGroup($"/api/{route}").RequireAuthorization().AddEndpointFilter<RequestValidationFilter>();
-        group.MapGet("/", async (AppDbContext db, int page = 1, int pageSize = 50) =>
+        group.MapGet("/", async (AppDbContext db, HttpContext http, int page = 1, int pageSize = 50) =>
         {
             if (page < 1 || page > 100000 || pageSize is < 1 or > 100) return Results.BadRequest();
             var query = db.Set<TEntity>().AsNoTracking();
-            return Results.Ok(new { items = await query.OrderBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(), total = await query.CountAsync() });
+            var view = await ViewAsync(http);
+            var items = await query.OrderBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            return Results.Ok(new { items = items.Select(view), total = await query.CountAsync() });
         });
         group.MapGet("/{id:guid}", async (Guid id, AppDbContext db, HttpContext http) =>
         {
             var entity = await db.Set<TEntity>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == id);
             if (entity is null) return Results.NotFound();
             http.Response.Headers.ETag = $"\"{entity.Version}\"";
-            return Results.Ok(entity);
+            return Results.Ok((await ViewAsync(http))(entity));
         });
         Func<TRequest, AppDbContext, AuditWriter, HttpContext, Task<IResult>> create = async (request, db, audit, http) =>
         {
