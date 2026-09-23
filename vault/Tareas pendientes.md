@@ -131,6 +131,10 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 
 ---
 
+## Repositorio
+
+- [x] Poner `fase-2-producto` como rama predeterminada de GitHub; conservar las ramas de fases anteriores.
+
 ## Reglas del backlog
 
 - Una tarea marcada `[x]` significa que **se corrió la prueba y pasó**, no que se escribió el código.

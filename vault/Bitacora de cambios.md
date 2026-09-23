@@ -592,3 +592,39 @@ seguía 200) → AlertsManagement `alerta-demo-caida` **Fired 15:43:21 UTC** →
 está verificado. **Push a la app de Azure: el usuario confirmó que recibió "Fired" y después "Resolved"** (este último
 16:08:23 UTC según AlertsManagement, por la ventana de 15 min). Vigilancia de punta a punta verificada por push; el correo no sirve de canal.
 **Commit:** `ea54529` (código) + este registro. **Requisitos afectados:** RF-06, RF-09 (presentación).
+## 2026-09-23 — Plataforma renombrada a TanQR (solo UI), historial sin coautor y despliegue de `040d45b` (Claude)
+
+**Agente:** Claude. **Pedido:** renombrar la plataforma (el usuario eligió **TanQR**), solo en la UI si el cambio
+completo es grande; quitar a Claude como coautor en GitHub sin tocar `CLAUDE.md`/`AGENTS.md`.
+
+- Nombre: `040d45b` cambia marca, `<title>`, manifiesto PWA (`name`/`short_name`), encabezado, pie y login.
+  Namespaces `Combustible.*`, Docker, repo, correos y PDF **no** cambian. Encabezados de columna "Combustible"
+  (tipo de combustible) tampoco: no son la marca.
+- Historial reescrito (`git filter-branch --msg-filter`) en `fase-0/1/2`: se quitaron las líneas
+  `Co-Authored-By: Claude …` de 27 commits; árboles idénticos (diff vacío). Force-push con lease.
+  **Todos los hashes anteriores a hoy citados en este vault ya no existen en el historial** (p. ej. `ea54529`).
+  Respaldo previo: `C:\Dev\intec-combustible-respaldo-2026-09-23.bundle` (fuera del repo).
+- Configuración global de Claude Code: `attribution.commit/pr = ""` para que no vuelva a firmar.
+- Verificación: CI de `040d45b` verde (backend, frontend, navegador, GHCR). `instalar.sh` → `REVISION=040d45b…`,
+  `SRC_SHA256=11172f53…`; Blob subido (463 902 bytes), `run-command` terminó con `{"status":"ready"}`.
+  Desde internet: `<title>TanQR · INTEC</title>`, manifiesto `TanQR`, bundle sin textos de marca viejos.
+
+## 2026-09-23 — Rama predeterminada de GitHub alineada con TanQR (Codex)
+
+**Origen:** la página del repositorio mostraba avisos `Compare & pull request` para las
+ramas de Fase 1 y Fase 2 después de la reescritura del historial. La predeterminada
+seguía siendo `fase-0-entorno`, aunque el producto actual está en `fase-2-producto`.
+
+- Se comprobó que `fase-0-entorno` y `fase-1-dominio` son ancestros de
+  `fase-2-producto`; no había PR abiertas ni ramas protegidas. No se creó una PR.
+- Se estableció `fase-2-producto` como rama predeterminada en GitHub y se actualizó
+  `origin/HEAD` local. Las tres ramas se conservaron. Los avisos de pushes recientes
+  pueden seguir apareciendo temporalmente; no indican un fallo de la aplicación.
+- El cambio no concede acceso al repositorio privado a los coautores: se requiere
+  invitación y aceptación como colaboradores.
+
+**Verificado con:** API de GitHub (`default_branch=fase-2-producto`), `git merge-base
+--is-ancestor`, `git symbolic-ref refs/remotes/origin/HEAD` y estado local limpio
+(salvo `vault/.obsidian/` preexistente, sin rastrear). Código sin cambios; pruebas
+backend 58/58 y build frontend correctos en este mismo bloque de trabajo.
+**Commit de la nota:** este registro. **Requisitos afectados:** ninguno del SRS.

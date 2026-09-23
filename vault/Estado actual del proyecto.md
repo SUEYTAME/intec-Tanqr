@@ -57,6 +57,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
   atómico, inventario, cierre diario, reportes CSV/XLSX/PDF, dashboard, alertas, programaciones.
 - RS-03 cifrado de datos personales + TLS 1.3; RS-05 OAuth client credentials; RS-06 ancla firmada.
 - PWA instalable; la API nunca se guarda en caché. Base local migrada y empleados cifrados.
+- GitHub usa `fase-2-producto` como rama predeterminada; conserva las ramas de Fase 0 y Fase 1.
 
 ## Lo que falta / límites
 
