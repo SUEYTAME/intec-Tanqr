@@ -1,6 +1,6 @@
 # Publicación en Azure — INTEC
 
-Actualizado: 2026-09-23. **Desplegada y verificada.** Es una demo con datos ficticios.
+Actualizado: 2026-09-28. **Desplegada y verificada.** Es una demo con datos ficticios.
 
 **URL:** https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
 
@@ -65,8 +65,8 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
 5. Subir el código probado y ejecutar el instalador en la VM (sin SSH, ver ADR-015):
 
    ```powershell
-   git archive --format=tar.gz -o artifacts/azure/src-345e623.tar.gz 345e6231e2fc1d69ec2c99a0fa5300471793da62
-   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-345e623.tar.gz -f artifacts/azure/src-345e623.tar.gz --overwrite
+   git archive --format=tar.gz -o artifacts/azure/src-18a1e17.tar.gz 18a1e175c7c21d64cccee866b367b64f12752779
+   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-18a1e17.tar.gz -f artifacts/azure/src-18a1e17.tar.gz --overwrite
    az vm run-command invoke --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 -g rg-intec-fuel-dev-b805 -n vm-intec-fuel-dev-b805 --command-id RunShellScript --scripts '@deploy/azure/instalar.sh'
    ```
 
@@ -127,10 +127,12 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** construida en la VM desde `ea54529`, no descargada de GHCR (paquete privado sin credencial en la VM).
+- **Imagen:** `intec-combustible:0.4.0-18a1e17`, construida en la VM desde el paquete privado
+  `src-18a1e17.tar.gz` (SHA-256 `93abb4079cdffee680c0059be35a50163e36f8506f5e2bcf7e6ea6a6ce364254`),
+  no descargada de GHCR. Despliegue comprobado el 2026-09-28 con `/health/ready` HTTP 200.
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
-- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `ea54529` (ADR-016, galones legibles, QR explicado: ADR-018).
+- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `18a1e17` (incluye paneles por rol, ADR-016, galones legibles y QR explicado: ADR-018).
 - **Alertas:** Azure exige que el titular verifique su correo en el grupo de acciones (OTP de 30 min);
   sin eso la alerta `alerta-demo-caida` no se entrega.
 - Data Protection guarda sus claves dentro del contenedor (aviso en el arranque). Solo afecta al token de restablecimiento de contraseña, que se genera y consume en la misma petición.

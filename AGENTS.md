@@ -20,9 +20,6 @@ seguridad (RS-01..RS-06). El SRS manda; cuando nos desviamos, queda un ADR que l
 4. Si existe el vault local, abre **solo** lo que el Estado actual te mande. No cargues el vault entero: no hace falta
    y quema contexto que necesitas para el código.
 
-Si el usuario dice solo **"continúa con el programa"**, eso significa: pasos 1-4 y luego
-ejecutar la siguiente tarea pendiente sin volver a preguntar qué toca.
-
 **El nombre del archivo es el índice.** Están en lenguaje natural para que decidas qué abrir
 sin abrirlo.
 
