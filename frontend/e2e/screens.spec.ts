@@ -6,7 +6,6 @@ const screens: [string, string][] = [
   ["Solicitudes", "Solicitudes"],
   ["Tickets", "Tickets"],
   ["Programaciones", "Programaciones"],
-  ["Cierre diario", "Cierre diario"],
   ["Inventario", "Inventario"],
   ["Reportes", "Reportes"],
   ["Notificaciones", "Notificaciones"],
@@ -43,6 +42,7 @@ test("todas las pantallas cargan sin errores y los reportes consultan", async ({
   await page.screenshot({ path: `../artifacts/panel-${testInfo.project.name}.png`, fullPage: true });
   // El administrador no despacha (política dispatch: solo Despachador, ADR-016).
   await expect(page.getByRole("button", { name: "Despacho", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cierre diario", exact: true })).toHaveCount(0);
 
   for (const [nav, heading] of screens) {
     await page.getByRole("button", { name: nav, exact: false }).first().click();
