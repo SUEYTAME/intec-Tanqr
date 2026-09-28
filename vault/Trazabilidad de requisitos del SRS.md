@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-23
+actualizado: 2026-09-28
 ---
 
 # Trazabilidad de requisitos del SRS
@@ -30,7 +30,7 @@ preguntar no constituye aprobación.
 
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
-| RF-01 | Gestión de Usuarios | Crear, modificar, desactivar, perfiles y roles, reset de contraseña, políticas de acceso. 5 roles mínimos: Administrador, Supervisor, Despachador, Auditor, Consulta | HECHO | API Endpoints/UserEndpoints.cs; frontend/Administration.tsx | SecurityTests: Edicion_de_usuario_es_atomica_y_reset_revoca_sesiones, Desactivar_cuenta_revoca_JWT_y_refresh; ProductTests: RBAC_limita_escritura_y_auditoria |
+| RF-01 | Gestión de Usuarios | Crear, modificar, desactivar, perfiles y roles, reset de contraseña, políticas de acceso. 5 roles mínimos: Administrador, Supervisor, Despachador, Auditor, Consulta | HECHO | API Endpoints/UserEndpoints.cs; frontend/Administration.tsx; frontend/App.tsx | SecurityTests: Edicion_de_usuario_es_atomica_y_reset_revoca_sesiones, Desactivar_cuenta_revoca_JWT_y_refresh; ProductTests: RBAC_limita_escritura_y_auditoria; Playwright roles.spec.ts (5 roles, escritorio/móvil, 2026-09-28) |
 | RF-02 | Gestión de Empleados | Código, nombre, cédula, departamento, cargo, correo, teléfono móvil, estado | HECHO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: Empleados_y_vehiculos_requieren_departamento...; Edicion_de_empleado_y_vehiculo_recifra_y_conserva_unicidad (2026-09-23) |
 | RF-03 | Gestión de Vehículos | Placa, ficha, marca, modelo, año, tipo, departamento, capacidad tanque, odómetro, estado | HECHO | Domain/Catalogs.cs; Endpoints/CatalogEndpoints.cs | CatalogTests: precisión, odómetro, relaciones; Edicion_de_empleado_y_vehiculo_recifra_y_conserva_unicidad (2026-09-23) |
 | RF-04 | Gestión de Departamentos | Crear, modificar, asociar empleados, asociar vehículos | HECHO | Endpoints/CatalogEndpoints.cs; frontend/src/App.tsx | ProductTests: Persistencia_versiones_y_auditoria_transaccional; Playwright catalogs.spec.ts; empleados/vehículos asociados por departmentId |
@@ -82,7 +82,7 @@ preguntar no constituye aprobación.
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
 | RS-01 | Autenticación | Usuario/contraseña, MFA opcional, gestión de sesiones | HECHO | Endpoints/AuthEndpoints.cs; Security/SessionService.cs | SecurityTests: MFA_necesita_codigo_valido..., Cinco_fallos_bloquean..., JWT_alterado...; e2e mfa.spec.ts (alta/baja); login real verificado en Azure 2026-09-23 |
-| RS-02 | Autorización | Control RBAC basado en roles | HECHO | Program.cs; políticas por rol | ProductTests: RBAC_limita_escritura_y_auditoria, Sin_token_no_hay_acceso. Ver hallazgos 2026-09-23 (lectura de empleados, OAuth Supervisor) |
+| RS-02 | Autorización | Control RBAC basado en roles | HECHO | Program.cs; políticas por rol; frontend/App.tsx (visibilidad por rol) | ProductTests: RBAC_limita_escritura_y_auditoria, Sin_token_no_hay_acceso; Playwright roles.spec.ts (matriz completa de navegación, 2026-09-28). Las lecturas de API necesarias para OAuth/RF-24 se conservan separadas de la visibilidad de paneles humanos. |
 | RS-03 | Cifrado | Tránsito: TLS 1.3. Reposo: AES-256 | HECHO en código (AES-256-GCM, TLS 1.3); **verificado en Azure 2026-09-23** con certificado Let's Encrypt del FQDN de demo (TLS 1.3 ok, TLS 1.2 rechazado, `docs/azure.md`); dominio institucional sigue B-03 | Security/Crypto.cs FieldProtector; Security/TransportSecurity.cs | HardeningTests: cifrado, backfill, Kestrel_rechaza_TLS_1_2... |
 | RS-04 | Seguridad de QR | Firma digital, hash SHA-256, token de validación | HECHO | Security/Crypto.cs TicketSigner | FuelTests: QR_alterado...; Solo_existe_una_ruta_de_despacho... |
 | RS-05 | Seguridad de APIs | OAuth 2.0, JWT | HECHO | OAuthEndpoints.cs (OpenIddict, client credentials, ADR-011) | HardeningTests: OAuth2_* (2) |

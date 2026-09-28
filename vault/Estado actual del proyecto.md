@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-23
+actualizado: 2026-09-28
 ---
 
 # Estado actual del proyecto
@@ -42,6 +42,9 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - React: login, catálogos editables, administración de usuarios, MFA y consulta de auditoría.
   Tokens solo en memoria. No hay datos reales precargados. Las pruebas UI dejan registros
   `QA-` / `Prueba UI` inactivos, expresamente ficticios.
+- Navegación por rol corregida el 2026-09-28 (`be50048`): Despachador solo ve Tickets,
+  Despacho, Cierre diario y Mi seguridad; Supervisor, Auditor y Consulta tienen menús ajustados
+  a los actores del SRS. Playwright valida los cinco roles en escritorio y móvil.
 - Build Release backend sin avisos/errores; tests PostgreSQL real y navegador registrados
   en la bitácora. Build/lint frontend correctos. Auditoría NuGet sin vulnerabilidades reportadas.
 - CI ampliada de Fase 1 correcta para `70972c7`: run `35764488194`, backend, frontend y

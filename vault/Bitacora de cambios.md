@@ -628,3 +628,27 @@ seguía siendo `fase-0-entorno`, aunque el producto actual está en `fase-2-prod
 (salvo `vault/.obsidian/` preexistente, sin rastrear). Código sin cambios; pruebas
 backend 58/58 y build frontend correctos en este mismo bloque de trabajo.
 **Commit de la nota:** este registro. **Requisitos afectados:** ninguno del SRS.
+
+## 2026-09-28 — Paneles visibles según rol (Codex)
+
+**Origen:** se reportó que el Despachador podía ver Departamentos, Empleados y otros paneles
+ajenos a su función. Se contrastó la interfaz con los actores del SRS §3 y ADR-016.
+
+- `frontend/src/App.tsx`: matriz de navegación por rol. Administrador ve todos los módulos salvo
+  Despacho/Cierre; Supervisor ve operación, inventario, reportes, alertas y catálogos; Despachador
+  ve Tickets, Despacho, Cierre diario y Mi seguridad; Auditor ve Tablero, Reportes, Auditoría y
+  Mi seguridad; Consulta ve Solicitudes, Tickets y Mi seguridad.
+- Cada rol abre en su pantalla principal útil (Despacho, Panel o Solicitudes), no se muestran
+  encabezados de grupos vacíos y solo Administrador/Supervisor consulta el contador de alertas.
+- `frontend/e2e/roles.spec.ts`: crea usuarios temporales para los cinco roles, compara el menú
+  completo y los desactiva al finalizar. `screens.spec.ts` confirma que Administrador tampoco ve
+  Cierre diario.
+- Se preservaron deliberadamente las lecturas de API para OAuth/RF-24: ocultar un panel humano no
+  debe romper clientes de integración con rol Consulta. Escrituras, PII, despacho y cierre siguen
+  protegidos por las políticas existentes del backend.
+
+**Verificado con:** `dotnet test backend -c Release --nologo` → **58/58**; `npm run build` y
+`npm run lint` correctos; Playwright dirigido (`roles.spec.ts` + `screens.spec.ts`) → **4/4**
+en Desktop Chrome y Pixel 7 emulado. El primer intento de backend no ejecutó las pruebas porque
+Docker Desktop estaba detenido; se inició el motor 29.6.1 y la repetición pasó completa.
+**Commit de código:** `be50048`. **Requisitos afectados:** RF-01 y RS-02 (visibilidad de interfaz por rol).

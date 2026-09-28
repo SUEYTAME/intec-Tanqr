@@ -284,23 +284,25 @@ export default function App() {
   const online = useOnline();
   const [page, setPage] = useState<Page | null>(null);
   const [error, setError] = useState("");
-  const notifications = useUnread(session !== null);
-  if (!session) return <Login />;
-
-  const roles = session.roles;
+  const roles = session?.roles ?? [];
   const admin = hasRole(roles, "Administrador");
   const manager = hasRole(roles, "Administrador", "Supervisor");
   // Solo el Despachador despacha: quien aprueba no despacha (ADR-016).
   const operator = hasRole(roles, "Despachador");
   const auditor = hasRole(roles, "Administrador", "Auditor");
-  const reporter = hasRole(
+  const dashboard = hasRole(roles, "Administrador", "Supervisor", "Auditor");
+  const reporter = hasRole(roles, "Administrador", "Supervisor", "Auditor");
+  const requester = hasRole(roles, "Administrador", "Supervisor", "Consulta");
+  const ticketReader = hasRole(
     roles,
     "Administrador",
     "Supervisor",
-    "Auditor",
+    "Despachador",
     "Consulta",
   );
-  const requester = hasRole(roles, "Administrador", "Supervisor", "Consulta");
+  const notifications = useUnread(session !== null && manager);
+  if (!session) return <Login />;
+
   const unreadLabel =
     notifications.unread === null
       ? " (?)"
@@ -312,33 +314,33 @@ export default function App() {
     [
       "OPERACIÓN",
       [
-        { page: "tablero", label: "Tablero", visible: true },
-        { page: "solicitudes", label: "Solicitudes", visible: true },
-        { page: "tickets", label: "Tickets", visible: true },
-        { page: "programaciones", label: "Programaciones", visible: true },
+        { page: "tablero", label: "Tablero", visible: dashboard },
+        { page: "solicitudes", label: "Solicitudes", visible: requester },
+        { page: "tickets", label: "Tickets", visible: ticketReader },
+        { page: "programaciones", label: "Programaciones", visible: manager },
         { page: "despacho", label: "Despacho", visible: operator },
-        { page: "cierre", label: "Cierre diario", visible: true },
-        { page: "inventario", label: "Inventario", visible: true },
+        { page: "cierre", label: "Cierre diario", visible: operator },
+        { page: "inventario", label: "Inventario", visible: manager },
         { page: "reportes", label: "Reportes", visible: reporter },
         {
           page: "notificaciones",
           label: `Notificaciones${unreadLabel}`,
-          visible: true,
+          visible: manager,
         },
       ],
     ],
     [
       "CATÁLOGOS",
       [
-        { page: "departamentos", label: "Departamentos", visible: true },
-        { page: "empleados", label: "Empleados", visible: true },
-        { page: "vehiculos", label: "Vehículos", visible: true },
+        { page: "departamentos", label: "Departamentos", visible: manager },
+        { page: "empleados", label: "Empleados", visible: manager },
+        { page: "vehiculos", label: "Vehículos", visible: manager },
       ],
     ],
     [
       "ADMINISTRACIÓN",
       [
-        { page: "parametros", label: "Parámetros", visible: true },
+        { page: "parametros", label: "Parámetros", visible: admin },
         { page: "integraciones", label: "Integraciones", visible: admin },
         { page: "auditoria", label: "Auditoría", visible: auditor },
         { page: "usuarios", label: "Usuarios", visible: admin },
@@ -351,10 +353,13 @@ export default function App() {
       items.filter((i) => i.visible).map((i) => i.page),
     ),
   );
-  // El despachador empieza en el escáner; los demás, en el tablero.
-  const fallback: Page = hasRole(roles, "Despachador")
+  const fallback: Page = operator
     ? "despacho"
-    : "tablero";
+    : dashboard
+      ? "tablero"
+      : requester
+        ? "solicitudes"
+        : "seguridad";
   const current = page && allowed.has(page) ? page : fallback;
 
   function screen() {
@@ -401,7 +406,7 @@ export default function App() {
           INTEC<span>TanQR</span>
         </div>
         <nav aria-label="Navegación principal">
-          {groups.map(([title, items]) => (
+          {groups.filter(([, items]) => items.some((item) => item.visible)).map(([title, items]) => (
             <div key={title} className="nav-group">
               <p className="nav-label">{title}</p>
               {items

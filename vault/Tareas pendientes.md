@@ -135,6 +135,11 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 
 - [x] Poner `fase-2-producto` como rama predeterminada de GitHub; conservar las ramas de fases anteriores.
 
+## Correcciones posteriores a la entrega
+
+- [x] Restringir los paneles visibles por rol según los actores del SRS y ADR-016; matriz de los
+      cinco roles verificada por Playwright en escritorio y móvil (`be50048`, 2026-09-28).
+
 ## Reglas del backlog
 
 - Una tarea marcada `[x]` significa que **se corrió la prueba y pasó**, no que se escribió el código.
