@@ -5,7 +5,6 @@ completa; producción pendiente de SMTP, SMS, dominio/certificado y datos reales
 INTEC es el contexto del documento de requisitos. Una demo puede usar datos ficticios y
 correo de prueba; no necesita esperar recursos institucionales. Publicar el repositorio o
 su contenedor en GitHub no pone automáticamente la aplicación en internet.
-El estado verificable y los pendientes están en `vault/Estado actual del proyecto.md`.
 Agentes: leer `AGENTS.md` primero. Requisitos: `docs/SRS.pdf`.
 
 ## Acceder en Windows
@@ -83,6 +82,3 @@ API + PostgreSQL. Los secretos de CI se generan por ejecución y se enmascaran.
 - Certificado y dominio (B-03); sin ellos la cámara del teléfono no funciona fuera de localhost.
 - CA-6 (prueba en Android físico) pendiente. La emulación móvil no la sustituye.
 - Carga probada con base casi vacía (50 usuarios, 250 rps, 0 errores); no con volumen real.
-
-El vault dentro del repositorio mantiene estado, decisiones delegadas, evidencia y próximos
-pasos para continuar en una sesión nueva con “continúa con el programa”.

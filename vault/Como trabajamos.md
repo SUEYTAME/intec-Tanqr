@@ -13,11 +13,6 @@ Reglas de colaboración entre el usuario, Claude y Astra. Si una regla aquí cho
 
 Abrir Obsidian → "Abrir carpeta como vault" → `C:\Dev\intec-combustible\vault`.
 
-El vault vive **dentro** del repositorio, no fuera. Así un solo `git pull` trae a la vez el
-código y el contexto que lo explica, y nunca se quedan desincronizados. Es una diferencia
-deliberada con `micarrito-vault`, que está separado porque allí el código es de otro
-repositorio y el vault se comparte con un colaborador externo.
-
 ## El reparto entre Claude y Astra
 
 Los dos pueden escribir código y pruebas. Lo que los diferencia son las herramientas de
@@ -75,13 +70,3 @@ Para esos y para cualquier ambigüedad nueva:
 Nunca se rellena un hueco con lo que suene plausible. Este sistema controla inventario de
 combustible y registros de auditoría: un supuesto inventado se convierte en un descuadre que
 alguien tiene que explicar.
-
-## Qué hacer al retomar en frío
-
-El usuario dirá algo como "continúa con el programa". Eso significa, sin preguntar más:
-
-1. `AGENTS.md`
-2. [[Estado actual del proyecto]]
-3. [[Tareas pendientes]] → primera tarea desbloqueada de la fase activa
-4. Ejecutarla
-5. Cerrar con el checklist de arriba

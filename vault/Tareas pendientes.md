@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-23
+actualizado: 2026-09-28
 ---
 
 # Tareas pendientes
@@ -138,7 +138,8 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 ## Correcciones posteriores a la entrega
 
 - [x] Restringir los paneles visibles por rol según los actores del SRS y ADR-016; matriz de los
-      cinco roles verificada por Playwright en escritorio y móvil (`be50048`, 2026-09-28).
+      cinco roles verificada por Playwright en escritorio y móvil (`be50048`, 2026-09-28),
+      subida en `18a1e17`, CI `36443297257` correcta y desplegada en Azure.
 
 ## Reglas del backlog
 

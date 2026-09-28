@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-22
+actualizado: 2026-09-28
 ---
 
 # Bitácora de cambios
@@ -652,3 +652,23 @@ ajenos a su función. Se contrastó la interfaz con los actores del SRS §3 y AD
 en Desktop Chrome y Pixel 7 emulado. El primer intento de backend no ejecutó las pruebas porque
 Docker Desktop estaba detenido; se inició el motor 29.6.1 y la repetición pasó completa.
 **Commit de código:** `be50048`. **Requisitos afectados:** RF-01 y RS-02 (visibilidad de interfaz por rol).
+
+## 2026-09-28 — Corrección por rol publicada en GitHub y Azure (Codex)
+
+- Se subieron `be50048` y su registro `18a1e17` a `origin/fase-2-producto`.
+- GitHub Actions run [`36443297257`](https://github.com/SUEYTAME/intec-combustible/actions/runs/36443297257)
+  terminó **success** para `18a1e17`: backend 58/58, frontend build/lint, Playwright en
+  escritorio/móvil y publicación del contenedor en GHCR.
+- Se creó `src-18a1e17.tar.gz` desde el commit exacto `18a1e175c7c21d64cccee866b367b64f12752779`;
+  tamaño 467,961 bytes y SHA-256
+  `93abb4079cdffee680c0059be35a50163e36f8506f5e2bcf7e6ea6a6ce364254`. El Blob privado
+  `deployments/src-18a1e17.tar.gz` quedó con el mismo tamaño.
+- `deploy/azure/instalar.sh` quedó fijado a esa revisión y hash. Azure Run Command construyó
+  `intec-combustible:0.4.0-18a1e17`, confirmó que la base ya estaba actualizada y recreó solo
+  la aplicación; PostgreSQL permaneció saludable.
+- Verificación posterior independiente: URL pública `/health/ready` → HTTP 200 con
+  `{"status":"ready"}`; en la VM, `APP_VERSION=0.4.0-18a1e17` y el contenedor ejecutaba la
+  imagen de igual etiqueta. No se modificaron secretos ni datos de la demo.
+
+**Commit desplegado:** `18a1e17`. **Requisitos afectados:** RF-01 y RS-02, sin cambio adicional
+de comportamiento respecto al código ya probado.

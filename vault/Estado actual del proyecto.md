@@ -11,9 +11,9 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 ## Fase actual
 
-**Producto en rama `fase-2-producto`, subida a GitHub (Claude `09d740d`; publicación `4c105d7`; Azure IaC `345e623`).**
+**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente `18a1e17` y Azure IaC `345e623`.**
 Fases 1-5 con código y pruebas; Fase 6 con contenedor local, carga, manual e informe.
-**Desplegada y verificada en Azure INTEC (2026-09-23):**
+**Desplegada y verificada en Azure INTEC (actualizada 2026-09-28):**
 https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com — demo con datos ficticios.
 Acceso, operación y evidencia en `docs/azure.md`; decisiones ADR-014/015.
 Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
@@ -44,7 +44,9 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
   `QA-` / `Prueba UI` inactivos, expresamente ficticios.
 - Navegación por rol corregida el 2026-09-28 (`be50048`): Despachador solo ve Tickets,
   Despacho, Cierre diario y Mi seguridad; Supervisor, Auditor y Consulta tienen menús ajustados
-  a los actores del SRS. Playwright valida los cinco roles en escritorio y móvil.
+  a los actores del SRS. Playwright valida los cinco roles en escritorio y móvil. La revisión
+  `18a1e17` pasó CI `36443297257` (cuatro jobs) y está desplegada en Azure como
+  `intec-combustible:0.4.0-18a1e17`; `/health/ready` respondió HTTP 200 el 2026-09-28.
 - Build Release backend sin avisos/errores; tests PostgreSQL real y navegador registrados
   en la bitácora. Build/lint frontend correctos. Auditoría NuGet sin vulnerabilidades reportadas.
 - CI ampliada de Fase 1 correcta para `70972c7`: run `35764488194`, backend, frontend y
@@ -78,7 +80,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - Usuario autorizó **todo lo necesario en su cuenta Azure INTEC**. Cuenta
   `1128305@est.intec.edu.do`, suscripción `44f41884-c42a-4162-898f-d83d8d987ff3` (Azure for Students).
   No usar `LegatTech-Bot`. Plan en `docs/azure.md`: B2als_v2,4GiB,northcentralus,~USD36.29/mes.
-- **Azure desplegado 2026-09-23** en `rg-intec-fuel-dev-b805`: VM B2als_v2, Key Vault, Blob,
+- **Azure desplegado 2026-09-23 y actualizado 2026-09-28 a `18a1e17`** en `rg-intec-fuel-dev-b805`: VM B2als_v2, Key Vault, Blob,
   ACS Email. Verificado desde internet: TLS 1.3 aceptado con Let's Encrypt, TLS 1.2 rechazado,
   salud 200, login real, PostgreSQL cerrado, respaldo a Blob y restauración con filas idénticas.
 - Administración sin SSH (`az vm run-command`): la clave `artifacts/azure/id_ed25519` tiene frase
