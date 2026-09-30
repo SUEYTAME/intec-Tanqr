@@ -11,9 +11,9 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 ## Fase actual
 
-**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente `18a1e17` y Azure IaC `345e623`.**
+**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente y desplegada `e43897b`, Azure IaC `345e623`.**
 Fases 1-5 con código y pruebas; Fase 6 con contenedor local, carga, manual e informe.
-**Desplegada y verificada en Azure INTEC (actualizada 2026-09-28):**
+**Desplegada y verificada en Azure INTEC (actualizada 2026-09-30):**
 https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com — demo con datos ficticios.
 Acceso, operación y evidencia en `docs/azure.md`; decisiones ADR-014/015.
 Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
@@ -31,7 +31,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 - Docker servidor 29.6.1 operativo. PostgreSQL **17.11 healthy**, `pg_isready` y consulta
   autenticada por TCP correctos. B-06 y B-07 resueltos. Volumen local persistente.
-- Repositorio **privado**: https://github.com/SUEYTAME/intec-combustible.
+- Repositorio **privado**: https://github.com/SUEYTAME/intec-Tanqr.
   Fase 0 CI correcta: https://github.com/SUEYTAME/intec-combustible/actions/runs/35759842395.
 - Backend .NET 10.0.401 / runtime 10.0.12, EF Core + Identity + Npgsql 10.
   Migración inicial aplicada a PostgreSQL. Usuario `combustible_app` separado del propietario;
@@ -45,8 +45,8 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - Navegación por rol corregida el 2026-09-28 (`be50048`): Despachador solo ve Tickets,
   Despacho, Cierre diario y Mi seguridad; Supervisor, Auditor y Consulta tienen menús ajustados
   a los actores del SRS. Playwright valida los cinco roles en escritorio y móvil. La revisión
-  `18a1e17` pasó CI `36443297257` (cuatro jobs) y está desplegada en Azure como
-  `intec-combustible:0.4.0-18a1e17`; `/health/ready` respondió HTTP 200 el 2026-09-28.
+  `e43897b` pasó CI `36730599453` (cuatro jobs) y está desplegada en Azure como
+  `intec-combustible:0.4.0-e43897b`; `/health/ready` respondió HTTP 200 el 2026-09-30.
 - Build Release backend sin avisos/errores; tests PostgreSQL real y navegador registrados
   en la bitácora. Build/lint frontend correctos. Auditoría NuGet sin vulnerabilidades reportadas.
 - CI ampliada de Fase 1 correcta para `70972c7`: run `35764488194`, backend, frontend y
@@ -66,13 +66,26 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 
 ## Lo que falta / límites
 
-- **QA previa a presentación (2026-09-30): dos defectos PDF confirmados y abiertos.**
-  Reportes anchos y detalle del acta de cierre se recortan por la derecha; el ticket
-  PDF muestra `Image has no valid type.` en vez del QR. Ambos reproducidos con código
-  actual `5aabf446` y datos ficticios. Backend 58/58, Playwright 8/8 y frontend build/lint correctos
-  no detectan estos defectos: los tests de PDF solo verifican `%PDF`. Evidencia y
-  resultados completos en `docs/qa-presentacion-2026-09-30.md`. No se corrigió ni
-  desplegó código en este bloque; falta validación visual y QR decodificable tras corrección.
+- **QA previa a presentación (2026-09-30): dos defectos PDF corregidos en código `f10045c`.**
+  Las tablas usan dimensiones Letter reales y caben en la página. El QR del ticket
+  se incrusta como BMP portable; PDFsharp no aceptaba el PNG monocromo de 1 bit.
+  Backend ampliado **66/66**, build/lint correctos, ocho regresiones PDF y render
+  visual de reportes de varias páginas. QR firmado sintético decodificado desde
+  el PDF renderizado con payload idéntico. Flujo integral de navegador agregado;
+  suite completa **10/10** y publicación Azure final `e43897b` verificada. Palabras
+  largas ajustadas al ancho interior de celdas. Lista/detalle refrescan al recuperar
+  foco/visibilidad y cada 15 s visibles; prueba con dos sesiones. Evidencia y
+  resultados: `docs/qa-presentacion-2026-09-30.md`.
+
+- **COM-2026-000009:** no tenía despacho; correo fallaba SMTP 5.1.4 por `.test`.
+  Usuario proporcionó dirección real; se corrigió Email por API y se reenvió una vez:
+  Email=Sent, ticket=Sent sin consumo. Recepción en bandeja no confirmada.
+  Cinco consumidos coinciden con cinco despachos, sin inconsistencias de estado.
+  SMS=Outbox explícito, sin gateway; el usuario pidió prompt para resolverlo en
+  otro chat: `docs/handoff-sms.md`. No configurar SMS_PROVIDER antes del adaptador.
+- **Portada:** el QR anterior apuntaba al login, no era ticket. Copia en
+  `C:\Users\proje\Downloads\portada corregida.pptx` contiene QR firmado real de
+  COM-2026-000008, Enviado, uso único, vence 2026-10-03; render/decodificación validados.
 
 - Rama `fase-2-producto` **subida**. CI `35818197956` correcta para `345e623`:
   backend 52/52, navegador 6/6, frontend build/lint y publicación. API de GitHub confirmó
@@ -88,7 +101,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - Usuario autorizó **todo lo necesario en su cuenta Azure INTEC**. Cuenta
   `1128305@est.intec.edu.do`, suscripción `44f41884-c42a-4162-898f-d83d8d987ff3` (Azure for Students).
   No usar `LegatTech-Bot`. Plan en `docs/azure.md`: B2als_v2,4GiB,northcentralus,~USD36.29/mes.
-- **Azure desplegado 2026-09-23 y actualizado 2026-09-28 a `18a1e17`** en `rg-intec-fuel-dev-b805`: VM B2als_v2, Key Vault, Blob,
+- **Azure desplegado 2026-09-23 y actualizado 2026-09-30 a `e43897b`** en `rg-intec-fuel-dev-b805`: VM B2als_v2, Key Vault, Blob,
   ACS Email. Verificado desde internet: TLS 1.3 aceptado con Let's Encrypt, TLS 1.2 rechazado,
   salud 200, login real, PostgreSQL cerrado, respaldo a Blob y restauración con filas idénticas.
 - Administración sin SSH (`az vm run-command`): la clave `artifacts/azure/id_ed25519` tiene frase

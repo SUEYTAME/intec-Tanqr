@@ -184,3 +184,28 @@ Las comprobaciones `%PDF` existentes no demuestran legibilidad ni QR incrustado.
 No se cierra ningún requisito nuevo ni se declara corregido ninguno de estos defectos.
 Detalle y evidencia: `docs/qa-presentacion-2026-09-30.md`; tareas QA-PDF-01/02
 en [[Tareas pendientes]].
+
+**Corrección posterior del mismo día:** `f10045c` resuelve los dos defectos.
+`DocumentTests.cs` prueba límites de las tablas (12/10/9/7 columnas), encabezados
+repetidos, última fila, acta de varias páginas, consumo vertical e imagen QR real sin
+placeholder. Backend **65/65** y revisión visual; la página del ticket sintético
+firmado se decodificó con `zxing-wasm` a su payload original de 146 caracteres.
+Se cierra esta regresión de RF-06, RF-18, RF-20 y CA-5 en el código probado.
+`20fb182` agrega `frontend/e2e/workflow.spec.ts`: solicitud/aprobación/despacho/inventario/
+cierre/reportes por UI con roles separados y rechazos sin alteración de inventario.
+Suite completa **10/10** sobre la misma base efímera en escritorio y móvil emulado.
+CA-6 (Android físico) no se cierra; tampoco se certifican todos los casos del plan propuesto.
+
+`93ce2f3` añade ajuste medido de palabras largas a celdas PDF y regresión de límites
+de texto sin alterar CSV: **66/66**, CI `36728670750` success en los cuatro jobs.
+`e43897b` refresca lista y detalle al recuperar foco/visibilidad y cada 15 s visibles;
+prueba con dos sesiones confirma que validar no consume y confirmar despacho sí,
+y que ambas vistas terminan mostrando Consumido. No altera la transición ni inventario.
+
+RF-09 real sigue pendiente de gateway SMS; Azure usa Outbox explícito. El correo
+fallido de COM-2026-000009 es rechazo SMTP 5.1.4 por dirección ficticia `.test`,
+no una entrega comprobada. El usuario proporcionó y autorizó un correo real;
+se corrigió por API y se reenvió una vez: SMTP aceptó (Email=Sent), ticket=Sent,
+sin despacho. Recepción en bandeja todavía no confirmada. CI de `e43897b`
+(`36730599453`) success en cuatro jobs y suite local final **10/10**.
+Auditoría de solo lectura: cinco consumidos y cinco despachos concordantes.

@@ -1,6 +1,6 @@
 # Publicación en Azure — INTEC
 
-Actualizado: 2026-09-28. **Desplegada y verificada.** Es una demo con datos ficticios.
+Actualizado: 2026-09-30. **Desplegada y verificada.** Es una demo con datos ficticios.
 
 **URL:** https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
 
@@ -65,8 +65,8 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
 5. Subir el código probado y ejecutar el instalador en la VM (sin SSH, ver ADR-015):
 
    ```powershell
-   git archive --format=tar.gz -o artifacts/azure/src-18a1e17.tar.gz 18a1e175c7c21d64cccee866b367b64f12752779
-   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-18a1e17.tar.gz -f artifacts/azure/src-18a1e17.tar.gz --overwrite
+   git archive --format=tar.gz -o artifacts/azure/src-e43897b.tar.gz e43897b0422630018b69143ec6cd1a639af2e4f2
+   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-e43897b.tar.gz -f artifacts/azure/src-e43897b.tar.gz --overwrite
    az vm run-command invoke --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 -g rg-intec-fuel-dev-b805 -n vm-intec-fuel-dev-b805 --command-id RunShellScript --scripts '@deploy/azure/instalar.sh'
    ```
 
@@ -127,14 +127,32 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** `intec-combustible:0.4.0-18a1e17`, construida en la VM desde el paquete privado
-  `src-18a1e17.tar.gz` (SHA-256 `93abb4079cdffee680c0059be35a50163e36f8506f5e2bcf7e6ea6a6ce364254`),
-  no descargada de GHCR. Despliegue comprobado el 2026-09-28 con `/health/ready` HTTP 200.
+- **Imagen:** `intec-combustible:0.4.0-e43897b`, construida en la VM desde el paquete privado
+  `src-e43897b.tar.gz` (SHA-256 `a7d9c6ec030af1de26dd1d330afa0eaca2f78633e9baf0a9ca7b7e9881731fa9`),
+  no descargada de GHCR. Despliegue comprobado el 2026-09-30 con `/health/ready` HTTP 200.
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
-- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `18a1e17` (incluye paneles por rol, ADR-016, galones legibles y QR explicado: ADR-018).
+- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `e43897b` (incluye paneles por rol, galones legibles, QR PDF, tablas PDF y refresco de estados entre sesiones).
+  El gateway SMS todavía no está implementado; prompt y alta en `docs/handoff-sms.md`.
 - **Alertas:** Azure exige que el titular verifique su correo en el grupo de acciones (OTP de 30 min);
   sin eso la alerta `alerta-demo-caida` no se entrega.
 - Data Protection guarda sus claves dentro del contenedor (aviso en el arranque). Solo afecta al token de restablecimiento de contraseña, que se genera y consume en la misma petición.
 - Key Vault con *purge protection* activada (2026-09-23, irreversible).
 - Datos DEMO en producción: departamento/empleado/vehículo/combustible/estación/tanque `DEMO*`, ticket `COM-2026-000001` consumido, cierre del 2026-09-23 de `DEMO-EST` y usuario `despacho@combustible-demo.test` desactivado.
+
+## Verificación de publicación — 2026-09-30
+
+CI `36730599453` success en los cuatro jobs; backend 66/66 y navegador 10/10.
+La ejecución del instalador terminó 14:48:35 UTC con checksum del paquete correcto,
+sin migraciones pendientes, PostgreSQL healthy conservado y app `0.4.0-e43897b`.
+Imagen local construida: `sha256:215b077b38723ccb2e14699eb780247ac90803cd0b19f840e118d87fb2e78c2c`.
+`/health/ready` externo devolvió HTTP 200/ready; el bundle web servido contiene el
+refresco al recuperar foco/visibilidad y el intervalo de 15 s.
+
+Desde la aplicación publicada se descargó COM-2026-000008: imagen QR incrustada,
+decodificación idéntica al PNG; reporte de despachos 12 columnas con cinco filas
+coincidentes y sin recorte de página/celda. Nombre DEMO mal codificado corregido
+puntualmente por API, sin cambiar inventario. COM-2026-000009 fallaba SMTP 5.1.4
+por dirección `.test`; con dirección autorizada por el usuario, reenvío Email=Sent,
+SMS=Outbox, ticket Enviado sin despacho. SMTP aceptó; bandeja del destinatario no
+confirmada. Detalle sin secretos: `docs/qa-presentacion-2026-09-30.md`.

@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-28
+actualizado: 2026-09-30
 ---
 
 # Bitácora de cambios
@@ -25,6 +25,70 @@ qué tocó el otro sin tener que leer el diff entero.
 siguiente agente sabe que tiene que comprobarlo. Lo que no vale es omitir la línea.
 
 ---
+
+## 2026-09-30 — PDF, consumo visible y entrega de presentación
+
+**Agente:** Codex con tres agentes de modelo menor para PDF y pruebas.
+**Autorización:** usuario pidió corregir, probar, commit/push y publicar en Azure;
+autorizó un destinatario real para reenviar COM-2026-000009. No se inventaron
+datos institucionales ni se consumieron tickets de la presentación.
+
+**Qué cambió:** `f10045c` fija dimensiones Letter reales, orientación horizontal
+según las tablas y ancho según márgenes; incrusta BMP portable en TicketPdf porque
+PDFsharp rechazaba el PNG monocromo de 1 bit. `93ce2f3` mide la fuente y ajusta
+palabras largas dentro de celdas, sin introducir guiones impresos ni alterar CSV/XLSX.
+`20fb182` agrega el flujo integral de navegador; `e43897b` refresca lista/detalle
+de tickets con foco/visibilidad y cada 15 s visibles, y añade Actualizar.
+Regresión con dos sesiones confirma estado Consumed en API y ambas pantallas.
+
+**Verificado con:** `dotnet test backend -c Release --nologo` **66/66**,
+compilación sin warnings/errores, `npm run build` y `npm run lint` correctos.
+PDF: geometría, paginación/encabezados y objeto de imagen; regresión de límites
+de texto con Arial y DejaVu; QR firmado leído desde raster con el mismo zxing-wasm.
+Playwright final **10/10**, Desktop/Pixel 7 emulado, 3.3 min, base aislada,
+incluyendo MFA y flujo recepción/solicitud/aprobación/despacho/inventario/cierre/reportes.
+Un ensayo intermedio perdió el proceso servidor: connection refused, no pasó.
+El ensayo limpio posterior no perdió servidores y cerró contextos/procesos/contenedor.
+CI `36723232494`, `36728670750` y `36730599453`: success en cuatro jobs cada uno.
+
+**Azure:** `20fb182` ya fue publicado y sus PDF originales descargados y decodificados.
+Publicación final de `e43897b0422630018b69143ec6cd1a639af2e4f2` por Blob privado,
+`src-e43897b.tar.gz`, SHA-256
+`a7d9c6ec030af1de26dd1d330afa0eaca2f78633e9baf0a9ca7b7e9881731fa9`;
+instalador fijado a esa revisión. RunCommand terminó el 2026-09-30 14:48:35 UTC;
+imagen `0.4.0-e43897b`, digest `215b077b38723ccb2e14699eb780247ac90803cd0b19f840e118d87fb2e78c2c`.
+Migraciones ya actualizadas, db healthy conservada (6 días), app recreada.
+`/health/ready` externo 200 y ready; bundle servido incluye refresco/15 s.
+PDF descargados tras la publicación: reporte 12 columnas/cinco filas sin recorte
+ni palabras fuera de celda; estación DEMO corregida. QR de COM-2026-000008
+decodificado idéntico al PNG. Paquete Blob 478858 bytes y checksum OK en la VM.
+Rollback del instalador previo guardado localmente; PostgreSQL persistente.
+
+**Retroalimentación:** auditoría de solo lectura coincide: cinco tickets consumidos,
+cinco despachos, cero discrepancias. COM-2026-000009 estaba Pending, sin despacho,
+correo Failed con SMTP 5.1.4 por dominio ficticio `.test`; los siete fallos recientes
+comparten esa causa. Usuario autorizó dirección real; PUT con If-Match modifica solo
+Email, reenvío único Email=Sent/SMS=Outbox, ticket=Sent, sin despacho. SMTP aceptó;
+recepción en bandeja no confirmada. PDF nuevo con QR de 146 caracteres decodificado
+idéntico al origen. SMS real no está implementado: nueve intentos son Outbox explícito.
+Prompt de alta/integración solicitado para otro chat: `docs/handoff-sms.md`.
+Corrección puntual de nombre de estación DEMO `EstaciÃ³n`→`Estación` mediante API
+con versión, código/estado intactos e inventario sin cambios; rollback local.
+
+**Portada:** captura corresponde a TanQR (1).pptx, 28 diapositivas. Su QR original
+era URL de la app (HTTP 200), no un ticket; explica rechazo en Despacho/login en cámara.
+Copia `Downloads/portada corregida.pptx` usa QR real COM-2026-000008, Enviado,
+uso único, vence 2026-10-03. Las 28 diapositivas renderizadas; QR final coincide con
+payload IC1 original; paquete sin errores tras retirar declaraciones huérfanas de
+maestros ausentes del archivo fuente. Originales conservados.
+
+**Archivos:** Documents.cs, DocumentTests.cs, Tickets.tsx, workflow.spec.ts,
+deploy/azure/instalar.sh, docs/qa-presentacion-2026-09-30.md, docs/handoff-sms.md,
+docs/azure.md y notas de continuidad. Evidencia local ignorada en artifacts/qa-20260930
+y artifacts/presentation-qr-20260930. Los 55 casos del plan no se declaran ejecutados;
+Android/cámara físico, SMS real y configuración institucional siguen pendientes.
+**Commits:** `f10045c`, `20fb182`, `93ce2f3`, `e43897b`, subidos a fase-2-producto.
+**Requisitos:** regresiones RF-06/RF-08/RF-18/RF-20/CA-5; RF-09 SMS y CA-6 no cerrados.
 
 ## 2026-09-22 — Configuración delegada y primera administración funcional
 

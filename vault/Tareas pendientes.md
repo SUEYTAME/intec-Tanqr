@@ -139,18 +139,43 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 
 - [x] Confirmar los dos PDF reportados y ejecutar la regresión disponible (2026-09-30):
       reproducción aislada y evidencia en `docs/qa-presentacion-2026-09-30.md`.
-- [ ] **QA-PDF-01:** corregir dimensiones/orientación y ancho de tablas PDF. Despachos,
+- [x] **QA-PDF-01:** corregir dimensiones/orientación y ancho de tablas PDF. Despachos,
       tickets, movimientos y detalle del acta reproducen recorte. Criterio: todas las
       columnas legibles dentro de la página, con render visual y prueba de límites,
-      incluyendo varias páginas y encabezados repetidos.
-- [ ] **QA-PDF-02:** corregir incrustación del QR en ticket PDF. Hoy muestra
-      `Image has no valid type.`. Criterio: imagen visible y decodificable desde el PDF
-      renderizado, payload idéntico al QR de origen y sin recuadros de error.
-- [ ] Revisar texto DEMO mal codificado en celdas del reporte aportado (`EstaciÃ³n`);
-      causa todavía no determinada, no atribuirlo al generador globalmente.
-- [ ] Completar recorrido de presentación mediante UI: solicitud → aprobación →
-      descarga/escaneo → despacho → inventario → reporte → cierre. La suite actual
-      de navegador no recorre todo ese flujo; Android físico sigue pendiente (CA-6).
+      incluyendo varias páginas y encabezados repetidos. Cerrado en `f10045c`:
+      geometría real, encabezados/última fila y revisión visual; backend **65/65**.
+- [x] **QA-PDF-02:** corregir incrustación del QR en ticket PDF (`f10045c`).
+      Imagen visible y decodificable desde la página PDF renderizada, payload firmado
+      de 146 caracteres idéntico al QR de origen y sin recuadros de error.
+- [x] Corregir texto DEMO mal codificado en el reporte (`EstaciÃ³n`): un nombre de
+      estación estaba guardado así en Azure. Corrección puntual a `Estación` por API
+      de catálogo con If-Match, estado/código intactos y copia local de rollback.
+      No era un error global del renderer; inventario sin modificaciones.
+- [x] Ajustar palabras largas al ancho interior de celdas PDF (`93ce2f3`):
+      medición de la fuente real y ajuste sin añadir guiones visibles. Regresión de
+      límites de texto y CSV intacto; backend **66/66**, incluida prueba con DejaVu.
+- [x] Corregir QR de portada: el original era la URL de la app, no un ticket.
+      Copia `Downloads/portada corregida.pptx` usa COM-2026-000008 firmado, decodificado
+      desde render, 28 diapositivas y paquete validado. Uso único; vence 2026-10-03.
+- [x] Auditar COM-2026-000009 en Azure: Pendiente, sin despacho, correo fallido
+      por destinatario reservado `.test` (SMTP 5.1.4). Cinco consumidos y cinco
+      despachos concordantes. No alterar estados por comentarios sin despacho registrado.
+- [x] Corregir el correo autorizado del empleado de COM-2026-000009 y reenviar:
+      dato real proporcionado por el usuario; PUT con If-Match conservando otros
+      campos. Reenvío único Email=Sent, SMS=Outbox, ticket Enviado sin despacho.
+      PDF nuevo y QR decodificado idéntico al origen. SMTP aceptó el mensaje;
+      recepción en bandeja depende de confirmación del destinatario.
+- [x] Refrescar lista/detalle de tickets entre sesiones (`e43897b`): foco/visibilidad,
+      15 s mientras visible y botón Actualizar. CI cuatro jobs success y suite local
+      final **10/10** con prueba de ambas vistas tras confirmar el despacho.
+- [ ] Implementar proveedor SMS y comprobar recepción real en teléfono:
+      los nueve intentos actuales son Outbox. Usuario pidió continuar alta/integración
+      en otro chat; prompt y pasos en `docs/handoff-sms.md`. RF-09 real sigue abierto.
+- [x] Completar recorrido de presentación mediante UI (`20fb182`): solicitud → aprobación →
+      descarga/decodificación → despacho → inventario → reporte → cierre. Playwright
+      **10/10** juntos en una base aislada, Desktop Chrome y Pixel 7 emulado, con
+      rechazos de reuso, exceso de autorización, stock insuficiente y cierre duplicado.
+      Android físico/cámara real sigue pendiente (CA-6).
 
 - [x] Restringir los paneles visibles por rol según los actores del SRS y ADR-016; matriz de los
       cinco roles verificada por Playwright en escritorio y móvil (`be50048`, 2026-09-28),
