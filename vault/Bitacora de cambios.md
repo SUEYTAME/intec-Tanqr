@@ -6,6 +6,15 @@ actualizado: 2026-09-30
 
 # Bitácora de cambios
 
+## 2026-09-30 — Mensajes de entrega y validación en lenguaje claro
+
+**Agente:** Cursor.
+**Qué cambió:** al ver un ticket, «Entregas registradas» ya no muestra la respuesta cruda de SMTP ni de Twilio. El correo aceptado dice que está en camino; un SMS rechazado por la cuenta de prueba explica que el número no está autorizado, sin códigos HTTP ni identificadores. La misma traducción cubre la bandeja local, los fallos de conexión y el aviso de SMS de demostración. La validación de formularios y los errores de cuenta dejan de usar las frases en inglés del marco. En Auditoría, la acción y la entidad se leen en español; el registro guardado no cambia.
+**Archivos:** `backend/src/Combustible.Api/Endpoints/DeliveryText.cs`, `ValidationText.cs`, `TicketEndpoints.cs`, `RequestValidationFilter.cs`, `Security/SpanishIdentityErrors.cs`, `Program.cs`, `frontend/src/lib.ts`, `frontend/src/App.tsx`, `frontend/e2e/workflow.spec.ts`, pruebas `DeliveryTextTests.cs`.
+**Verificado con:** `dotnet test backend --configuration Release --nologo` → **113/113**. `npm run build` y `npm run lint` en `frontend/` correctos.
+**Commit:** el de esta entrada.
+**Requisitos afectados:** RF-09 (el resultado de la entrega se entiende), RF-21 (la auditoría se lee sin códigos internos).
+
 ## 2026-09-30 — Acceso administrativo del compañero a Azure (Codex)
 
 Solicitud explícita: mismo acceso del titular para modificar/ver el proyecto.
