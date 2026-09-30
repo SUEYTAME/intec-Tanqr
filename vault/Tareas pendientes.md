@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-28
+actualizado: 2026-09-30
 ---
 
 # Tareas pendientes
@@ -136,6 +136,21 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [x] Poner `fase-2-producto` como rama predeterminada de GitHub; conservar las ramas de fases anteriores.
 
 ## Correcciones posteriores a la entrega
+
+- [x] Confirmar los dos PDF reportados y ejecutar la regresión disponible (2026-09-30):
+      reproducción aislada y evidencia en `docs/qa-presentacion-2026-09-30.md`.
+- [ ] **QA-PDF-01:** corregir dimensiones/orientación y ancho de tablas PDF. Despachos,
+      tickets, movimientos y detalle del acta reproducen recorte. Criterio: todas las
+      columnas legibles dentro de la página, con render visual y prueba de límites,
+      incluyendo varias páginas y encabezados repetidos.
+- [ ] **QA-PDF-02:** corregir incrustación del QR en ticket PDF. Hoy muestra
+      `Image has no valid type.`. Criterio: imagen visible y decodificable desde el PDF
+      renderizado, payload idéntico al QR de origen y sin recuadros de error.
+- [ ] Revisar texto DEMO mal codificado en celdas del reporte aportado (`EstaciÃ³n`);
+      causa todavía no determinada, no atribuirlo al generador globalmente.
+- [ ] Completar recorrido de presentación mediante UI: solicitud → aprobación →
+      descarga/escaneo → despacho → inventario → reporte → cierre. La suite actual
+      de navegador no recorre todo ese flujo; Android físico sigue pendiente (CA-6).
 
 - [x] Restringir los paneles visibles por rol según los actores del SRS y ADR-016; matriz de los
       cinco roles verificada por Playwright en escritorio y móvil (`be50048`, 2026-09-28),

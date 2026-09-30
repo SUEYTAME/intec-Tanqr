@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-28
+actualizado: 2026-09-30
 ---
 
 # Estado actual del proyecto
@@ -65,6 +65,14 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - GitHub usa `fase-2-producto` como rama predeterminada; conserva las ramas de Fase 0 y Fase 1.
 
 ## Lo que falta / límites
+
+- **QA previa a presentación (2026-09-30): dos defectos PDF confirmados y abiertos.**
+  Reportes anchos y detalle del acta de cierre se recortan por la derecha; el ticket
+  PDF muestra `Image has no valid type.` en vez del QR. Ambos reproducidos con código
+  actual `5aabf446` y datos ficticios. Backend 58/58, Playwright 8/8 y frontend build/lint correctos
+  no detectan estos defectos: los tests de PDF solo verifican `%PDF`. Evidencia y
+  resultados completos en `docs/qa-presentacion-2026-09-30.md`. No se corrigió ni
+  desplegó código en este bloque; falta validación visual y QR decodificable tras corrección.
 
 - Rama `fase-2-producto` **subida**. CI `35818197956` correcta para `345e623`:
   backend 52/52, navegador 6/6, frontend build/lint y publicación. API de GitHub confirmó

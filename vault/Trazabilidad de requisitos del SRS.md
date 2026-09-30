@@ -1,7 +1,7 @@
 ---
 tipo: proyecto
 estado: activo
-actualizado: 2026-09-28
+actualizado: 2026-09-30
 ---
 
 # Trazabilidad de requisitos del SRS
@@ -173,3 +173,14 @@ mensual (RF-15) en `GET /api/inventario`.
    inutiliza datos cifrados y respaldos. Activarla es irreversible.
 4. Permisos de clientes OAuth con rol Supervisor (decisión pendiente desde Fase 6).
 5. Siguen fuera de alcance del código: SMS real (B-01), datos reales (B-04), Android físico (CA-6).
+
+## QA de PDF — 2026-09-30
+
+La exportación HTTP/PDF existe, pero la verificación visual reabre defectos en
+RF-06 (QR ausente en PDF), RF-18 (detalle del acta recortado), RF-20 y CA-5
+(tablas anchas recortadas). Confirmados en los archivos exactos aportados y
+reproducidos con datos ficticios en el renderer de `5aabf446`.
+Las comprobaciones `%PDF` existentes no demuestran legibilidad ni QR incrustado.
+No se cierra ningún requisito nuevo ni se declara corregido ninguno de estos defectos.
+Detalle y evidencia: `docs/qa-presentacion-2026-09-30.md`; tareas QA-PDF-01/02
+en [[Tareas pendientes]].

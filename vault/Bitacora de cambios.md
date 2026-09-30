@@ -672,3 +672,39 @@ Docker Desktop estaba detenido; se inició el motor 29.6.1 y la repetición pas�
 
 **Commit desplegado:** `18a1e17`. **Requisitos afectados:** RF-01 y RS-02, sin cambio adicional
 de comportamiento respecto al código ya probado.
+
+## 2026-09-30 — QA previa a presentación: dos defectos PDF confirmados (Codex)
+
+**Pedido:** confirmar los errores reportados por compañeros y repartir la revisión
+entre agentes de un modelo más pequeño. Tres agentes `gpt-6-luna` revisaron reporte,
+ticket y regresión general. Codex inspeccionó también los renders originales y las
+reproducciones. **Commit de código auditado:** `5aabf44663531081334c5358b32e6cdf01ef41dc`.
+
+- `despachos-202609301150.pdf`: tabla de 12 columnas recortada por el borde derecho.
+  Los datos siguen en el flujo de texto del archivo. `TablePdf`/`AddGrid` asignan
+  24.94 cm a una tabla horizontal, pero el PDF emitido mantiene A4 vertical.
+  Reproducido también con tablas de 10, 9 y 7 columnas (tickets, movimientos y
+  detalle del acta); consumo de 3 columnas cabe.
+- `COM-2026-000008.pdf`: mensaje `Image has no valid type.` en lugar del QR,
+  sin objetos de imagen incrustados. `TicketPdf` actual reproduce el problema
+  con datos ficticios; el PNG generado por `QrPng` sí es válido.
+- Los tests actuales comprueban `%PDF`, no límites de tabla ni QR visible/decodificable.
+  Se abrieron QA-PDF-01/02 con criterios de corrección; se anotó texto DEMO mal
+  codificado de origen no determinado y la brecha del flujo completo mediante UI.
+- Informe persistente con hashes y rutas de evidencia:
+  `docs/qa-presentacion-2026-09-30.md`. Evidencia local y logs bajo
+  `artifacts/qa-20260930/`, ignorados por Git. No se cambiaron archivos originales,
+  código de aplicación, secretos ni despliegue; `vault/.obsidian/` preexistente preservado.
+
+**Verificado:** `dotnet test backend -c Release --nologo` → **58/58**, cero fallos
+y omitidas; `npm run build` y `npm run lint` correctos. Playwright completo →
+**8/8** (Desktop Chrome y Pixel 7 emulado, incluyendo MFA), log válido en
+`artifacts/qa-20260930/overall/attempt-02/playwright.log`. El lanzador temporal
+inicial produjo errores de entorno PowerShell/procesos y conexiones rechazadas;
+se repitió con servidores hijos en primer plano, sin cambiar el producto.
+PostgreSQL efímero separado en puerto 15433; limpieza del entorno de pruebas.
+Pruebas de PDF aisladas con datos ficticios,
+Poppler + inspección de objetos + revisión visual. **Requisitos con defecto abierto:**
+RF-06, RF-18, RF-20 y CA-5; no se cierra ninguno nuevo.
+
+**Commit del registro:** esta entrada y el informe de QA (solo documentación).
