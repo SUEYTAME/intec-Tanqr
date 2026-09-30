@@ -97,7 +97,7 @@ builder.Services.AddIdentityCore<AppUser>(options =>
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 }).AddRoles<IdentityRole<Guid>>().AddEntityFrameworkStores<AppDbContext>()
-    .AddSignInManager().AddDefaultTokenProviders().AddPasswordValidator<PassphraseValidator>();
+    .AddSignInManager().AddDefaultTokenProviders().AddErrorDescriber<SpanishIdentityErrors>().AddPasswordValidator<PassphraseValidator>();
 builder.Services.Configure<PasswordHasherOptions>(options => options.IterationCount = 600000);
 // RS-05: servidor OAuth 2.0 (client credentials, RFC 6749 §4.4) que emite JWT de acceso (RFC 9068)
 // para sistemas que consumen la API (RF-24). Clave propia: una fuga no permite falsificar QR.

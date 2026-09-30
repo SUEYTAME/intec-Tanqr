@@ -124,6 +124,9 @@ async function readTicketQr(page: Page, ticketNumber: string) {
     page.getByRole("button", { name: "Descargar PDF", exact: true }).click(),
   ]);
   expect((await readFile(await ticketPdf.path())).subarray(0, 5).toString()).toBe("%PDF-");
+  await expect(page.getByText("El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real.")).toBeVisible();
+  await expect(page.getByText("El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono.")).toBeVisible();
+  await expect(page.getByText(/SMTP |Twilio HTTP|Queued mail/)).toHaveCount(0);
   return qr!;
 }
 
