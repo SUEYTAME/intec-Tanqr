@@ -137,6 +137,10 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 
 ## Correcciones posteriores a la entrega
 
+- [x] Revalidar aviso de Azure/instalador antiguos: GitHub e imagen activa e43897b
+      coinciden; PDF recién descargados con QR decodificado y tabla completa.
+      Aviso de 18a1e17 obsoleto; evidencia en QA de presentación, 2026-09-30.
+
 - [x] Confirmar los dos PDF reportados y ejecutar la regresión disponible (2026-09-30):
       reproducción aislada y evidencia en `docs/qa-presentacion-2026-09-30.md`.
 - [x] **QA-PDF-01:** corregir dimensiones/orientación y ancho de tablas PDF. Despachos,

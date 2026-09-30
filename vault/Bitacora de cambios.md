@@ -28,6 +28,16 @@ siguiente agente sabe que tiene que comprobarlo. Lo que no vale es omitir la lí
 
 ## 2026-09-30 — PDF, consumo visible y entrega de presentación
 
+**Revalidación posterior al aviso de otro agente:** GitHub devuelve instalar.sh
+con REVISION=e43897b y hash del paquete correcto; 93b7635 ya publicó ese cambio.
+RunCommand de solo lectura confirma APP_VERSION e imagen 0.4.0-e43897b,
+PostgreSQL healthy y ready. Se descargaron PDF nuevos desde Azure: COM-2026-000008
+con imagen y QR decodificado idéntico al PNG; reporte generado 10:58 Santo Domingo,
+cinco filas y 12 columnas, sin recorte derecho tras render visual. El aviso de
+18a1e17 estaba desactualizado. No hubo cambio de aplicación ni redespliegue;
+no se repitieron suites que ya pasaron para código sin cambios. Commit fuente
+desplegado e43897b, instalador publicado 93b7635. Evidencia en docs/qa-presentacion-2026-09-30.md.
+
 **Agente:** Codex con tres agentes de modelo menor para PDF y pruebas.
 **Autorización:** usuario pidió corregir, probar, commit/push y publicar en Azure;
 autorizó un destinatario real para reenviar COM-2026-000009. No se inventaron

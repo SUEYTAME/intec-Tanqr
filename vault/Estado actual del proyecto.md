@@ -76,6 +76,8 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
   largas ajustadas al ancho interior de celdas. Lista/detalle refrescan al recuperar
   foco/visibilidad y cada 15 s visibles; prueba con dos sesiones. Evidencia y
   resultados: `docs/qa-presentacion-2026-09-30.md`.
+  Revalidado ante aviso de otro agente: instalador en GitHub e imagen activa Azure
+  coinciden en e43897b; PDF nuevos sin recorte y QR leído. Aviso de 18a1e17 obsoleto.
 
 - **COM-2026-000009:** no tenía despacho; correo fallaba SMTP 5.1.4 por `.test`.
   Usuario proporcionó dirección real; se corrigió Email por API y se reenvió una vez:
