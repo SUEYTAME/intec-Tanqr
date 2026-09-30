@@ -6,6 +6,8 @@ actualizado: 2026-09-30
 
 # Tareas pendientes
 
+**Revisión SRS 2026-09-30:** se contrastó el PDF completo con el código y se volvió a correr la suite. Backend 88/88, build/lint de frontend y navegador 10/10 (escritorio y móvil emulado). No apareció un requisito del SRS sin implementar ni mal implementado. Siguen abiertos SMS personalizado y Android físico, abajo.
+
 Backlog por fases. **Una fase no empieza hasta que la anterior está verificada**, porque cada
 una depende de contratos que fija la anterior.
 

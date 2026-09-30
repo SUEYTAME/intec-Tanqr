@@ -6,6 +6,15 @@ actualizado: 2026-09-30
 
 # Bitácora de cambios
 
+## 2026-09-30 — Revisión completa del SRS contra el código vigente
+
+**Agente:** Cursor.
+**Qué cambió:** nada en el producto. Se releyó `docs/SRS.pdf` (12 páginas, v1.0, agosto 2026) y se contrastó RF-01..RF-24, RS-01..RS-06 y CA-1..CA-7 con la API, la interfaz y las pruebas. Los requisitos ya estaban implementados y se comportan como el SRS pide. No se tocó el estilo visual ni la PWA.
+**Archivos:** solo esta bitácora, [[Estado actual del proyecto]] y [[Trazabilidad de requisitos del SRS]].
+**Verificado con:** `dotnet test backend --configuration Release --nologo` → **88/88**. `npm run build` y `npm run lint` en `frontend/` correctos. `CI=true bash scripts/ci-e2e.sh` → Playwright **10/10** (escritorio Chrome y Pixel 7 emulado): catálogos, menú de los cinco roles, pantallas, flujo solicitud→QR→despacho→inventario→cierre→reportes, y MFA.
+**Commit:** el de esta entrada.
+**Requisitos afectados:** ninguno cerrado ni reabierto. Siguen fuera del código RF-09 SMS personalizado (cuenta Twilio Trial, ADR-020) y CA-6 en un Android físico.
+
 ## 2026-09-30 — Acceso administrativo del compañero a Azure (Codex)
 
 Solicitud explícita: mismo acceso del titular para modificar/ver el proyecto.

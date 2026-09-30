@@ -6,6 +6,8 @@ actualizado: 2026-09-30
 
 # Trazabilidad de requisitos del SRS
 
+**Revisión 2026-09-30 (Cursor):** relectura de las 12 páginas de `docs/SRS.pdf` contra API, interfaz y pruebas. No hubo cambios de código. `dotnet test` Release **88/88**; `npm run build` y `npm run lint` correctos; Playwright **10/10** en escritorio y Pixel 7 emulado (`scripts/ci-e2e.sh`). Los estados de la matriz se mantienen. RF-09 SMS personalizado y CA-6 Android físico siguen abiertos por las mismas causas externas.
+
 Matriz viva de los 24 requisitos funcionales y 6 de seguridad de `docs/SRS.pdf`
 (SRS Ticket Digitales v1.0, agosto 2026) contra su implementación real.
 

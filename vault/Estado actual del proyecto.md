@@ -6,6 +6,10 @@ actualizado: 2026-09-30
 
 # Estado actual del proyecto
 
+## Revisión SRS — 2026-09-30
+
+Relectura de `docs/SRS.pdf` contra el código de `fase-2-producto`. RF-01..RF-24 y RS-01..RS-06 siguen implementados. Verificación de esta sesión: backend **88/88**, frontend build/lint correctos, navegador **10/10** en escritorio y Pixel 7 emulado. Sin cambios de producto. Siguen abiertos solo RF-09 SMS personalizado (Twilio Trial, ADR-020) y CA-6 en Android físico.
+
 Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decisiones en
 [[Decisiones de arquitectura]], evidencia exacta en [[Bitacora de cambios]].
 
