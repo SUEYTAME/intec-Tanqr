@@ -66,6 +66,8 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM: ${TWILIO_FROM:-}
       TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
+      TWILIO_TRIAL_TEMPLATE: ${TWILIO_TRIAL_TEMPLATE:-}
+      TWILIO_TRIAL_UNTIL: ${TWILIO_TRIAL_UNTIL:-}
       ASPNETCORE_Kestrel__Certificates__Default__Path: /certs/tls.pfx
       ASPNETCORE_Kestrel__Certificates__Default__Password: ${TLS_PFX_PASSWORD:?falta TLS_PFX_PASSWORD}
     volumes:

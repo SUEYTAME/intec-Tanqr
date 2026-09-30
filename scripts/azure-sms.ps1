@@ -18,6 +18,8 @@ $mapping = [ordered]@{
     'twilio-auth-token' = 'TWILIO_AUTH_TOKEN'
     'twilio-from' = 'TWILIO_FROM'
     'twilio-messaging-service-sid' = 'TWILIO_MESSAGING_SERVICE_SID'
+    'twilio-trial-template' = 'TWILIO_TRIAL_TEMPLATE'
+    'twilio-trial-until' = 'TWILIO_TRIAL_UNTIL'
 }
 $temporary = Join-Path $root 'artifacts/azure/twilio-secret.tmp'
 foreach ($name in $mapping.Keys) {

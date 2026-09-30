@@ -79,7 +79,8 @@ API + PostgreSQL. Los secretos de CI se generan por ejecución y se enmascaran.
 ## Límites actuales
 
 - SMS: adaptador Twilio por `SMS_PROVIDER=twilio` y `TWILIO_*`; vacío conserva Outbox.
-  La cuenta Trial probada el 2026-09-30 rechaza texto personalizado (572006); recepción real pendiente de Upgrade.
+  La cuenta Trial rechaza texto personalizado (572006); para la presentación del 2026-09-30
+  se habilita plantilla genérica con vencimiento explícito, sin datos del ticket (ver `docs/sms-twilio.md`).
   Correo real requiere SMTP institucional (B-02).
 - Certificado y dominio (B-03); sin ellos la cámara del teléfono no funciona fuera de localhost.
 - CA-6 (prueba en Android físico) pendiente. La emulación móvil no la sustituye.

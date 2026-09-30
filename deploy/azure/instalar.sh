@@ -61,6 +61,8 @@ TWILIO_ACCOUNT_SID=$(optional_secret twilio-account-sid)
 TWILIO_AUTH_TOKEN=$(optional_secret twilio-auth-token)
 TWILIO_FROM=$(optional_secret twilio-from)
 TWILIO_MESSAGING_SERVICE_SID=$(optional_secret twilio-messaging-service-sid)
+TWILIO_TRIAL_TEMPLATE=$(optional_secret twilio-trial-template)
+TWILIO_TRIAL_UNTIL=$(optional_secret twilio-trial-until)
 umask 077
 {
   echo "APP_VERSION=$APP_VERSION"
@@ -85,6 +87,8 @@ umask 077
   echo "TWILIO_AUTH_TOKEN=$TWILIO_AUTH_TOKEN"
   echo "TWILIO_FROM=$TWILIO_FROM"
   echo "TWILIO_MESSAGING_SERVICE_SID=$TWILIO_MESSAGING_SERVICE_SID"
+  echo "TWILIO_TRIAL_TEMPLATE=$TWILIO_TRIAL_TEMPLATE"
+  echo "TWILIO_TRIAL_UNTIL=$TWILIO_TRIAL_UNTIL"
   echo "TLS_PFX_DIR=$BASE/certs"
   echo "TLS_PFX_PASSWORD=$(secret tls-pfx-password)"
 } > "$BASE/produccion.env.new"

@@ -59,13 +59,18 @@ public sealed class OutboxEmailSender(string directory, string from) : IEmailSen
         $"{DateTime.UtcNow.ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture)}-{Guid.NewGuid():N}.{extension}";
 }
 
-public sealed record TwilioSettings(string AccountSid, string AuthToken, string? From, string? MessagingServiceSid);
+public sealed record TwilioSettings(string AccountSid, string AuthToken, string? From, string? MessagingServiceSid,
+    string? TrialTemplate = null, DateOnly? TrialUntil = null);
 
-public sealed class TwilioSmsSender(HttpClient client, TwilioSettings settings) : ISmsSender, IDisposable
+public sealed class TwilioSmsSender(HttpClient client, TwilioSettings settings, TimeProvider? time = null) : ISmsSender, IDisposable
 {
     public void Dispose() => client.Dispose();
     public async Task<DeliveryReport> SendAsync(string phoneNumber, string text, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (settings.TrialTemplate is not null && (settings.TrialUntil is null ||
+            BusinessClock.LocalDay((time ?? TimeProvider.System).GetUtcNow()) > settings.TrialUntil))
+            return new(DeliveryResult.Failed, "Twilio: modo de demostración Trial expirado; configure SMS personalizado para operación real.");
         var phone = Regex.Replace(phoneNumber, @"[\s().-]", "");
         if (Regex.IsMatch(phone, @"^(809|829|849)[0-9]{7}$")) phone = "+1" + phone;
         else if (Regex.IsMatch(phone, @"^1[0-9]{10}$")) phone = "+" + phone;
@@ -78,7 +83,7 @@ public sealed class TwilioSmsSender(HttpClient client, TwilioSettings settings) 
             Convert.ToBase64String(Encoding.ASCII.GetBytes($"{settings.AccountSid}:{settings.AuthToken}")));
         request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
         {
-            ["To"] = phone, ["Body"] = text,
+            ["To"] = phone, ["Body"] = settings.TrialTemplate ?? text,
             [settings.MessagingServiceSid is { Length: > 0 } ? "MessagingServiceSid" : "From"] =
                 settings.MessagingServiceSid is { Length: > 0 } ? settings.MessagingServiceSid : settings.From!
         });
@@ -88,7 +93,8 @@ public sealed class TwilioSmsSender(HttpClient client, TwilioSettings settings) 
             var body = await response.Content.ReadAsStringAsync(cancellationToken);
             using var json = JsonDocument.Parse(body);
             if (response.IsSuccessStatusCode)
-                return new(DeliveryResult.Sent, Detail($"Twilio {json.RootElement.GetProperty("sid").GetString()}: {json.RootElement.GetProperty("status").GetString()}"));
+                return new(DeliveryResult.Sent, Detail($"Twilio {json.RootElement.GetProperty("sid").GetString()}: {json.RootElement.GetProperty("status").GetString()}" +
+                    (settings.TrialTemplate is null ? "" : "; DEMO Trial: confirmación genérica con datos de ejemplo Twilio, sin datos del ticket.")));
             return new(DeliveryResult.Failed, Detail($"Twilio HTTP {(int)response.StatusCode}: {json.RootElement.GetProperty("code")}: {json.RootElement.GetProperty("message").GetString()}"));
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
