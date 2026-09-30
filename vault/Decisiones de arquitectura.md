@@ -379,3 +379,22 @@ No contratar ni modificar facturación de Twilio automáticamente. Ver docs/sms-
 
 **DESCARTADO:** simular Sent con Outbox, convertir errores Twilio en éxito, usar una
 plantilla genérica sin código/enlace del ticket, añadir SDK para una única petición REST.
+
+## ADR-020 — SMS genérico Trial solo para la presentación
+
+**Fecha:** 2026-09-30. **Estado:** aceptada por solicitud explícita del usuario.
+
+Supersede para la presentación la exclusión de plantilla genérica de ADR-019.
+El usuario solo necesita recibir un SMS hoy y autoriza reducir su contenido.
+TWILIO_TRIAL_TEMPLATE=sms_order_confirmation sustituye el Body por la plantilla
+oficial de Twilio; el From suministrado es necesario. Twilio genera datos de ejemplo,
+no admite el código o URL del ticket. El detalle de entrega declara DEMO Trial y esa
+limitación. TWILIO_TRIAL_UNTIL obligatorio, configurado 2026-09-30: después del día
+local de República Dominicana devuelve Failed sin petición. Configuración vacía
+mantiene texto personalizado para cuentas habilitadas, sin fallback automático.
+
+Prueba directa entregada y recepción confirmada por el usuario. RF-09 completo
+permanece abierto: SMS genérico demuestra conectividad, no ticket personalizado.
+
+**DESCARTADO:** cambiar silenciosamente el contenido tras 572006, presentar el
+pedido de ejemplo como un ticket real, dejar la demo habilitada indefinidamente.

@@ -11,7 +11,7 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 ## Fase actual
 
-**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente y desplegada `2b34698`, Azure IaC `345e623`.**
+**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente y desplegada `4db7a30`, Azure IaC `345e623`.**
 Fases 1-5 con código y pruebas; Fase 6 con contenedor local, carga, manual e informe.
 **Desplegada y verificada en Azure INTEC (actualizada 2026-09-30):**
 https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com — demo con datos ficticios.
@@ -71,7 +71,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 | QA-PDF-01: tablas recortadas | CERRADO; publicado en Azure | `f10045c` y `93ce2f3`; regresiones de página/celda y render de PDF descargado |
 | QA-PDF-02: QR ausente en PDF | CERRADO; publicado en Azure | `f10045c`; imagen incrustada y QR de COM-2026-000008 decodificado idéntico al PNG |
 | Flujo integral y estados entre sesiones | VERIFICADO | `20fb182` y `e43897b`; navegador 10/10, backend 66/66 |
-| Versión publicada | `0.4.0-2b34698` | CI `36742182779` success, Twilio configurado, salud HTTP 200 |
+| Versión publicada | `0.4.0-4db7a30` | CI `36745051245` success, plantilla Trial temporal, salud HTTP 200 |
 
 Los diagnósticos anteriores describen el estado de sus fechas; esta sección y
 [[Tareas pendientes]] indican qué sigue abierto. Evidencia detallada por commit
@@ -155,3 +155,16 @@ Credenciales guardadas en .env ignorado y cinco secretos en Key Vault INTEC.
 Prueba directa rechazada 572006: cuenta Trial solo admite plantillas predefinidas.
 RF-09 recepción real sigue abierto, requiere Upgrade del usuario y prueba del ticket.
 Azure 0.4.0-2b34698 desplegada; CI 36742182779 success, 82/82 backend y 10/10 navegador. Salud 200 y RestartCount=0. VM confirma Twilio configurado y rechazo HTTP 400/572006. PDF público con QR idéntico al PNG, render inspeccionado. Login bootstrap 401: falta acceso actual para ticket/reporte privado; solicitado al usuario.
+
+## SMS genérico para presentación — 2026-09-30
+
+Usuario autoriza plantilla genérica solo hoy. Twilio confirmó delivered y el usuario
+confirmó recepción; plantilla sms_order_confirmation, datos de ejemplo, sin datos del
+ticket. Implementación 4db7a30, pruebas backend 88/88 y frontend build/lint correctos.
+TWILIO_TRIAL_UNTIL=2026-09-30, vencimiento al terminar el día de República Dominicana.
+Secretos demo guardados en Key Vault. CI 36745051245 success; publicación Azure 0.4.0-4db7a30 completada, salud 200.
+RF-09 completo continúa pendiente de SMS personalizado; ADR-020, docs/sms-twilio.md.
+
+Verificación final de VM: plantilla y vencimiento presentes, RestartCount=0 y SMS
+delivered sin error desde Azure. Aprobación local comprobada; recepción inicial
+confirmada por usuario. No nueva aprobación autenticada Azure (bootstrap 401).

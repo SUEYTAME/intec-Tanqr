@@ -204,3 +204,5 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
   y deja constancia del bloqueo en [[Estado actual del proyecto]].
 
 - [ ] Twilio: Upgrade para mensajes personalizados; comprobar remitente/permisos RD y recepción de un ticket real. Prueba 2026-09-30 rechazada 572006; ver docs/sms-twilio.md.
+
+- [x] Plantilla SMS Trial para presentación autorizada 2026-09-30: delivered y recepción confirmada por usuario; backend 88/88. Modo temporal con fecha explícita, sin datos del ticket. Publicado Azure 4db7a30, CI cuatro jobs correcta y salud 200.

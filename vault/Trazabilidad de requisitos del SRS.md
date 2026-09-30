@@ -229,3 +229,15 @@ QA-PDF-01/02 conservan cierre/evidencia previa e43897b.
 Publicación Twilio 2b34698 verificada, CI cuatro jobs correcta. Salud 200; VM
 confirma configuración y 572006. Local demuestra Failed/IntegrationFailure.
 Prueba autenticada Azure pendiente: login bootstrap 401 y acceso actual solicitado.
+
+## RF-09 — Demo genérica autorizada, 2026-09-30
+
+4db7a30: modo Trial sms_order_confirmation con vencimiento explícito. Backend 88/88,
+SMS directo delivered y recepción confirmada por el usuario. Pruebas de plantilla,
+vencimiento sin HTTP y configuración incompleta. No cierra código corto/URL de RF-09.
+
+Verificación final Azure: imagen 0.4.0-4db7a30, RestartCount=0, plantilla
+sms_order_confirmation y vencimiento 2026-09-30 presentes. SMS desde VM
+SM212521fbe413fb8af2153057589f55fc: delivered sin error. Salud ready.
+Logs ignorados artifacts/sms-trial-azure-runtime.log. Aprobación probada en local;
+no se probó aprobación autenticada Azure, pendiente del acceso actual (bootstrap 401).

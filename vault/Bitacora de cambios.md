@@ -49,6 +49,27 @@ siguiente agente sabe que tiene que comprobarlo. Lo que no vale es omitir la lí
 
 ---
 
+## 2026-09-30 — Plantilla SMS Trial autorizada para presentación
+
+**Agente:** Codex. **Commit de implementación:** `4db7a30`.
+**Qué cambió:** usuario autoriza SMS genérico solo hoy. Se usa Body=sms_order_confirmation,
+con From indicado: la API aceptó y confirmó delivered; el usuario confirmó recepción.
+Datos de ejemplo Twilio sin personalización; no se presenta ORD87254 como ticket TanQR.
+Modo explícito TWILIO_TRIAL_TEMPLATE + TWILIO_TRIAL_UNTIL=2026-09-30; vencimiento por
+BusinessClock de República Dominicana. Después devuelve Failed sin HTTP; no fallback.
+Detalle de entrega declara DEMO Trial y ausencia de datos del ticket. ADR-020.
+**Verificado con:** dotnet test backend -c Release --nologo **88/88**; frontend build/lint
+correctos. .env local y siete secretos Key Vault configurados sin exponer valores.
+Prueba directa: Message SMeceb6c3ea65563e5f4308518f13d97c7, delivered sin error y recepción
+confirmada por el usuario. Primer intento sin From rechazado 572003; con From suministrado
+se entregó. Normalización/tickets personalizados mantienen sus pruebas.
+Flujo local: aprobación COM-2026-000004, SMS Sent, detalle DEMO Trial, sin alertas.
+SM60146cb24920535e0eea1e17625d53b1 delivered por API; ticket anulado y empleado/vehículo
+QA inactivos. Sin consumo ni movimientos de inventario.
+CI 36745051245 success: backend 88/88, navegador 10/10, frontend y contenedor correctos.
+Publicación Azure completada 16:42:55 UTC, 0.4.0-4db7a30 y salud 200; paquete SHA-256
+593a2956095cbfaf805aa96314c8fe109a89108248f28f19ce171770b298c39c en Blob privado.
+**Requisitos:** demo de conectividad SMS; RF-09 completo sigue abierto (faltan código/URL).
 ## 2026-09-30 — Integración Twilio y bloqueo Trial comprobado
 
 **Agente:** Codex. **Commit de implementación:** `2b34698`.
@@ -885,3 +906,9 @@ RF-06, RF-18, RF-20 y CA-5 afectados. Ese diagnóstico quedó superado por
 f10045c/93ce2f3 y el despliegue e43897b; QA-PDF-01/02 están cerrados.
 
 **Commit del registro:** esta entrada y el informe de QA (solo documentación).
+
+Verificación final Azure: imagen 0.4.0-4db7a30, RestartCount=0, plantilla
+sms_order_confirmation y vencimiento 2026-09-30 presentes. SMS desde VM
+SM212521fbe413fb8af2153057589f55fc: delivered sin error. Salud ready.
+Logs ignorados artifacts/sms-trial-azure-runtime.log. Aprobación probada en local;
+no se probó aprobación autenticada Azure, pendiente del acceso actual (bootstrap 401).
