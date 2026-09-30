@@ -6,6 +6,23 @@ namespace Combustible.UnitTests;
 
 public sealed class DeliveryTextTests
 {
+    [Theory]
+    [InlineData(DeliveryChannel.Email, DeliveryResult.Failed, "SMTP smtp.azurecomm.net: SmtpCommandException: 5.1.4 Recipient address reserved by RFC 2606. For more information see https://aka.ms/EXOSmtpErrors.", "dirección del destinatario")]
+    [InlineData(DeliveryChannel.Sms, DeliveryResult.Failed, "Twilio HTTP 422: 572002: No Twilio trial phone number is assigned for messaging to this destination number. Please add the 'to' number as a verified recipient.", "no está autorizado")]
+    [InlineData(DeliveryChannel.Email, DeliveryResult.Sent, "SMTP smtp.azurecomm.net: 2.6.0 7b88a35c-24c6-49cd-995e-c0fa7a0f44f9 Queued mail for delivery", "en camino al destinatario")]
+    public void Los_textos_del_proveedor_que_ve_la_persona_no_se_muestran(DeliveryChannel channel, DeliveryResult result, string raw, string fragment)
+    {
+        var text = DeliveryText.ForPerson(channel, result, raw);
+        Assert.Contains(fragment, text, StringComparison.Ordinal);
+        Assert.DoesNotContain("SMTP", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Twilio", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("azurecomm", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("aka.ms", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("572002", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("7b88a35c", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Exception", text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Una_frase_ya_clara_no_se_reescribe()
     {

@@ -26,7 +26,12 @@ public static class DeliveryText
                 : "El SMS fue aceptado y está en camino al teléfono.";
         }
 
-        return channel == DeliveryChannel.Email ? EmailFailure(text) : SmsFailure(text);
+        var message = channel == DeliveryChannel.Email ? EmailFailure(text) : SmsFailure(text);
+        return LooksTechnical(message)
+            ? (channel == DeliveryChannel.Email
+                ? "No se pudo enviar el correo. Puedes reenviar el ticket más tarde."
+                : "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde.")
+            : message;
     }
 
     private static bool IsDemo(string text) =>
@@ -36,7 +41,7 @@ public static class DeliveryText
 
     private static string EmailFailure(string text)
     {
-        if (Has(text, "5.1.4", "recipient address rejected", "mailbox unavailable", "user unknown", "invalid address", "domain does not"))
+        if (Has(text, "5.1.4", "recipient address rejected", "recipient address reserved", "mailbox unavailable", "user unknown", "invalid address", "rfc 2606", "domain does not"))
             return "No se pudo enviar el correo: la dirección del destinatario no es válida.";
         if (Has(text, "Authentication", "5.7.8", "535", "credentials", "not authenticated"))
             return "No se pudo enviar el correo: el servidor rechazó el acceso de la aplicación.";

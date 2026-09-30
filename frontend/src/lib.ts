@@ -156,7 +156,7 @@ export function presentDeliveryDetail(
   if (sms && result === "Sent")
     return "El SMS fue aceptado y está en camino al teléfono.";
   if (!sms) {
-    if (/5\.1\.4|recipient address rejected|mailbox unavailable|user unknown/i.test(text))
+    if (/5\.1\.4|recipient address rejected|recipient address reserved|mailbox unavailable|user unknown|rfc 2606|aka\.ms/i.test(text))
       return "No se pudo enviar el correo: la dirección del destinatario no es válida.";
     if (/Authentication|535|credentials/i.test(text))
       return "No se pudo enviar el correo: el servidor rechazó el acceso de la aplicación.";
@@ -180,7 +180,8 @@ export function presentDeliveryDetail(
     return "No se pudo enviar el SMS: el proveedor no respondió a tiempo. Puedes reenviar el ticket.";
   if (/conexión|connection|Socket/i.test(text))
     return "No se pudo enviar el SMS: no hubo conexión con el proveedor. Puedes reenviar el ticket.";
-  return "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde.";
+  const message = "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde.";
+  return providerText.test(message) ? "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde." : message;
 }
 // La bitácora guarda códigos estables. En pantalla se leen en español.
 export const auditActionLabels: Record<string, string> = {
