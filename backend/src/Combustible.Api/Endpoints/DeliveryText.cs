@@ -10,12 +10,12 @@ public static class DeliveryText
     {
         var text = detail ?? string.Empty;
         // Una frase ya escrita para la persona se conserva. El texto del proveedor (SMTP, Twilio, rutas) no.
-        if (!string.IsNullOrWhiteSpace(text) && !LooksTechnical(text) && result != DeliveryResult.Outbox)
+        if (result == DeliveryResult.Outbox || IsLocalTray(text))
+            return IsSms(channel, text)
+                ? "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono."
+                : "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real.";
+        if (!string.IsNullOrWhiteSpace(text) && !LooksTechnical(text))
             return text;
-        if (result == DeliveryResult.Outbox)
-            return channel == DeliveryChannel.Email
-                ? "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real."
-                : "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono.";
 
         if (result == DeliveryResult.Sent)
         {
@@ -73,8 +73,14 @@ public static class DeliveryText
         return "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde.";
     }
 
+    private static bool IsLocalTray(string text) =>
+        Has(text, "Bandeja local", "/app/outbox", "/outbox/", ".sms.txt", ".eml", "B-01");
+
+    private static bool IsSms(DeliveryChannel channel, string text) =>
+        channel == DeliveryChannel.Sms || Has(text, "SMS", ".sms.txt", "B-01");
+
     private static bool LooksTechnical(string text) =>
-        Has(text, "SMTP ", "smtp.", "Twilio", "Queued mail", "HTTP ", "Exception", "/tmp/", "Bandeja local");
+        Has(text, "SMTP ", "smtp.", "Twilio", "Queued mail", "HTTP ", "Exception", "/tmp/", "/app/outbox", "Bandeja local", "B-01");
 
     private static bool Has(string text, params string[] parts) =>
         parts.Any(part => text.Contains(part, StringComparison.OrdinalIgnoreCase));

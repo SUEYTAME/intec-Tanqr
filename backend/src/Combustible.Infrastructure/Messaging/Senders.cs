@@ -52,7 +52,7 @@ public sealed class OutboxEmailSender(string directory, string from) : IEmailSen
         Directory.CreateDirectory(directory);
         var path = Path.Combine(directory, OutboxName("eml"));
         await MailFactory.Build(from, message).WriteToAsync(path, cancellationToken);
-        return new DeliveryReport(DeliveryResult.Outbox, $"Bandeja local: {path}");
+        return new DeliveryReport(DeliveryResult.Outbox, "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real.");
     }
 
     internal static string OutboxName(string extension) =>
@@ -130,7 +130,7 @@ public sealed class OutboxSmsSender(string directory) : ISmsSender
         Directory.CreateDirectory(directory);
         var path = Path.Combine(directory, OutboxEmailSender.OutboxName("sms.txt"));
         await File.WriteAllTextAsync(path, $"Para: {phoneNumber}\n\n{text}\n", cancellationToken);
-        return new DeliveryReport(DeliveryResult.Outbox, $"Bandeja local SMS (sin pasarela, B-01): {path}");
+        return new DeliveryReport(DeliveryResult.Outbox, "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono.");
     }
 }
 

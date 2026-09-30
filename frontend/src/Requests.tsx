@@ -254,7 +254,7 @@ export function Requests({
           <p>
             Resultado de la entrega al empleado. «En bandeja local» significa
             que el mensaje quedó guardado en el servidor y <strong>no</strong>{" "}
-            salió (SMS sin pasarela todavía, bloqueo B-01).
+            salió a un teléfono ni a un buzón.
           </p>
           <Deliveries deliveries={approval.deliveries} />
           <button className="subtle" onClick={() => setApproval(null)}>

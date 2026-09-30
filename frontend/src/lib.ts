@@ -131,7 +131,7 @@ export const deliveryResultLabels: Record<string, string> = {
 };
 
 const providerText =
-  /smtp\.|SMTP |Twilio|Queued mail|HTTP \d{3}|\bException\b|\/tmp\/|Bandeja local/i;
+  /smtp\.|SMTP |Twilio|Queued mail|HTTP \d{3}|\bException\b|\/tmp\/|\/app\/outbox|\/outbox\/|Bandeja local|\.sms\.txt|\bB-01\b/i;
 
 // El detalle guardado puede ser la respuesta cruda del proveedor. En pantalla solo va una frase.
 export function presentDeliveryDetail(
@@ -140,8 +140,8 @@ export function presentDeliveryDetail(
   detail: string,
 ) {
   const text = detail ?? "";
-  const sms = channel === "Sms";
-  if (result === "Outbox" || text.startsWith("Bandeja local"))
+  const sms = channel === "Sms" || /SMS|\.sms\.txt|\bB-01\b/i.test(text);
+  if (result === "Outbox" || /Bandeja local|\/app\/outbox|\/outbox\/|\.sms\.txt|\bB-01\b/i.test(text))
     return sms
       ? "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono."
       : "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real.";

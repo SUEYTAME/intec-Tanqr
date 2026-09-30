@@ -55,11 +55,27 @@ public sealed class DeliveryTextTests
     [Theory]
     [InlineData(DeliveryChannel.Email, "Bandeja local: /tmp/combustible/a.eml", "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real.")]
     [InlineData(DeliveryChannel.Sms, "Bandeja local SMS (sin pasarela, B-01): /tmp/a.sms.txt", "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono.")]
+    [InlineData(DeliveryChannel.Sms, "Bandeja local SMS (sin pasarela, B-01): /app/outbox/20260923151326644-2ea1c45cedd341d2a4332cacd632c24d.sms.txt", "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono.")]
     public void Bandeja_local_no_muestra_la_ruta(DeliveryChannel channel, string raw, string expected)
     {
         var text = DeliveryText.ForPerson(channel, DeliveryResult.Outbox, raw);
         Assert.Equal(expected, text);
         Assert.DoesNotContain("/tmp", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("/app/outbox", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("B-01", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(DeliveryResult.Outbox)]
+    [InlineData(DeliveryResult.Failed)]
+    [InlineData(DeliveryResult.Sent)]
+    public void La_ruta_real_de_la_bandeja_sms_no_se_muestra(DeliveryResult result)
+    {
+        const string raw = "Bandeja local SMS (sin pasarela, B-01): /app/outbox/20260923151326644-2ea1c45cedd341d2a4332cacd632c24d.sms.txt";
+        var text = DeliveryText.ForPerson(DeliveryChannel.Email, result, raw);
+        Assert.Equal("El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono.", text);
+        Assert.DoesNotContain("2ea1c45cedd341d2a4332cacd632c24d", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("B-01", text, StringComparison.Ordinal);
     }
 
     [Fact]
