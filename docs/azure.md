@@ -83,8 +83,8 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
 5. Subir el código probado y ejecutar el instalador en la VM (sin SSH, ver ADR-015):
 
    ```powershell
-   git archive --format=tar.gz -o artifacts/azure/src-2b34698.tar.gz 2b34698986ef4c397dfd26abf6726441a6788246
-   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-2b34698.tar.gz -f artifacts/azure/src-2b34698.tar.gz --overwrite
+   git archive --format=tar.gz -o artifacts/azure/src-4db7a30.tar.gz 4db7a30cb26c9728e5f13ab2399b271d443c3a23
+   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-4db7a30.tar.gz -f artifacts/azure/src-4db7a30.tar.gz --overwrite
    az vm run-command invoke --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 -g rg-intec-fuel-dev-b805 -n vm-intec-fuel-dev-b805 --command-id RunShellScript --scripts '@deploy/azure/instalar.sh'
    ```
 
@@ -145,12 +145,12 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** `intec-combustible:0.4.0-2b34698`, construida en la VM desde el paquete privado
-  `src-2b34698.tar.gz` (SHA-256 `10b52f8358976550ce9441026c859d7d6cb8f1d0a94aa465b0b680f5c57967d6`),
+- **Imagen:** `intec-combustible:0.4.0-4db7a30`, construida en la VM desde el paquete privado
+  `src-4db7a30.tar.gz` (SHA-256 `593a2956095cbfaf805aa96314c8fe109a89108248f28f19ce171770b298c39c`),
   no descargada de GHCR. Despliegue comprobado el 2026-09-30 con `/health/ready` HTTP 200.
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
-- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `2b34698` (incluye paneles por rol, galones legibles, QR PDF, tablas PDF y refresco de estados entre sesiones).
+- SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `4db7a30` (incluye paneles por rol, galones legibles, QR PDF, tablas PDF y refresco de estados entre sesiones).
   Gateway Twilio implementado; cuenta Trial bloquea contenido personalizado (572006), ver `docs/sms-twilio.md`.
 - **Alertas:** Azure exige que el titular verifique su correo en el grupo de acciones (OTP de 30 min);
   sin eso la alerta `alerta-demo-caida` no se entrega.
@@ -189,3 +189,14 @@ Conectividad desde VM a Twilio comprobada: HTTP 400/572006. /health/ready HTTP 2
 PDF público COM-2026-000008 descargado, render inspeccionado y QR idéntico al PNG
 (146 caracteres). Login con contraseña bootstrap devolvió 401: prueba de ticket
 y reporte privado requieren acceso actual del usuario; no se cambió la contraseña.
+
+## SMS genérico de presentación — 2026-09-30
+
+Usuario autorizó SMS fijo de Twilio solo para hoy. Release 0.4.0-4db7a30, CI
+36745051245 success (backend 88/88, navegador 10/10, frontend y contenedor).
+Instalador terminó 16:42:55 UTC y salud pública HTTP 200.
+TWILIO_TRIAL_TEMPLATE=sms_order_confirmation; TWILIO_TRIAL_UNTIL=2026-09-30,
+ambas en Key Vault. Mensaje con datos de ejemplo de Twilio, sin datos del ticket;
+detalle DEMO Trial explícito. Pasada la fecha de República Dominicana, Failed sin HTTP.
+Prueba directa y aprobación local COM-2026-000004 delivered; usuario confirmó la
+recepción de la prueba inicial. RF-09 personalizado sigue abierto. ADR-020.

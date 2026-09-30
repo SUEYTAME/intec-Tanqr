@@ -71,3 +71,14 @@ aceptado, ticket posteriormente anulado y empleado/vehículo QA inactivos.
 PDF público Azure COM-2026-000008 revisado visualmente, QR igual al PNG de origen.
 Login bootstrap Azure 401: emisión autenticada/reporte privado pendientes de
 credenciales actuales solicitadas; ningún cambio de contraseña/MFA realizado.
+
+Prueba del flujo local: COM-2026-000004, SMS Sent con detalle DEMO Trial; Message
+SM60146cb24920535e0eea1e17625d53b1 confirmado delivered por API. Sin alertas ni
+despacho; ticket anulado y empleado/vehículo QA inactivos. Para presentar, el
+empleado debe tener el móvil del destinatario Trial autorizado.
+
+Verificación final Azure: imagen 0.4.0-4db7a30, RestartCount=0, plantilla
+sms_order_confirmation y vencimiento 2026-09-30 presentes. SMS desde VM
+SM212521fbe413fb8af2153057589f55fc: delivered sin error. Salud ready.
+Logs ignorados artifacts/sms-trial-azure-runtime.log. Aprobación probada en local;
+no se probó aprobación autenticada Azure, pendiente del acceso actual (bootstrap 401).
