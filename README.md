@@ -37,7 +37,8 @@ Los scripts solo detienen PID, fecha de inicio y comando que coincidan con su re
 - Cierre diario con acta PDF; reportes CSV/Excel/PDF; panel ejecutivo; notificaciones.
 - Auditoría encadenada con ancla firmada externa; OAuth 2.0 client credentials para integraciones.
 
-Manual: `docs/manual-usuario.md`. Despliegue en producción: `docs/despliegue.md`.
+Manual: `docs/manual-usuario.md`. Recorrido de demostración con varios roles y datos
+para copiar: `docs/recorrido-ciclo-completo.md`. Despliegue: `docs/despliegue.md`.
 Demo en Azure (datos ficticios): https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com —
 acceso y operación en `docs/azure.md`.
 

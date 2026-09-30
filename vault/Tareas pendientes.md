@@ -181,6 +181,10 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [ ] Implementar proveedor SMS y comprobar recepción real en teléfono:
       los nueve intentos actuales son Outbox. Usuario pidió continuar alta/integración
       en otro chat; prompt y pasos en `docs/handoff-sms.md`. RF-09 real sigue abierto.
+- [x] Guion de ciclo de vida para demostrar y probar el producto con varios roles
+      (`docs/recorrido-ciclo-completo.md`, 2026-09-30): datos `VIAJE-*`, menús reales por
+      rol (ADR-016), inventario antes del cierre y mapa RF/RS → acto.
+
 - [x] Completar recorrido de presentación mediante UI (`20fb182`): solicitud → aprobación →
       descarga/decodificación → despacho → inventario → reporte → cierre. Playwright
       **10/10** juntos en una base aislada, Desktop Chrome y Pixel 7 emulado, con

@@ -138,6 +138,10 @@ en [[Bitacora de cambios]] y por requisito en [[Trazabilidad de requisitos del S
   SMTP. Azure/Graph confirmaron las cinco asignaciones. Alcance limitado al proyecto;
   GitHub, login TanQR y presupuesto de suscripción separados. Detalle en `docs/azure.md`.
 
+- **Demostración de ciclo completo (2026-09-30):** `docs/recorrido-ciclo-completo.md`.
+  Datos ficticios `VIAJE-*`, cinco cuentas, inventario, tickets, despacho, cierre, reportes
+  y auditoría. No sustituye el manual; es el guion para recorrer el SRS con usuarios reales.
+
 | Tarea | Archivos |
 |---|---|
 | Continuar | [[Tareas pendientes]] + [[Bitacora de cambios]] |

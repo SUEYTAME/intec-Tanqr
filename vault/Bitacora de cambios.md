@@ -6,6 +6,23 @@ actualizado: 2026-09-30
 
 # Bitácora de cambios
 
+## 2026-09-30 — Guion de ciclo de vida para demostrar el producto
+
+**Agente:** Cursor Grok. **Qué cambió:** se añadió `docs/recorrido-ciclo-completo.md` con el
+viaje de varios roles (Administrador, Supervisor, Consulta, Despachador, Auditor), datos
+ficticios `VIAJE-*` para copiar, contraseñas que cumplen la frase de 15 caracteres, menús
+reales de ADR-016 y el mapa RF-01..RF-24 / RS-01..RS-06 → acto. Enlaces en README, Inicio
+del vault, Estado actual y Tareas pendientes.
+
+**Verificación:** lectura de `App.tsx` (matriz de menú), `roles.spec.ts`, `workflow.spec.ts`,
+contratos de catálogo/tickets/despacho, ADR-007/016 y `docs/SRS.pdf` (el repositorio no
+tiene el SRS en Markdown; el PDF es el documento fuente). No se ejecutó la aplicación ni
+`dotnet test`: es documentación de operación, no cambio de código. Escrito, sin recorrer
+el flujo en navegador en esta sesión.
+
+**Commit:** el de esta nota. **Requisitos afectados:** ninguno cerrado; guía de demostración
+sobre requisitos ya HECHO.
+
 ## 2026-09-30 — Acceso administrativo del compañero a Azure (Codex)
 
 Solicitud explícita: mismo acceso del titular para modificar/ver el proyecto.

@@ -1,7 +1,7 @@
 ---
 tipo: meta
 estado: activo
-actualizado: 2026-09-22
+actualizado: 2026-09-30
 ---
 
 # Inicio
@@ -30,4 +30,5 @@ Toda nota nueva se enlaza aquí. Una nota fuera del índice es una nota que se p
 ## Fuera del vault
 
 - `docs/SRS.pdf` — el documento fuente. Manda sobre cualquier nota.
+- `docs/recorrido-ciclo-completo.md` — viaje de demostración con 5 roles y datos `VIAJE-*`.
 - `AGENTS.md` en la raíz — el contrato para agentes.
