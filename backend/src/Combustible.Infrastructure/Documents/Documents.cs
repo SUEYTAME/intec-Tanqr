@@ -37,7 +37,10 @@ public static class DocumentRenderer
         var section = document.LastSection;
         Heading(section, "INTEC — Ticket digital de combustible", 16);
         Heading(section, ticket.Number, 13);
-        var image = section.AddImage("base64:" + Convert.ToBase64String(QrPng(ticket.QrPayload)));
+        // PDFsharp no importa el PNG de escala de grises de 1 bit de QRCoder.
+        // El renderer BMP es portable y conserva exactamente el mismo payload.
+        var qr = BitmapByteQRCodeHelper.GetQRCode(ticket.QrPayload, QRCodeGenerator.ECCLevel.M, 8);
+        var image = section.AddImage("base64:" + Convert.ToBase64String(qr));
         image.Width = Unit.FromCentimeter(6.5);
         image.LockAspectRatio = true;
         section.AddParagraph("Este código lo lee el escáner de la estación; con la cámara del teléfono no abre ninguna página.")
@@ -76,9 +79,8 @@ public static class DocumentRenderer
     {
         ArgumentNullException.ThrowIfNull(table);
         ArgumentNullException.ThrowIfNull(more);
-        var document = NewDocument(table.Title);
+        var document = NewDocument(table.Title, new[] { table }.Concat(more).Any(x => x.Headers.Count > 6));
         var section = document.LastSection;
-        if (new[] { table }.Concat(more).Any(x => x.Headers.Count > 6)) section.PageSetup.Orientation = Orientation.Landscape;
         Heading(section, table.Title, 14);
         foreach (var (label, value) in table.Summary)
         {
@@ -100,7 +102,8 @@ public static class DocumentRenderer
     private static void AddGrid(Section section, TableDocument table)
     {
         if (table.Headers.Count == 0) return;
-        var usable = (section.PageSetup.Orientation == Orientation.Landscape ? 27.94 : 21.59) - 3.0;
+        var usable = section.PageSetup.PageWidth.Centimeter
+            - section.PageSetup.LeftMargin.Centimeter - section.PageSetup.RightMargin.Centimeter;
         var grid = section.AddTable();
         grid.Borders.Width = 0.4;
         grid.Format.Font.Size = 7.5;
@@ -190,7 +193,7 @@ public static class DocumentRenderer
             : value;
     }
 
-    private static Document NewDocument(string title)
+    private static Document NewDocument(string title, bool landscape = false)
     {
         EnsureFonts();
         var document = new Document();
@@ -199,8 +202,13 @@ public static class DocumentRenderer
         document.Styles[StyleNames.Normal]!.Font.Name = SystemFontResolver.Family;
         document.Styles[StyleNames.Normal]!.Font.Size = 10;
         var section = document.AddSection();
-        section.PageSetup = document.DefaultPageSetup.Clone();
+        // El setup predeterminado ya contiene dimensiones A4 explícitas; clonarlo
+        // conserva esas dimensiones aunque luego se cambie PageFormat/Orientation.
+        section.PageSetup = new PageSetup();
         section.PageSetup.PageFormat = PageFormat.Letter;
+        section.PageSetup.Orientation = landscape ? Orientation.Landscape : Orientation.Portrait;
+        section.PageSetup.PageWidth = Unit.FromCentimeter(landscape ? 27.94 : 21.59);
+        section.PageSetup.PageHeight = Unit.FromCentimeter(landscape ? 21.59 : 27.94);
         section.PageSetup.LeftMargin = section.PageSetup.RightMargin = Unit.FromCentimeter(1.5);
         section.PageSetup.TopMargin = section.PageSetup.BottomMargin = Unit.FromCentimeter(1.5);
         var footer = section.Footers.Primary.AddParagraph();
