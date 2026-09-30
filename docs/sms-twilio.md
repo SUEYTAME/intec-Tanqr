@@ -44,3 +44,14 @@ para República Dominicana y destinatario, y repetir un ticket controlado.
 
 QA-PDF-01/02 ya estaban cerrados y publicados en e43897b antes de este cambio;
 no se reabren por la suposición histórica del plan.
+
+## Publicación verificada
+
+Commit 2b34698, CI 36742182779 success (82/82 backend, 10/10 navegador).
+Azure imagen 0.4.0-2b34698, RestartCount=0, salud HTTP 200 y Twilio configurado.
+Solicitud de prueba desde VM también rechazada HTTP 400/572006.
+En local, COM-2026-000003 registró SMS Failed y alerta IntegrationFailure; correo
+aceptado, ticket posteriormente anulado y empleado/vehículo QA inactivos.
+PDF público Azure COM-2026-000008 revisado visualmente, QR igual al PNG de origen.
+Login bootstrap Azure 401: emisión autenticada/reporte privado pendientes de
+credenciales actuales solicitadas; ningún cambio de contraseña/MFA realizado.

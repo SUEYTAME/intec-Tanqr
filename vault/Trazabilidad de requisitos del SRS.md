@@ -49,7 +49,7 @@ preguntar no constituye aprobación.
 | RF-06 | Emisión de Tickets Digitales | UUID, secuencia correlativa, fechas creación/vencimiento, vehículo, empleado, departamento, cantidad, tipo. Formatos: PDF, correo, QR | HECHO | Tickets/TicketService.cs; Documents/Documents.cs (PDF) | FuelTests: Emision_numera_firma_y_envia_por_SMTP_real; DocumentTests: QR incrustado sin placeholder, f10045c; PDF real Azure decodificado |
 | RF-07 | Generación de QR Seguro | Datos protegidos por hash: ticket ID, número secuencial, empleado, vehículo, cantidad, fecha emisión, fecha expiración. Criterios: no reutilizable, no editable, único, verificación criptográfica | HECHO | Security/Crypto.cs (TicketSigner ECDSA P-256) | FuelTests: QR_alterado_o_ticket_modificado_en_la_base_se_rechaza; reuso y vencido rechazados |
 | RF-08 | Numeración de Tickets | Secuencia consecutiva, prefijo configurable, reinicio anual opcional, sin duplicados. Formato ejemplo: `COM-2026-000001` | HECHO | TicketService.IssueAsync; TicketSettings (prefijo, reinicio anual) | FuelTests: Emision_concurrente_no_duplica_ni_salta_numeros; Parametros_exigen_version_y_rol_administrador |
-| RF-09 | Envío de Tickets | Correo con QR y datos. SMS con código corto, URL segura y QR descargable | EN CURSO: correo ACS verificado; SMS real BLOQUEADO (B-01) | Messaging/Senders.cs; enlace público /ticket/<id>.<token>; PublicTicket.tsx | FuelTests: Enlace_publico_muestra_el_ticket_y_su_QR_descargable; Sin_SMTP_la_entrega_queda_pendiente... |
+| RF-09 | Envío de Tickets | Correo con QR y datos. SMS con código corto, URL segura y QR descargable | EN CURSO: correo ACS verificado; adaptador Twilio probado; recepción real BLOQUEADA por Trial 572006 | Messaging/Senders.cs; enlace público /ticket/<id>.<token>; PublicTicket.tsx | FuelTests: Enlace_publico_muestra_el_ticket_y_su_QR_descargable; Sin_SMTP_la_entrega_queda_pendiente... |
 | RF-10 | Consulta de Estado | 7 estados: Creado, Enviado, Pendiente, Próximo a vencer, Vencido, Consumido, Anulado | HECHO | Domain/Fuel.cs TicketStatus; LifecycleService (vencer/avisar) | FuelTests: Proceso_periodico_marca_proximo_a_vencer_y_vencido; Anulacion_rechazo_y_cancelacion...; workflow.spec.ts: lista/detalle actualizados entre sesiones tras despacho, e43897b |
 | RF-11 | Asignaciones | Manual por usuario autorizado. Automática por programación, reglas de negocio y consumo histórico | HECHO | FuelSchedule (cantidad fija o promedio histórico, aprobación automática) | FuelTests: Programaciones_generan_solicitudes_y_asignan_automaticamente |
 
@@ -178,7 +178,7 @@ mensual (RF-15) en `GET /api/inventario`.
 3. Key Vault sin *purge protection*: purgar `data-encryption-key` o `qr-signing-key-b64`
    inutiliza datos cifrados y respaldos. Activarla es irreversible.
 4. Permisos de clientes OAuth con rol Supervisor (decisión pendiente desde Fase 6).
-5. Siguen fuera de alcance del código: SMS real (B-01), datos reales (B-04), Android físico (CA-6).
+5. Siguen fuera de alcance del código: recepción SMS (Trial 572006), datos reales (B-04), Android físico (CA-6).
 
 ## QA de PDF — CERRADA, 2026-09-30
 
@@ -217,3 +217,15 @@ se corrigió por API y se reenvió una vez: SMTP aceptó (Email=Sent), ticket=Se
 sin despacho. Recepción en bandeja todavía no confirmada. CI de `e43897b`
 (`36730599453`) success en cuatro jobs y suite local final **10/10**.
 Auditoría de solo lectura: cinco consumidos y cinco despachos concordantes.
+
+## RF-09 — Twilio, 2026-09-30
+
+TwilioSmsSender en Messaging/Senders.cs y registro/configuración local+Azure.
+SmsTests/SmsConfigurationTests: aceptación/formulario/Basic auth, normalización, errores,
+red/timeout/cancelación y arranque incompleto; suite backend 82/82, build/lint frontend.
+No cierre RF-09 real: prueba de recepción bloqueada por Trial 572006.
+QA-PDF-01/02 conservan cierre/evidencia previa e43897b.
+
+Publicación Twilio 2b34698 verificada, CI cuatro jobs correcta. Salud 200; VM
+confirma configuración y 572006. Local demuestra Failed/IntegrationFailure.
+Prueba autenticada Azure pendiente: login bootstrap 401 y acceso actual solicitado.

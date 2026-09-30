@@ -11,7 +11,7 @@ Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decision
 
 ## Fase actual
 
-**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente y desplegada `e43897b`, Azure IaC `345e623`.**
+**Producto en rama `fase-2-producto`, subida a GitHub; corrección vigente y desplegada `2b34698`, Azure IaC `345e623`.**
 Fases 1-5 con código y pruebas; Fase 6 con contenedor local, carga, manual e informe.
 **Desplegada y verificada en Azure INTEC (actualizada 2026-09-30):**
 https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com — demo con datos ficticios.
@@ -71,7 +71,7 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 | QA-PDF-01: tablas recortadas | CERRADO; publicado en Azure | `f10045c` y `93ce2f3`; regresiones de página/celda y render de PDF descargado |
 | QA-PDF-02: QR ausente en PDF | CERRADO; publicado en Azure | `f10045c`; imagen incrustada y QR de COM-2026-000008 decodificado idéntico al PNG |
 | Flujo integral y estados entre sesiones | VERIFICADO | `20fb182` y `e43897b`; navegador 10/10, backend 66/66 |
-| Versión publicada | `0.4.0-e43897b` | CI `36730599453` success, instalador actualizado, salud HTTP 200 |
+| Versión publicada | `0.4.0-2b34698` | CI `36742182779` success, Twilio configurado, salud HTTP 200 |
 
 Los diagnósticos anteriores describen el estado de sus fechas; esta sección y
 [[Tareas pendientes]] indican qué sigue abierto. Evidencia detallada por commit
@@ -95,7 +95,7 @@ en [[Bitacora de cambios]] y por requisito en [[Trazabilidad de requisitos del S
   Email=Sent, ticket=Sent sin consumo. Recepción en bandeja no confirmada.
   Cinco consumidos coinciden con cinco despachos, sin inconsistencias de estado.
   SMS=Outbox explícito, sin gateway; el usuario pidió prompt para resolverlo en
-  otro chat: `docs/handoff-sms.md`. No configurar SMS_PROVIDER antes del adaptador.
+  otro chat: `docs/handoff-sms.md`. Adaptador Twilio implementado el 2026-09-30; ver docs/sms-twilio.md.
 - **Portada:** el QR anterior apuntaba al login, no era ticket. Copia en
   `C:\Users\proje\Downloads\portada corregida.pptx` contiene QR firmado real de
   COM-2026-000008, Enviado, uso único, vence 2026-10-03; render/decodificación validados.
@@ -147,3 +147,11 @@ en [[Bitacora de cambios]] y por requisito en [[Trazabilidad de requisitos del S
 | Arranque | `scripts/iniciar.ps1`, `scripts/preparar.ps1`, `scripts/config-local.ps1` |
 | Frontend | `frontend/src/App.tsx` (menú/rutas), pantallas `*.tsx`, `lib.ts`, `components.tsx`, `screens.css`, `frontend/e2e/` |
 | Colaboración | [[Como trabajamos]]; comprobar archivos estables antes de escribir |
+
+## SMS Twilio — 2026-09-30
+
+Adaptador real implementado; backend 82/82 y frontend build/lint correctos.
+Credenciales guardadas en .env ignorado y cinco secretos en Key Vault INTEC.
+Prueba directa rechazada 572006: cuenta Trial solo admite plantillas predefinidas.
+RF-09 recepción real sigue abierto, requiere Upgrade del usuario y prueba del ticket.
+Azure 0.4.0-2b34698 desplegada; CI 36742182779 success, 82/82 backend y 10/10 navegador. Salud 200 y RestartCount=0. VM confirma Twilio configurado y rechazo HTTP 400/572006. PDF público con QR idéntico al PNG, render inspeccionado. Login bootstrap 401: falta acceso actual para ticket/reporte privado; solicitado al usuario.

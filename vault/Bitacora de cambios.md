@@ -49,6 +49,34 @@ siguiente agente sabe que tiene que comprobarlo. Lo que no vale es omitir la lí
 
 ---
 
+## 2026-09-30 — Integración Twilio y bloqueo Trial comprobado
+
+**Agente:** Codex. **Commit de implementación:** `2b34698`.
+**Qué cambió:** TwilioSmsSender con REST/Basic/formulario, E.164 dominicano, fallos explícitos,
+redacción del token y timeout/cancelación. Registro, .env.example, script local, compose,
+Key Vault/instalador opcional y script azure-sms; sin nuevos paquetes. ADR-019.
+**Verificado con:** `dotnet test backend -c Release --nologo`: **82/82**; tras disposición
+HttpClient, pruebas `--filter FullyQualifiedName~Sms`: **16/16**. Frontend `npm run build`
+y `npm run lint` correctos. Docker 29.6.1 operativo. `scripts/azure-sms.ps1` guardó cinco
+secretos en Key Vault INTEC, sin imprimir valores. `scripts/iniciar.ps1 -Reiniciar`
+arrancó API/web. Prueba REST local emitió COM-2026-000003: SMS Failed 572006,
+alerta IntegrationFailure presente, correo Sent; ticket anulado y registros QA inactivos.
+Intento previo COM-2026-000002 también anulado; limpieza If-Match ajustada a comillas.
+No despacho ni movimiento de inventario. Logs ignorados artifacts/sms-*.log.
+**Bloqueo comprobado:** cuenta Twilio Trial active; envío directo autorizado rechazado
+572006 (solo plantillas predefinidas), sin Message SID. No afirmar recepción ni RF-09 cerrado.
+El usuario debe completar Upgrade para el texto personalizado del ticket. No facturación
+Twilio modificada. Azure: paquete probado SHA-256 10b52f8358976550ce9441026c859d7d6cb8f1d0a94aa465b0b680f5c57967d6
+subido a Blob privado; CI 36742182779 success en cuatro jobs (82/82 y navegador 10/10).
+Instalador completó 16:20:10 UTC; imagen 0.4.0-2b34698, RestartCount=0 y salud 200.
+Runtime VM confirma SMS_PROVIDER=twilio, credenciales/remitente presentes y rechazo
+HTTP 400/572006 desde Azure. PDF público COM-2026-000008 descargado, render revisado,
+QR decodificado idéntico al PNG (146 caracteres). Login bootstrap devolvió 401: no
+se pudo emitir ticket Azure ni descargar reporte privado, acceso actual solicitado.
+No cambiar contraseña/MFA para rodear el bloqueo. Evidencia artifacts/sms-azure-*.log.
+
+**Requisitos:** RF-09 parcial; RF-23 error de integración confirmado. QA-PDF-01/02 conservan
+cierre/evidencia previa e43897b. Credenciales y teléfono del usuario fuera de estas notas.
 ## 2026-09-30 — Consolidación del estado de entrega
 
 **Agente:** Codex. **Commit fuente:** `e43897b`, registro previo `772b5d6`.

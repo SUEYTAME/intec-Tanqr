@@ -362,3 +362,20 @@ y datos reales). **Origen:** el usuario escaneó el QR del correo con la cámara
 denso y peor lectura con reflejos o pantallas dañadas en la estación; cambia el formato firmado, el
 escáner y sus pruebas a un mes de la demo; beneficio pequeño porque el empleado no necesita escanear
 su propio ticket (el correo ya trae datos y enlace).
+
+## ADR-019 — Adaptador SMS Twilio con entrega explícita
+
+**Fecha:** 2026-09-30. **Estado:** aceptada; recepción real bloqueada por cuenta Trial.
+
+Twilio REST mediante HttpClient sin paquete nuevo. SMS_PROVIDER vacío conserva Outbox;
+Twilio configurado requiere Account SID, Auth Token y exactamente un remitente.
+Errores HTTP/red/timeout quedan Failed y usan la alerta IntegrationFailure existente.
+Sent indica aceptación por proveedor, no confirmación en el teléfono. Normalización
+E.164 local solo para 809/829/849; credenciales en .env ignorado y Azure Key Vault.
+
+La API real rechazó el texto de prueba con 572006 (Trial solo admite plantillas
+predefinidas). Se requiere Upgrade del usuario para contenido personalizado de RF-09.
+No contratar ni modificar facturación de Twilio automáticamente. Ver docs/sms-twilio.md.
+
+**DESCARTADO:** simular Sent con Outbox, convertir errores Twilio en éxito, usar una
+plantilla genérica sin código/enlace del ticket, añadir SDK para una única petición REST.

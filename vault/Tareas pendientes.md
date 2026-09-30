@@ -120,7 +120,7 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - [ ] SMS real (RF-09 lo pide; la función está programada y prueba en bandeja): contratar proveedor NO es necesario para presentar. Solo si INTEC adopta el sistema
 - [ ] Correo/dominio institucional y datos reales: NO los pide el SRS; solo si INTEC adopta el sistema
 - [ ] Carga masiva (CSV/Excel) de empleados, vehículos y tanques para B-04: hoy solo existe alta uno a uno en Catálogos
-- [ ] Adaptador de SMS real (`ISmsSender`) cuando se elija proveedor (B-01): hoy solo existe `OutboxSmsSender`
+- [x] Adaptador SMS Twilio (`ISmsSender`), 82/82 backend, build/lint frontend; secretos Key Vault (2026-09-30). Recepción real bloqueada por Trial 572006.
 - [x] Datos DEMO ficticios para que la demo no se vea vacía (2026-09-23, ver bitácora)
 - [ ] **Rediseño de la UI** (el usuario la ve genérica): decisión pendiente del usuario; no empezar sin ella
 - [x] Galones legibles ("10" y no "10.000") en correo/SMS/PDF/acta/mensajes; desplegado `9fed40e` (2026-09-23)
@@ -202,3 +202,5 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 - Si descubres trabajo que falta, añádelo aquí en el momento. Un hallazgo que no se escribe se pierde.
 - Si una tarea está `[!]` bloqueada, no la rodees inventando un sustituto: sigue a la siguiente
   y deja constancia del bloqueo en [[Estado actual del proyecto]].
+
+- [ ] Twilio: Upgrade para mensajes personalizados; comprobar remitente/permisos RD y recepción de un ticket real. Prueba 2026-09-30 rechazada 572006; ver docs/sms-twilio.md.
