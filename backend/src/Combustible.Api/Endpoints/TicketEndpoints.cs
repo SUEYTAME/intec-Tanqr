@@ -127,7 +127,11 @@ public static class TicketEndpoints
     private static Task<FuelRequest?> LockRequestAsync(AppDbContext db, Guid id) =>
         db.FuelRequests.FromSqlInterpolated($"SELECT * FROM \"FuelRequests\" WHERE \"Id\" = {id} FOR UPDATE").SingleOrDefaultAsync();
 
-    private static object DeliveryView(TicketDelivery x) => new { x.Channel, x.Destination, x.Result, x.Detail, x.AttemptedAt };
+    private static object DeliveryView(TicketDelivery x) => new
+    {
+        x.Channel, x.Destination, x.Result, x.AttemptedAt,
+        Detail = DeliveryText.ForPerson(x.Channel, x.Result, x.Detail),
+    };
 
     private static void MapTicketQueries(WebApplication app)
     {

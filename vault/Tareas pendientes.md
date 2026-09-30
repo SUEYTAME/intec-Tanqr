@@ -6,6 +6,8 @@ actualizado: 2026-09-30
 
 # Tareas pendientes
 
+**Mensajes 2026-09-30:** el detalle técnico de correo y SMS ya no se muestra en Tickets. Quedó traducido al consultar la entrega, junto con la validación de formularios, los errores de Identity y las etiquetas de auditoría.
+
 Backlog por fases. **Una fase no empieza hasta que la anterior está verificada**, porque cada
 una depende de contratos que fija la anterior.
 

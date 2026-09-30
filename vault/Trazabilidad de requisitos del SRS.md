@@ -6,6 +6,8 @@ actualizado: 2026-09-30
 
 # Trazabilidad de requisitos del SRS
 
+**2026-09-30:** RF-09 muestra el resultado de correo y SMS en español (`DeliveryText`, vista de entrega del ticket). RF-21 sigue guardando el código de auditoría y lo presenta con etiqueta en español. Backend 113/113.
+
 Matriz viva de los 24 requisitos funcionales y 6 de seguridad de `docs/SRS.pdf`
 (SRS Ticket Digitales v1.0, agosto 2026) contra su implementación real.
 

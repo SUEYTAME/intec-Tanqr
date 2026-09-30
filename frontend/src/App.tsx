@@ -13,7 +13,17 @@ import { Requests } from "./Requests";
 import { Schedules } from "./Schedules";
 import { Integrations, Settings } from "./Settings";
 import { Tickets } from "./Tickets";
-import { explain, formatDateTime, hasRole, saveBlob, useOnline } from "./lib";
+import {
+  auditActionLabels,
+  auditActorLabels,
+  auditEntityLabels,
+  explain,
+  formatDateTime,
+  hasRole,
+  labelOf,
+  saveBlob,
+  useOnline,
+} from "./lib";
 import "./App.css";
 import "./screens.css";
 
@@ -218,10 +228,12 @@ function Audit() {
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>{formatDateTime(row.occurredAt)}</td>
-                  <td>{row.action}</td>
-                  <td>{row.entity}</td>
-                  <td className="mono">{row.actor}</td>
-                  <td>{row.ip}</td>
+                  <td>{labelOf(auditActionLabels, row.action)}</td>
+                  <td>{labelOf(auditEntityLabels, row.entity)}</td>
+                  <td className="mono">
+                    {labelOf(auditActorLabels, row.actor)}
+                  </td>
+                  <td>{row.ip === "local" ? "Servidor" : row.ip}</td>
                 </tr>
               ))}
             </tbody>
