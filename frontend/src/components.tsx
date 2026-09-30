@@ -4,6 +4,7 @@ import {
   channelLabels,
   deliveryResultLabels,
   explain,
+  presentDeliveryDetail,
   formatDateTime,
   formatGallons,
   ticketStatusLabels,
@@ -261,7 +262,9 @@ export function Deliveries({ deliveries }: { deliveries: Delivery[] }) {
             </Badge>
             <small>{formatDateTime(d.attemptedAt)}</small>
           </div>
-          {d.detail && <p>{d.detail}</p>}
+          {d.detail && (
+            <p>{presentDeliveryDetail(d.channel, d.result, d.detail)}</p>
+          )}
         </li>
       ))}
     </ul>

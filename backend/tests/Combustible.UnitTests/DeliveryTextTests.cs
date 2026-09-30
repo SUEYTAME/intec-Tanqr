@@ -7,6 +7,13 @@ namespace Combustible.UnitTests;
 public sealed class DeliveryTextTests
 {
     [Fact]
+    public void Una_frase_ya_clara_no_se_reescribe()
+    {
+        const string clear = "No se pudo enviar el SMS: este número no está autorizado en la cuenta de prueba. Hay que verificarlo con el proveedor o usar una cuenta de producción.";
+        Assert.Equal(clear, DeliveryText.ForPerson(DeliveryChannel.Sms, DeliveryResult.Failed, clear));
+    }
+
+    [Fact]
     public void Correo_aceptado_no_muestra_la_respuesta_SMTP()
     {
         var raw = "SMTP smtp.azurecomm.net: 2.6.0 7b88a35c-24c6-49cd-995e-c0fa7a0f44f9 Queued mail for delivery";
@@ -55,7 +62,7 @@ public sealed class DeliveryTextTests
     [InlineData("Twilio: tiempo de espera agotado.", "no respondió a tiempo")]
     [InlineData("Twilio: error de conexión HTTP.", "no hubo conexión")]
     [InlineData("Twilio: respuesta JSON inválida.", "forma inesperada")]
-    [InlineData("algo desconocido", "reenviar el ticket más tarde")]
+    [InlineData("Twilio HTTP 500: 30001: carrier rejected the message", "reenviar el ticket más tarde")]
     public void Fallos_de_sms_se_leen_sin_codigos(string raw, string fragment)
     {
         var text = DeliveryText.ForPerson(DeliveryChannel.Sms, DeliveryResult.Failed, raw);

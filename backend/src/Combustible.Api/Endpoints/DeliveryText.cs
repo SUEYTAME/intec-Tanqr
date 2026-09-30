@@ -9,6 +9,9 @@ public static class DeliveryText
     public static string ForPerson(DeliveryChannel channel, DeliveryResult result, string? detail)
     {
         var text = detail ?? string.Empty;
+        // Una frase ya escrita para la persona se conserva. El texto del proveedor (SMTP, Twilio, rutas) no.
+        if (!string.IsNullOrWhiteSpace(text) && !LooksTechnical(text) && result != DeliveryResult.Outbox)
+            return text;
         if (result == DeliveryResult.Outbox)
             return channel == DeliveryChannel.Email
                 ? "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real."
@@ -64,6 +67,9 @@ public static class DeliveryText
             return "No se pudo enviar el SMS: el proveedor respondió de una forma inesperada. Puedes reenviar el ticket.";
         return "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde.";
     }
+
+    private static bool LooksTechnical(string text) =>
+        Has(text, "SMTP ", "smtp.", "Twilio", "Queued mail", "HTTP ", "Exception", "/tmp/", "Bandeja local");
 
     private static bool Has(string text, params string[] parts) =>
         parts.Any(part => text.Contains(part, StringComparison.OrdinalIgnoreCase));

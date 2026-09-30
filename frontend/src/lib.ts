@@ -129,6 +129,59 @@ export const deliveryResultLabels: Record<string, string> = {
   Outbox: "En bandeja local (no enviado)",
   Failed: "Falló",
 };
+
+const providerText =
+  /smtp\.|SMTP |Twilio|Queued mail|HTTP \d{3}|\bException\b|\/tmp\/|Bandeja local/i;
+
+// El detalle guardado puede ser la respuesta cruda del proveedor. En pantalla solo va una frase.
+export function presentDeliveryDetail(
+  channel: string,
+  result: string,
+  detail: string,
+) {
+  const text = detail ?? "";
+  const sms = channel === "Sms";
+  if (result === "Outbox" || text.startsWith("Bandeja local"))
+    return sms
+      ? "El SMS quedó guardado en la bandeja de pruebas. No se envió a un teléfono."
+      : "El correo quedó guardado en la bandeja de pruebas. No llegó a un buzón real.";
+  if (!providerText.test(text)) return text;
+  if (
+    !sms &&
+    (result === "Sent" || /Queued mail|accepted for delivery|\b250\b/i.test(text))
+  )
+    return "El correo fue aceptado y está en camino al destinatario.";
+  if (sms && result === "Sent" && /DEMO Trial|sin datos del ticket|datos de ejemplo/i.test(text))
+    return "Se envió un SMS de demostración. No incluye los datos de este ticket.";
+  if (sms && result === "Sent")
+    return "El SMS fue aceptado y está en camino al teléfono.";
+  if (!sms) {
+    if (/5\.1\.4|recipient address rejected|mailbox unavailable|user unknown/i.test(text))
+      return "No se pudo enviar el correo: la dirección del destinatario no es válida.";
+    if (/Authentication|535|credentials/i.test(text))
+      return "No se pudo enviar el correo: el servidor rechazó el acceso de la aplicación.";
+    if (/Socket|connection|timed out|timeout|Ssl/i.test(text))
+      return "No se pudo enviar el correo: no hubo conexión con el servidor. Puedes reenviar el ticket.";
+    return "No se pudo enviar el correo. Puedes reenviar el ticket más tarde.";
+  }
+  if (/E\.164/i.test(text))
+    return "No se pudo enviar el SMS: el número debe incluir el código de país, por ejemplo +1 809 555 1234.";
+  if (/572002|verified recipient|trial phone/i.test(text))
+    return "No se pudo enviar el SMS: este número no está autorizado en la cuenta de prueba. Hay que verificarlo con el proveedor o usar una cuenta de producción.";
+  if (/572006|predefined|template/i.test(text))
+    return "No se pudo enviar el SMS: la cuenta de prueba solo admite un mensaje genérico, no el texto del ticket.";
+  if (/21608|unverified/i.test(text))
+    return "No se pudo enviar el SMS: el número del destinatario no está verificado en la cuenta de prueba.";
+  if (/21211|not a valid phone|invalid phone/i.test(text))
+    return "No se pudo enviar el SMS: el número de teléfono no es válido.";
+  if (/expirado|\bTrial\b/i.test(text))
+    return "No se pudo enviar el SMS: el modo de demostración ya venció. Hace falta configurar el envío con los datos del ticket.";
+  if (/tiempo de espera|timeout/i.test(text))
+    return "No se pudo enviar el SMS: el proveedor no respondió a tiempo. Puedes reenviar el ticket.";
+  if (/conexión|connection|Socket/i.test(text))
+    return "No se pudo enviar el SMS: no hubo conexión con el proveedor. Puedes reenviar el ticket.";
+  return "No se pudo enviar el SMS. Puedes reenviar el ticket más tarde.";
+}
 // La bitácora guarda códigos estables. En pantalla se leen en español.
 export const auditActionLabels: Record<string, string> = {
   initialize: "Inicio del sistema",

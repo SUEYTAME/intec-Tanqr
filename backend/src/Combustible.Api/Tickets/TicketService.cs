@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.Security.Cryptography;
+using Combustible.Api.Endpoints;
 using Combustible.Application;
 using Combustible.Domain;
 using Combustible.Infrastructure.Data;
@@ -170,8 +171,8 @@ public sealed class TicketService(AppDbContext db, TicketSigner signer, FieldPro
         var ticket = await db.Tickets.FromSqlInterpolated($"SELECT * FROM \"Tickets\" WHERE \"Id\" = {ticketId} FOR UPDATE").SingleAsync(cancellationToken);
         var deliveries = new List<TicketDelivery>
         {
-            new() { TicketId = ticketId, Channel = DeliveryChannel.Email, Destination = MaskEmail(employee.Email), Result = emailReport.Result, Detail = emailReport.Detail, AttemptedAt = now, Actor = actor },
-            new() { TicketId = ticketId, Channel = DeliveryChannel.Sms, Destination = MaskPhone(employee.Mobile), Result = smsReport.Result, Detail = smsReport.Detail, AttemptedAt = now, Actor = actor },
+            new() { TicketId = ticketId, Channel = DeliveryChannel.Email, Destination = MaskEmail(employee.Email), Result = emailReport.Result, Detail = DeliveryText.ForPerson(DeliveryChannel.Email, emailReport.Result, emailReport.Detail), AttemptedAt = now, Actor = actor },
+            new() { TicketId = ticketId, Channel = DeliveryChannel.Sms, Destination = MaskPhone(employee.Mobile), Result = smsReport.Result, Detail = DeliveryText.ForPerson(DeliveryChannel.Sms, smsReport.Result, smsReport.Detail), AttemptedAt = now, Actor = actor },
         };
         db.TicketDeliveries.AddRange(deliveries);
         var anySent = deliveries.Any(x => x.Result == DeliveryResult.Sent);
