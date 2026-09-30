@@ -53,10 +53,25 @@ if (builder.Configuration["SMTP_HOST"] is { Length: > 0 } smtpHost)
         builder.Configuration["SMTP_PASSWORD"], mailFrom, !string.Equals(builder.Configuration["SMTP_REQUIRE_TLS"], "false", StringComparison.OrdinalIgnoreCase))));
 }
 else builder.Services.AddSingleton<IEmailSender>(new OutboxEmailSender(outbox, mailFrom));
-// B-01: no hay pasarela SMS. Configurar un proveedor sin implementación es un error, no un envío simulado.
-if (builder.Configuration["SMS_PROVIDER"] is { Length: > 0 } smsProvider)
-    throw new InvalidOperationException($"SMS_PROVIDER={smsProvider} no tiene implementación (bloqueo B-01). Déjalo vacío para usar la bandeja local.");
-builder.Services.AddSingleton<ISmsSender>(new OutboxSmsSender(outbox));
+var smsProvider = builder.Configuration["SMS_PROVIDER"];
+if (string.IsNullOrWhiteSpace(smsProvider))
+    builder.Services.AddSingleton<ISmsSender>(new OutboxSmsSender(outbox));
+else if (string.Equals(smsProvider, "twilio", StringComparison.OrdinalIgnoreCase))
+{
+    string RequiredSmsSetting(string key) => !string.IsNullOrWhiteSpace(builder.Configuration[key])
+        ? builder.Configuration[key]! : throw new InvalidOperationException($"Falta {key} para SMS_PROVIDER=twilio.");
+    var accountSid = RequiredSmsSetting("TWILIO_ACCOUNT_SID");
+    var authToken = RequiredSmsSetting("TWILIO_AUTH_TOKEN");
+    var twilioFrom = builder.Configuration["TWILIO_FROM"];
+    var serviceSid = builder.Configuration["TWILIO_MESSAGING_SERVICE_SID"];
+    if (string.IsNullOrWhiteSpace(twilioFrom) == string.IsNullOrWhiteSpace(serviceSid))
+        throw new InvalidOperationException("Twilio requiere exactamente uno de TWILIO_FROM o TWILIO_MESSAGING_SERVICE_SID.");
+    builder.Services.AddSingleton<ISmsSender>(_ => new TwilioSmsSender(new HttpClient(new SocketsHttpHandler
+    {
+        PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+    }) { Timeout = TimeSpan.FromSeconds(15) }, new TwilioSettings(accountSid, authToken, twilioFrom, serviceSid)));
+}
+else throw new InvalidOperationException("SMS_PROVIDER: proveedor no implementado.");
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddSingleton<LifecycleService>();
 if (builder.Configuration.GetValue("Jobs:Enabled", true)) builder.Services.AddHostedService<LifecycleWorker>();

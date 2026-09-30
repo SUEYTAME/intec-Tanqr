@@ -61,6 +61,11 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:?falta SMTP_FROM}
+      SMS_PROVIDER: ${SMS_PROVIDER:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM: ${TWILIO_FROM:-}
+      TWILIO_MESSAGING_SERVICE_SID: ${TWILIO_MESSAGING_SERVICE_SID:-}
       ASPNETCORE_Kestrel__Certificates__Default__Path: /certs/tls.pfx
       ASPNETCORE_Kestrel__Certificates__Default__Password: ${TLS_PFX_PASSWORD:?falta TLS_PFX_PASSWORD}
     volumes:
