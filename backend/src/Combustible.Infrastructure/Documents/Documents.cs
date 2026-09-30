@@ -1,11 +1,13 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using Combustible.Domain;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.DocumentObjectModel.Tables;
 using MigraDoc.Rendering;
 using PdfSharp.Fonts;
+using PdfSharp.Drawing;
 using QRCoder;
 
 namespace Combustible.Infrastructure.Documents;
@@ -107,15 +109,40 @@ public static class DocumentRenderer
         var grid = section.AddTable();
         grid.Borders.Width = 0.4;
         grid.Format.Font.Size = 7.5;
+        grid.LeftPadding = grid.RightPadding = Unit.FromMillimeter(1.2);
+        using var measure = XGraphics.CreateMeasureContext(new XSize(1000, 1000), XGraphicsUnit.Point, XPageDirection.Downwards);
+        var regular = new XFont(SystemFontResolver.Family, 7.5);
+        var bold = new XFont(SystemFontResolver.Family, 7.5, XFontStyleEx.Bold);
+        // MigraDoc no divide palabras automáticamente. Reserva ambos paddings de celda.
+        var textWidth = Unit.FromCentimeter(usable / table.Headers.Count).Point
+            - grid.LeftPadding.Point - grid.RightPadding.Point;
+        string Wrap(string text, XFont font) => Regex.Replace(text, @"\S+", match =>
+        {
+            if (measure.MeasureString(match.Value, font).Width <= textWidth) return match.Value;
+            var result = new StringBuilder();
+            var segment = new StringBuilder();
+            var elements = StringInfo.GetTextElementEnumerator(match.Value);
+            while (elements.MoveNext())
+            {
+                var element = elements.GetTextElement();
+                if (segment.Length > 0 && measure.MeasureString(segment.ToString() + element, font).Width > textWidth)
+                {
+                    result.Append(segment).Append('\u200B');
+                    segment.Clear();
+                }
+                segment.Append(element);
+            }
+            return result.Append(segment).ToString();
+        });
         foreach (var _ in table.Headers) grid.AddColumn(Unit.FromCentimeter(usable / table.Headers.Count));
         var header = grid.AddRow();
         header.HeadingFormat = true;
         header.Shading.Color = Colors.LightGray;
-        for (var i = 0; i < table.Headers.Count; i++) header.Cells[i].AddParagraph(table.Headers[i]).Format.Font.Bold = true;
+        for (var i = 0; i < table.Headers.Count; i++) header.Cells[i].AddParagraph(Wrap(table.Headers[i], bold)).Format.Font.Bold = true;
         foreach (var values in table.Rows)
         {
             var row = grid.AddRow();
-            for (var i = 0; i < table.Headers.Count; i++) row.Cells[i].AddParagraph(Text(values[i]));
+            for (var i = 0; i < table.Headers.Count; i++) row.Cells[i].AddParagraph(Wrap(Text(values[i]), regular));
         }
         if (table.Rows.Count == 0) section.AddParagraph("Sin registros para los filtros indicados.");
     }

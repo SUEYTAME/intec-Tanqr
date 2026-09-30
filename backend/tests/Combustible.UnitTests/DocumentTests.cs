@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Text;
 using Combustible.Infrastructure.Documents;
+using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.Content;
 using PdfSharp.Pdf.Content.Objects;
@@ -51,6 +53,45 @@ public sealed class DocumentTests
         Assert.True(pdf.Pages[0].Height.Point > pdf.Pages[0].Width.Point,
             "A narrow report should remain in portrait orientation.");
         AssertPageGeometryFits(pdf.Pages[0]);
+    }
+
+    [Fact]
+    public void Wide_report_wraps_long_unbroken_header_and_body_inside_cells_without_changing_csv()
+    {
+        const string longHeader = "UNBROKENHEADERSEQUENCEFORPDF";
+        const string longValue = "UNBROKENBODYSEQUENCEWITHMANYCHARACTERS";
+        var headers = new[]
+        {
+            "Fecha y hora", "Ticket", "Estación", "Tanque", "Empleado", "Vehículo",
+            longHeader, "Combustible", "Autorizado (gal)", "Servido (gal)", "Diferencia (gal)", "Operador",
+        };
+        var row = new object?[]
+        {
+            "2026-09-30 09:52", "COM-2026-000001", "DEMO - Estación Campus", "DEMO-C-GO",
+            "DEMO - Empleado QA", "DEMO004", longValue, "DEMO - Gasolina Regular", 15m, 13.5m, 1.5m,
+            "DEMO - Despachador Campus",
+        };
+        var report = new TableDocument("Reporte de despachos", Summary, headers,
+            new IReadOnlyList<object?>[] { row });
+        var csv = DocumentRenderer.Csv(report);
+
+        using var pdf = Open(DocumentRenderer.TablePdf(report));
+
+        Assert.Single(pdf.Pages);
+        Assert.Equal(csv, DocumentRenderer.Csv(report));
+        var csvText = Encoding.UTF8.GetString(csv);
+        Assert.Contains(longHeader, csvText, StringComparison.Ordinal);
+        Assert.Contains(longValue, csvText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u200B", csvText, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u00AD", csvText, StringComparison.Ordinal);
+
+        using var measure = XGraphics.CreateMeasureContext(new XSize(1000, 1000),
+            XGraphicsUnit.Point, XPageDirection.Downwards);
+        var regular = new XFont("Sans", 7.5);
+        var bold = new XFont("Sans", 7.5, XFontStyleEx.Bold);
+        var cellBlocks = ReadTableTextBlocks(pdf.Pages[0]);
+        AssertWrappedCellFits(cellBlocks, longHeader, measure, bold);
+        AssertWrappedCellFits(cellBlocks, longValue, measure, regular);
     }
 
     [Fact]
@@ -145,4 +186,81 @@ public sealed class DocumentTests
         }
         return maximum;
     }
+
+    private static void AssertWrappedCellFits(IEnumerable<CellTextBlock> blocks, string expected,
+        XGraphics measure, XFont font)
+    {
+        var block = Assert.Single(blocks, item => NormalizePdfText(item.Runs.Select(run => run.Text))
+            .Contains(expected, StringComparison.Ordinal));
+        Assert.True(block.Runs.Count > 1,
+            $"Expected '{expected}' to be split into multiple rendered text runs.");
+        foreach (var run in block.Runs)
+        {
+            var width = measure.MeasureString(run.Text, font).Width;
+            Assert.True(run.X >= block.Left + 2.5,
+                $"Text run '{run.Text}' starts outside its table cell at x={run.X:F2} pt (left={block.Left:F2} pt).");
+            Assert.True(run.X + width <= block.Right - 2.5 + 0.75,
+                $"Text run '{run.Text}' ends outside its table cell at x={run.X + width:F2} pt (right={block.Right:F2} pt).");
+        }
+    }
+
+    private static string NormalizePdfText(IEnumerable<string> runs) => string.Concat(runs)
+        .Replace("\u200B", string.Empty, StringComparison.Ordinal)
+        .Replace("\u00AD", string.Empty, StringComparison.Ordinal);
+
+    private static List<CellTextBlock> ReadTableTextBlocks(PdfPage page)
+    {
+        var rectangles = new List<(double Left, double Right)>();
+        var rawBlocks = new List<List<TextRun>>();
+        List<TextRun>? runs = null;
+        double lineX = 0;
+        double startingX = 0;
+        foreach (var operation in ContentReader.ReadContent(page).OfType<COperator>())
+        {
+            var numbers = operation.Operands
+                .Select(value => double.TryParse(value.ToString(), NumberStyles.Float,
+                    CultureInfo.InvariantCulture, out var number) ? number : (double?)null)
+                .ToArray();
+            if (operation.Name == "re" && numbers.Length >= 4 && numbers[0] is { } x && numbers[2] is { } width)
+                rectangles.Add((x, x + width));
+            else if (operation.Name == "BT")
+            {
+                runs = [];
+                lineX = 0;
+                startingX = 0;
+            }
+            else if (operation.Name == "ET")
+            {
+                if (runs is { Count: > 0 }) rawBlocks.Add(runs);
+                runs = null;
+            }
+            else if (runs is not null && operation.Name == "Td" && numbers.Length >= 2 && numbers[0] is { } dx && numbers[1] is { } dy)
+            {
+                if (dy != 0)
+                {
+                    if (dx != 0) startingX = lineX = dx;
+                    else lineX = startingX;
+                }
+                else lineX += dx;
+            }
+            else if (runs is not null && operation.Name == "Tj")
+            {
+                var text = string.Concat(operation.Operands.OfType<CString>().Select(value => value.Value));
+                if (text.Length > 0) runs.Add(new TextRun(text, lineX));
+            }
+        }
+
+        return rawBlocks.Select(block =>
+        {
+            var firstX = block[0].X;
+            var bounds = rectangles
+                .Where(rectangle => firstX >= rectangle.Left && firstX < rectangle.Right)
+                .OrderBy(rectangle => rectangle.Right - rectangle.Left)
+                .FirstOrDefault();
+            return new CellTextBlock(bounds.Left, bounds.Right, block);
+        }).ToList();
+    }
+
+    private sealed record CellTextBlock(double Left, double Right, IReadOnlyList<TextRun> Runs);
+    private sealed record TextRun(string Text, double X);
 }
