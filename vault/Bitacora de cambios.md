@@ -26,9 +26,60 @@ siguiente agente sabe que tiene que comprobarlo. Lo que no vale es omitir la lí
 
 ---
 
+## 2026-09-30 — Consolidación del estado de entrega
+
+**Agente:** Codex. **Commit fuente:** `e43897b`, registro previo `772b5d6`.
+**Qué cambió:** estado vigente al inicio de las notas, QA-PDF-01/02 cerrados,
+diagnóstico inicial identificado como histórico y entradas por cada commit de
+corrección/pruebas. RF-09 distingue correo verificado de SMS todavía pendiente.
+**Archivos:** Estado actual, Tareas pendientes, Trazabilidad y esta bitácora.
+**Verificado con:** `git diff --check` correcto y existencia de f10045c, 20fb182
+y 93ce2f3 mediante `git cat-file -t`. Referencias de pruebas/despliegue contrastadas
+con el registro de entrega y QA. Solo documentación; no se repitieron suites ni
+despliegue, porque la aplicación no cambió. **Requisitos:** sin cierre adicional.
+
+## 2026-09-30 — Corrección de exportación PDF
+
+**Agente:** Codex. **Commit:** `f10045c`.
+**Qué cambió:** dimensiones Letter y orientación reales, tablas calculadas según
+márgenes, QR BMP incrustado en el ticket en lugar del PNG incompatible con PDFsharp.
+**Archivos:** `backend/src/Combustible.Infrastructure/Documents/Documents.cs`,
+`backend/tests/Combustible.UnitTests/DocumentTests.cs`.
+**Verificado con:** `dotnet test backend -c Release --nologo` 65/65;
+`dotnet build backend -c Release --nologo` sin avisos/errores;
+`npm run build` y `npm run lint` correctos. Siete regresiones PDF, render de tablas
+de varias páginas y decodificación del QR firmado. Incluido en la versión Azure
+e43897b; ticket real descargado sin placeholder y QR idéntico al PNG.
+**Requisitos afectados:** RF-06, RF-18, RF-20 y CA-5; QA-PDF-01/02 cerrados.
+
+## 2026-09-30 — Prueba del flujo integral de operación
+
+**Agente:** Codex. **Commit:** `20fb182`.
+**Qué cambió:** prueba UI de recepción, solicitud, aprobación, descarga/QR,
+despacho, inventario, cierre y reportes; rechazos de reuso, exceso, stock insuficiente
+y cierre duplicado sin alterar inventario. Datos sintéticos únicos por ejecución.
+**Archivos:** `frontend/e2e/workflow.spec.ts`.
+**Verificado con:** suite Playwright completa en base aislada 10/10, Desktop Chrome
+y Pixel 7 emulado; build/lint correctos. CI `36723232494` success en backend,
+frontend, navegador y GHCR. Backend 65/65 en esa revisión.
+**Requisitos afectados:** evidencia del ciclo de tickets, RF-12/RF-14/RF-18/RF-20.
+Los 55 casos del plan y Android físico no se declaran completados.
+
+## 2026-09-30 — Ajuste de texto a celdas PDF
+
+**Agente:** Codex. **Commit:** `93ce2f3`.
+**Qué cambió:** medición con la fuente real y ajuste de palabras largas al ancho
+interior de la celda, sin guiones impresos y sin modificar datos ni exportación CSV.
+**Archivos:** Documents.cs y DocumentTests.cs.
+**Verificado con:** `dotnet test backend -c Release --nologo` 66/66;
+regresión de texto en celdas con Arial y DejaVu, CSV intacto;
+`npm run build` y `npm run lint` correctos. CI `36728670750` success en cuatro jobs.
+Incluido en Azure e43897b; reporte real de 12 columnas renderizado sin recorte.
+**Requisitos afectados:** RF-18, RF-20 y CA-5; extensión del cierre QA-PDF-01.
+
 ## 2026-09-30 — PDF, consumo visible y entrega de presentación
 
-**Revalidación posterior al aviso de otro agente:** GitHub devuelve instalar.sh
+**Verificación de la versión publicada:** GitHub devuelve instalar.sh
 con REVISION=e43897b y hash del paquete correcto; 93b7635 ya publicó ese cambio.
 RunCommand de solo lectura confirma APP_VERSION e imagen 0.4.0-e43897b,
 PostgreSQL healthy y ready. Se descargaron PDF nuevos desde Azure: COM-2026-000008
@@ -98,7 +149,7 @@ docs/azure.md y notas de continuidad. Evidencia local ignorada en artifacts/qa-2
 y artifacts/presentation-qr-20260930. Los 55 casos del plan no se declaran ejecutados;
 Android/cámara físico, SMS real y configuración institucional siguen pendientes.
 **Commits:** `f10045c`, `20fb182`, `93ce2f3`, `e43897b`, subidos a fase-2-producto.
-**Requisitos:** regresiones RF-06/RF-08/RF-18/RF-20/CA-5; RF-09 SMS y CA-6 no cerrados.
+**Requisitos:** regresiones RF-06/RF-10/RF-18/RF-20/CA-5; RF-09 SMS y CA-6 no cerrados.
 
 ## 2026-09-22 — Configuración delegada y primera administración funcional
 
@@ -778,7 +829,8 @@ inicial produjo errores de entorno PowerShell/procesos y conexiones rechazadas;
 se repitió con servidores hijos en primer plano, sin cambiar el producto.
 PostgreSQL efímero separado en puerto 15433; limpieza del entorno de pruebas.
 Pruebas de PDF aisladas con datos ficticios,
-Poppler + inspección de objetos + revisión visual. **Requisitos con defecto abierto:**
-RF-06, RF-18, RF-20 y CA-5; no se cierra ninguno nuevo.
+Poppler + inspección de objetos + revisión visual. **Estado al diagnóstico inicial:**
+RF-06, RF-18, RF-20 y CA-5 afectados. Ese diagnóstico quedó superado por
+f10045c/93ce2f3 y el despliegue e43897b; QA-PDF-01/02 están cerrados.
 
 **Commit del registro:** esta entrada y el informe de QA (solo documentación).

@@ -15,6 +15,12 @@ cumplidas. Al terminarla, márcala aquí, anota en [[Bitacora de cambios]] y act
 
 Notación: `[ ]` pendiente · `[~]` en curso · `[x]` hecho y verificado · `[!]` bloqueada.
 
+**Entrega vigente — 2026-09-30:** QA-PDF-01 y QA-PDF-02 están cerrados y publicados
+en Azure `0.4.0-e43897b`. Backend 66/66, navegador 10/10 y CI `36730599453`
+success. Los commits `f10045c`, `20fb182` y `93ce2f3` tienen entradas y evidencia
+en [[Bitacora de cambios]]. Siguen pendientes SMS real, Android físico y los
+recursos institucionales indicados abajo; los defectos PDF no son tareas abiertas.
+
 ---
 
 ## Fase 0 — Montaje del entorno (verificada 2026-09-22)

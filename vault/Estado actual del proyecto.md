@@ -64,7 +64,18 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - PWA instalable; la API nunca se guarda en caché. Base local migrada y empleados cifrados.
 - GitHub usa `fase-2-producto` como rama predeterminada; conserva las ramas de Fase 0 y Fase 1.
 
-## Lo que falta / límites
+## Verificación de presentación — 2026-09-30
+
+| Entrega | Estado vigente | Evidencia |
+|---|---|---|
+| QA-PDF-01: tablas recortadas | CERRADO; publicado en Azure | `f10045c` y `93ce2f3`; regresiones de página/celda y render de PDF descargado |
+| QA-PDF-02: QR ausente en PDF | CERRADO; publicado en Azure | `f10045c`; imagen incrustada y QR de COM-2026-000008 decodificado idéntico al PNG |
+| Flujo integral y estados entre sesiones | VERIFICADO | `20fb182` y `e43897b`; navegador 10/10, backend 66/66 |
+| Versión publicada | `0.4.0-e43897b` | CI `36730599453` success, instalador actualizado, salud HTTP 200 |
+
+Los diagnósticos anteriores describen el estado de sus fechas; esta sección y
+[[Tareas pendientes]] indican qué sigue abierto. Evidencia detallada por commit
+en [[Bitacora de cambios]] y por requisito en [[Trazabilidad de requisitos del SRS]].
 
 - **QA previa a presentación (2026-09-30): dos defectos PDF corregidos en código `f10045c`.**
   Las tablas usan dimensiones Letter reales y caben en la página. El QR del ticket
@@ -76,8 +87,8 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
   largas ajustadas al ancho interior de celdas. Lista/detalle refrescan al recuperar
   foco/visibilidad y cada 15 s visibles; prueba con dos sesiones. Evidencia y
   resultados: `docs/qa-presentacion-2026-09-30.md`.
-  Revalidado ante aviso de otro agente: instalador en GitHub e imagen activa Azure
-  coinciden en e43897b; PDF nuevos sin recorte y QR leído. Aviso de 18a1e17 obsoleto.
+  Instalador en GitHub e imagen activa Azure coinciden en e43897b;
+  PDF recién descargados sin recorte y QR leído. 18a1e17 es una versión histórica.
 
 - **COM-2026-000009:** no tenía despacho; correo fallaba SMTP 5.1.4 por `.test`.
   Usuario proporcionó dirección real; se corrigió Email por API y se reenvió una vez:
@@ -88,6 +99,8 @@ Continuidad rápida: [[Handoff para Astra]]. No inventar datos reales de INTEC.
 - **Portada:** el QR anterior apuntaba al login, no era ticket. Copia en
   `C:\Users\proje\Downloads\portada corregida.pptx` contiene QR firmado real de
   COM-2026-000008, Enviado, uso único, vence 2026-10-03; render/decodificación validados.
+
+## Lo que falta / límites
 
 - Rama `fase-2-producto` **subida**. CI `35818197956` correcta para `345e623`:
   backend 52/52, navegador 6/6, frontend build/lint y publicación. API de GitHub confirmó

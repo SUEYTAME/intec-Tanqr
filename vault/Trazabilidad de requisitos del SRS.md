@@ -14,6 +14,12 @@ Matriz viva de los 24 requisitos funcionales y 6 de seguridad de `docs/SRS.pdf`
 Estados: `PENDIENTE` · `EN CURSO` · `HECHO` · `BLOQUEADO` (con el bloqueo de
 [[Estado actual del proyecto]]).
 
+**Entrega vigente — 2026-09-30:** QA-PDF-01 y QA-PDF-02 CERRADOS en código y Azure
+`0.4.0-e43897b`. Backend 66/66, navegador 10/10 y CI `36730599453` success.
+El apartado QA de PDF al final contiene la evidencia específica; los bloques con
+fecha anterior son históricos y no sustituyen este estado. RF-09 SMS real y
+CA-6 Android físico siguen sin cerrar.
+
 **Verificación de relevo 2026-09-22:** los commits `a6a3e08` y `6304270` cubren entorno
 y CI, no implementan ningún RF/RS ni cierran criterios de aceptación. Las dos pruebas
 existentes verifican `/` y `/health` en memoria; no prueban base de datos, seguridad ni
@@ -40,11 +46,11 @@ preguntar no constituye aprobación.
 | ID | Requisito | Qué exige el SRS | Estado | Dónde vive | Prueba |
 |---|---|---|---|---|---|
 | RF-05 | Creación de Solicitudes | Manuales, automáticas programadas y recurrentes. Campos: empleado, vehículo, departamento, cantidad autorizada, tipo combustible, fecha solicitud, fecha vencimiento | HECHO | Endpoints/TicketEndpoints.cs; Tickets/LifecycleService.cs; frontend Requests.tsx, Schedules.tsx | FuelTests: Programaciones_generan_solicitudes_y_asignan_automaticamente |
-| RF-06 | Emisión de Tickets Digitales | UUID, secuencia correlativa, fechas creación/vencimiento, vehículo, empleado, departamento, cantidad, tipo. Formatos: PDF, correo, QR | HECHO | Tickets/TicketService.cs; Documents/Documents.cs (PDF) | FuelTests: Emision_numera_firma_y_envia_por_SMTP_real |
+| RF-06 | Emisión de Tickets Digitales | UUID, secuencia correlativa, fechas creación/vencimiento, vehículo, empleado, departamento, cantidad, tipo. Formatos: PDF, correo, QR | HECHO | Tickets/TicketService.cs; Documents/Documents.cs (PDF) | FuelTests: Emision_numera_firma_y_envia_por_SMTP_real; DocumentTests: QR incrustado sin placeholder, f10045c; PDF real Azure decodificado |
 | RF-07 | Generación de QR Seguro | Datos protegidos por hash: ticket ID, número secuencial, empleado, vehículo, cantidad, fecha emisión, fecha expiración. Criterios: no reutilizable, no editable, único, verificación criptográfica | HECHO | Security/Crypto.cs (TicketSigner ECDSA P-256) | FuelTests: QR_alterado_o_ticket_modificado_en_la_base_se_rechaza; reuso y vencido rechazados |
 | RF-08 | Numeración de Tickets | Secuencia consecutiva, prefijo configurable, reinicio anual opcional, sin duplicados. Formato ejemplo: `COM-2026-000001` | HECHO | TicketService.IssueAsync; TicketSettings (prefijo, reinicio anual) | FuelTests: Emision_concurrente_no_duplica_ni_salta_numeros; Parametros_exigen_version_y_rol_administrador |
-| RF-09 | Envío de Tickets | Correo con QR y datos. SMS con código corto, URL segura y QR descargable | HECHO en código; producción BLOQUEADA (B-01 SMS, B-02 SMTP) | Messaging/Senders.cs; enlace público /ticket/<id>.<token>; PublicTicket.tsx | FuelTests: Enlace_publico_muestra_el_ticket_y_su_QR_descargable; Sin_SMTP_la_entrega_queda_pendiente... |
-| RF-10 | Consulta de Estado | 7 estados: Creado, Enviado, Pendiente, Próximo a vencer, Vencido, Consumido, Anulado | HECHO | Domain/Fuel.cs TicketStatus; LifecycleService (vencer/avisar) | FuelTests: Proceso_periodico_marca_proximo_a_vencer_y_vencido; Anulacion_rechazo_y_cancelacion... |
+| RF-09 | Envío de Tickets | Correo con QR y datos. SMS con código corto, URL segura y QR descargable | EN CURSO: correo ACS verificado; SMS real BLOQUEADO (B-01) | Messaging/Senders.cs; enlace público /ticket/<id>.<token>; PublicTicket.tsx | FuelTests: Enlace_publico_muestra_el_ticket_y_su_QR_descargable; Sin_SMTP_la_entrega_queda_pendiente... |
+| RF-10 | Consulta de Estado | 7 estados: Creado, Enviado, Pendiente, Próximo a vencer, Vencido, Consumido, Anulado | HECHO | Domain/Fuel.cs TicketStatus; LifecycleService (vencer/avisar) | FuelTests: Proceso_periodico_marca_proximo_a_vencer_y_vencido; Anulacion_rechazo_y_cancelacion...; workflow.spec.ts: lista/detalle actualizados entre sesiones tras despacho, e43897b |
 | RF-11 | Asignaciones | Manual por usuario autorizado. Automática por programación, reglas de negocio y consumo histórico | HECHO | FuelSchedule (cantidad fija o promedio histórico, aprobación automática) | FuelTests: Programaciones_generan_solicitudes_y_asignan_automaticamente |
 
 ### Despacho
@@ -174,16 +180,18 @@ mensual (RF-15) en `GET /api/inventario`.
 4. Permisos de clientes OAuth con rol Supervisor (decisión pendiente desde Fase 6).
 5. Siguen fuera de alcance del código: SMS real (B-01), datos reales (B-04), Android físico (CA-6).
 
-## QA de PDF — 2026-09-30
+## QA de PDF — CERRADA, 2026-09-30
 
-La exportación HTTP/PDF existe, pero la verificación visual reabre defectos en
-RF-06 (QR ausente en PDF), RF-18 (detalle del acta recortado), RF-20 y CA-5
-(tablas anchas recortadas). Confirmados en los archivos exactos aportados y
-reproducidos con datos ficticios en el renderer de `5aabf446`.
-Las comprobaciones `%PDF` existentes no demuestran legibilidad ni QR incrustado.
-No se cierra ningún requisito nuevo ni se declara corregido ninguno de estos defectos.
-Detalle y evidencia: `docs/qa-presentacion-2026-09-30.md`; tareas QA-PDF-01/02
-en [[Tareas pendientes]].
+| Defecto | Estado | Requisitos afectados | Implementación y evidencia |
+|---|---|---|---|
+| QA-PDF-01: tablas cortadas por la derecha | CERRADO en Azure | RF-18, RF-20, CA-5 | `f10045c`: dimensiones/orientación/ancho; `93ce2f3`: límites de texto; DocumentTests y render de reporte publicado |
+| QA-PDF-02: QR muestra Image has no valid type. | CERRADO en Azure | RF-06, CA-5 | `f10045c`: QR BMP incrustado; DocumentTests y decodificación del PDF real de COM-2026-000008 |
+
+El diagnóstico inicial reprodujo ambos defectos en `5aabf446`; quedó superado
+por las correcciones y el despliegue verificado `e43897b`. Las comprobaciones
+`%PDF` por sí solas eran insuficientes; la evidencia actual incluye geometría,
+imagen incrustada, render visual y decodificación. Detalle:
+`docs/qa-presentacion-2026-09-30.md`; tareas cerradas en [[Tareas pendientes]].
 
 **Corrección posterior del mismo día:** `f10045c` resuelve los dos defectos.
 `DocumentTests.cs` prueba límites de las tablas (12/10/9/7 columnas), encabezados
