@@ -29,6 +29,24 @@ de otra organización que no está autorizada para este despliegue.
 - Al entrar por primera vez: **activar MFA** en *Mi seguridad* y cambiar la contraseña. El cambio
   no actualiza Key Vault; ese secreto solo sirve para el primer acceso.
 
+## Colaboración Azure — 2026-09-30
+
+Por solicitud explícita del titular, se igualaron los permisos de administración del
+proyecto para un compañero existente en el tenant INTEC, object ID
+`e333eaea-7226-40a8-a583-a26d4d940caa`:
+
+- `Owner` en `rg-intec-fuel-dev-b805`: gestión de recursos y asignación de permisos.
+- `Key Vault Secrets Officer` en `kv-intec-fuel-dev-b805`: gestión de secretos.
+- `Storage Blob Data Contributor` en `stintecfueldevb805`: archivos de despliegue y respaldos.
+- Propietario de la app Entra SMTP `intec-combustible-smtp-b805` y de su service principal.
+
+Las tres asignaciones RBAC y ambas listas de propietarios se verificaron por lectura
+posterior en Azure/Graph. No se otorgaron permisos sobre la suscripción completa ni
+otros proyectos; el presupuesto de suscripción queda fuera de este acceso. GitHub y
+el login de la aplicación TanQR tienen permisos separados. El compañero debe iniciar
+sesión en el portal con su cuenta INTEC y abrir el grupo de recursos; su acceso desde
+su propia sesión todavía no fue comprobado.
+
 ## Recursos
 
 | Recurso | Nombre | Para qué |
