@@ -199,3 +199,13 @@ refresco por visibilidad e intervalo 15 s. PDF reales descargados tras desplegar
 reporte con cinco filas/12 columnas completas y textos dentro de celdas, estación
 DEMO corregida; COM-2026-000008 con QR visible y decodificado idéntico al endpoint.
 Evidencia local final en `artifacts/qa-20260930/azure-final/`.
+
+**Revalidación ante aviso de instalador antiguo:** GitHub, rama predeterminada
+fase-2-producto, devuelve REVISION=e43897b y su SHA-256 correcto. El commit
+93b7635 ya había actualizado instalar.sh. RunCommand de solo lectura vuelve a
+confirmar APP_VERSION=0.4.0-e43897b, contenedor con esa imagen, db healthy y
+ready. Descarga nueva de COM-2026-000008: imagen incrustada sin placeholder y
+QR decodificado idéntico al PNG. Reporte nuevo generado 2026-09-30 10:58
+Santo Domingo: cinco filas/12 columnas, render revisado sin recorte derecho.
+El aviso sobre 18a1e17 corresponde a un estado anterior; no se necesitó otro
+despliegue ni cambio de código. No reutilizar adjuntos PDF descargados antes del arreglo.
