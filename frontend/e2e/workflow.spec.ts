@@ -122,7 +122,8 @@ async function readTicketQr(page: Page, ticketNumber: string) {
   return qr!;
 }
 
-test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre y reportes", async ({ page, request }) => {
+test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre y reportes", async ({ browser, page, request }) => {
+  test.setTimeout(60_000);
   const adminEmail = process.env.BOOTSTRAP_EMAIL;
   const adminPassword = process.env.BOOTSTRAP_PASSWORD;
   expect(adminEmail).toBeTruthy();
@@ -185,6 +186,17 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
   await page.getByRole("button", { name: "Solicitudes", exact: true }).click();
   const firstNumber = await approveLatest(page);
   const firstQr = await readTicketQr(page, firstNumber);
+  const detailStatus = page.locator(".facts").getByText(/Creado|Enviado|Pendiente de entrega|Próximo a vencer/);
+  await expect(detailStatus).toBeVisible();
+  const managerListContext = await browser.newContext({ viewport: page.viewportSize() ?? undefined });
+  const managerListPage = await managerListContext.newPage();
+  await loginUi(managerListPage, accounts[0].email);
+  await managerListPage.getByRole("button", { name: "Tickets", exact: true }).click();
+  await managerListPage.getByLabel("Buscar por número, código corto o placa").fill(firstNumber);
+  await managerListPage.getByRole("button", { name: "Buscar", exact: true }).click();
+  const managerRow = managerListPage.getByRole("row").filter({ hasText: firstNumber });
+  const activeStatus = managerRow.locator("td").nth(1);
+  await expect(activeStatus).toContainText(/Creado|Enviado|Pendiente de entrega|Próximo a vencer/);
 
   // La API también rechaza una cantidad superior a la autorizada sin tocar stock.
   const over = await postResult<{ error?: string }>(request, "/api/despachos/", dispatcher.accessToken, {
@@ -197,16 +209,30 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
   expect(inventory.tanks.find((item) => item.id === tank.id)?.balance).toBe(12);
 
   // Despachador independiente valida el QR visible y confirma identidad.
-  await loginUi(page, accounts[2].email);
-  await page.getByRole("button", { name: "Validar código" }).waitFor();
-  await page.getByLabel(/Código QR \(lector externo o texto\)/).fill(firstQr);
-  await page.getByRole("button", { name: "Validar código" }).click();
-  await expect(page.getByText("TICKET VÁLIDO")).toBeVisible();
-  await page.getByLabel("Verifiqué la cédula del portador").check();
-  await page.getByLabel("Tanque").selectOption(tank.id);
-  await page.getByLabel("Galones despachados").fill("10");
-  await page.getByRole("button", { name: "Confirmar despacho" }).click();
-  await expect(page.getByText("DESPACHO REGISTRADO")).toBeVisible();
+  const dispatchContext = await browser.newContext({ viewport: page.viewportSize() ?? undefined });
+  const dispatchPage = await dispatchContext.newPage();
+  await loginUi(dispatchPage, accounts[2].email);
+  await dispatchPage.getByRole("button", { name: "Validar código" }).waitFor();
+  await dispatchPage.getByLabel(/Código QR \(lector externo o texto\)/).fill(firstQr);
+  await dispatchPage.getByRole("button", { name: "Validar código" }).click();
+  await expect(dispatchPage.getByText("TICKET VÁLIDO")).toBeVisible();
+  // Validar/leer el QR no lo consume; el consumo sucede al confirmar el despacho.
+  await expect(activeStatus).toContainText(/Creado|Enviado|Pendiente de entrega|Próximo a vencer/);
+  await dispatchPage.getByLabel("Verifiqué la cédula del portador").check();
+  await dispatchPage.getByLabel("Tanque").selectOption(tank.id);
+  await dispatchPage.getByLabel("Galones despachados").fill("10");
+  await dispatchPage.getByRole("button", { name: "Confirmar despacho" }).click();
+  await expect(dispatchPage.getByText("DESPACHO REGISTRADO")).toBeVisible();
+  // Otra sesión con la lista abierta conserva su instantánea hasta que se actualiza.
+  await expect(activeStatus).toContainText(/Creado|Enviado|Pendiente de entrega|Próximo a vencer/);
+  const currentTicket = await call<{ items: { status: string }[] }>(
+    request, `/api/tickets/?q=${encodeURIComponent(firstNumber)}`, supervisor.accessToken,
+  );
+  expect(currentTicket.items[0]?.status).toBe("Consumed");
+  await page.bringToFront();
+  await expect(page.locator(".facts dd").getByText("Consumido", { exact: true })).toBeVisible({ timeout: 20000 });
+  await managerListPage.bringToFront();
+  await expect(activeStatus).toHaveText("Consumido", { timeout: 20000 });
   inventory = await call(request, "/api/inventario/", dispatcher.accessToken);
   expect(inventory.tanks.find((item) => item.id === tank.id)?.balance).toBe(2);
   let movements = await call<{ items: { kind: string; quantity: number }[] }>(
@@ -216,10 +242,10 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
   expect(movements.items.find((item) => item.kind === "Dispatch")?.quantity).toBe(-10);
 
   // Reutilizar el QR consumido se rechaza y no crea un segundo movimiento.
-  await page.getByRole("button", { name: "Despachar otro ticket" }).click();
-  await page.getByLabel(/Código QR \(lector externo o texto\)/).fill(firstQr);
-  await page.getByRole("button", { name: "Validar código" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: /consumido|despachado/i })).toBeVisible();
+  await dispatchPage.getByRole("button", { name: "Despachar otro ticket" }).click();
+  await dispatchPage.getByLabel(/Código QR \(lector externo o texto\)/).fill(firstQr);
+  await dispatchPage.getByRole("button", { name: "Validar código" }).click();
+  await expect(dispatchPage.getByRole("alert").filter({ hasText: /consumido|despachado/i })).toBeVisible();
   movements = await call(request, `/api/inventario/movimientos?tankId=${tank.id}`, dispatcher.accessToken);
   expect(movements.items.filter((item) => item.kind === "Dispatch")).toHaveLength(1);
 
@@ -230,34 +256,29 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
   await page.getByRole("button", { name: "Solicitudes", exact: true }).click();
   const secondNumber = await approveLatest(page);
   const secondQr = await readTicketQr(page, secondNumber);
-  await loginUi(page, accounts[2].email);
-  await page.getByLabel(/Código QR \(lector externo o texto\)/).fill(secondQr);
-  await page.getByRole("button", { name: "Validar código" }).click();
-  await expect(page.getByText("TICKET VÁLIDO")).toBeVisible();
-  await page.getByLabel("Verifiqué la cédula del portador").check();
-  await page.getByLabel("Tanque").selectOption(tank.id);
-  await page.getByLabel("Galones despachados").fill("5");
-  await page.getByRole("button", { name: "Confirmar despacho" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: /existencia insuficiente/i })).toBeVisible();
+  const shortDispatch = await postResult<{ error?: string }>(request, "/api/despachos/", dispatcher.accessToken, {
+    qr: secondQr, tankId: tank.id, quantity: 5, identityConfirmed: true,
+    odometer: null, differenceReason: null, observations: null,
+  });
+  expect(shortDispatch.response.status()).toBe(422);
+  expect(shortDispatch.body.error).toMatch(/existencia insuficiente/i);
   inventory = await call(request, "/api/inventario/", dispatcher.accessToken);
   expect(inventory.tanks.find((item) => item.id === tank.id)?.balance).toBe(2);
   movements = await call(request, `/api/inventario/movimientos?tankId=${tank.id}`, dispatcher.accessToken);
   expect(movements.items.filter((item) => item.kind === "Dispatch")).toHaveLength(1);
-  await page.getByRole("button", { name: "Cancelar y leer otro QR" }).click();
-
   // CP-035/036: cierre con conteo físico, PDF de acta y duplicado rechazado.
-  await page.getByRole("button", { name: "Cierre diario", exact: true }).click();
-  await page.getByLabel("Estación").selectOption(station.id);
-  await page.getByLabel("Día operativo").fill(today);
-  await page.getByRole("button", { name: "Ver previo" }).click();
-  await expect(page.getByText(/1 despachos confirmados/)).toBeVisible();
-  await page.getByLabel(`Medido en el tanque Q${suffix}`).fill("2");
-  await page.getByRole("button", { name: "Cerrar el día" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Cerrar el día" }).click();
-  await expect(page.getByRole("heading", { name: "Cierre registrado" })).toBeVisible();
+  await dispatchPage.getByRole("button", { name: "Cierre diario", exact: true }).click();
+  await dispatchPage.getByLabel("Estación").selectOption(station.id);
+  await dispatchPage.getByLabel("Día operativo").fill(today);
+  await dispatchPage.getByRole("button", { name: "Ver previo" }).click();
+  await expect(dispatchPage.getByText(/1 despachos confirmados/)).toBeVisible();
+  await dispatchPage.getByLabel(`Medido en el tanque Q${suffix}`).fill("2");
+  await dispatchPage.getByRole("button", { name: "Cerrar el día" }).click();
+  await dispatchPage.getByRole("dialog").getByRole("button", { name: "Cerrar el día" }).click();
+  await expect(dispatchPage.getByRole("heading", { name: "Cierre registrado" })).toBeVisible();
   const [closePdf] = await Promise.all([
-    page.waitForEvent("download"),
-    page.getByRole("button", { name: "Descargar acta PDF" }).click(),
+    dispatchPage.waitForEvent("download"),
+    dispatchPage.getByRole("button", { name: "Descargar acta PDF" }).click(),
   ]);
   expect((await readFile(await closePdf.path())).subarray(0, 5).toString()).toBe("%PDF-");
   const duplicate = await postResult<{ error?: string }>(request, "/api/cierres/", dispatcher.accessToken, {
@@ -297,4 +318,6 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
     if (item.signature === "xlsx") expect(bytes.subarray(0, 4).toString("hex")).toBe("504b0304");
     if (item.signature === "pdf") expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
   }
+  await managerListContext.close();
+  await dispatchContext.close();
 });

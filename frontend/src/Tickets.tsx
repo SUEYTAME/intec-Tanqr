@@ -56,6 +56,22 @@ type Detail = {
   } | null;
 };
 
+function useRefreshWhenVisible(reload: () => void) {
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") reload();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    const timer = window.setInterval(refresh, 15000);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      window.clearInterval(timer);
+    };
+  }, [reload]);
+}
+
 function TicketDetail({
   id,
   canManage,
@@ -69,6 +85,7 @@ function TicketDetail({
 }) {
   const load = useCallback(() => api<Detail>(`/api/tickets/${id}`), [id]);
   const { data, error, loading, reload } = useLoad(load);
+  useRefreshWhenVisible(reload);
   const [qr, setQr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -284,6 +301,7 @@ export function Tickets({ canManage }: { canManage: boolean }) {
     return api<{ items: Ticket[]; total: number }>(`/api/tickets/?${params}`);
   }, [page, status, query]);
   const { data, error, loading, reload } = useLoad(load);
+  useRefreshWhenVisible(reload);
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setQuery(textValue(new FormData(event.currentTarget), "q"));
@@ -295,7 +313,11 @@ export function Tickets({ canManage }: { canManage: boolean }) {
         eyebrow="OPERACIÓN / TICKETS"
         title="Tickets"
         description="Tickets emitidos, su entrega y su estado de consumo."
-      />
+      >
+        <button className="subtle" onClick={reload} disabled={loading}>
+          Actualizar
+        </button>
+      </PageHeading>
       <Messages error={error} />
       {selected && (
         <TicketDetail
