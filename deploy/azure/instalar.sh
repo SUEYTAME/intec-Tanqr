@@ -43,6 +43,24 @@ install -m 0600 "$SRC_DIR/deploy/docker-compose.prod.yml" "$BASE/docker-compose.
 KV=$(token https://vault.azure.net)
 secret() { curl -fsS -H "Authorization: Bearer $KV" "https://$VAULT.vault.azure.net/secrets/$1?api-version=7.4" \
   | python3 -c 'import json,sys;print(json.load(sys.stdin)["value"])'; }
+# Solo 404 (secreto ausente) es opcional. Autorización/red/otros errores abortan.
+optional_secret() {
+  local response code
+  response=$(mktemp)
+  code=$(curl -sS -o "$response" -w '%{http_code}' -H "Authorization: Bearer $KV" \
+    "https://$VAULT.vault.azure.net/secrets/$1?api-version=7.4") || { rm -f "$response"; return 1; }
+  case "$code" in
+    200) python3 -c 'import json,sys;print(json.load(sys.stdin)["value"])' < "$response" || { rm -f "$response"; return 1; } ;;
+    404) echo "" ;;
+    *) rm -f "$response"; echo "Error HTTP $code leyendo secreto opcional $1" >&2; return 1 ;;
+  esac
+  rm -f "$response"
+}
+SMS_PROVIDER=$(optional_secret sms-provider)
+TWILIO_ACCOUNT_SID=$(optional_secret twilio-account-sid)
+TWILIO_AUTH_TOKEN=$(optional_secret twilio-auth-token)
+TWILIO_FROM=$(optional_secret twilio-from)
+TWILIO_MESSAGING_SERVICE_SID=$(optional_secret twilio-messaging-service-sid)
 umask 077
 {
   echo "APP_VERSION=$APP_VERSION"
@@ -62,12 +80,17 @@ umask 077
   echo "SMTP_USER=$(secret smtp-user)"
   echo "SMTP_PASSWORD=$(secret smtp-password)"
   echo "SMTP_FROM=$(secret smtp-from)"
+  echo "SMS_PROVIDER=$SMS_PROVIDER"
+  echo "TWILIO_ACCOUNT_SID=$TWILIO_ACCOUNT_SID"
+  echo "TWILIO_AUTH_TOKEN=$TWILIO_AUTH_TOKEN"
+  echo "TWILIO_FROM=$TWILIO_FROM"
+  echo "TWILIO_MESSAGING_SERVICE_SID=$TWILIO_MESSAGING_SERVICE_SID"
   echo "TLS_PFX_DIR=$BASE/certs"
   echo "TLS_PFX_PASSWORD=$(secret tls-pfx-password)"
 } > "$BASE/produccion.env.new"
 mv "$BASE/produccion.env.new" "$BASE/produccion.env"
 umask 022
-unset KV
+unset KV TWILIO_AUTH_TOKEN
 COMPOSE="docker compose -p combustible -f $BASE/docker-compose.yml --env-file $BASE/produccion.env"
 
 # --- 3. Certificado Let's Encrypt y renovación (Kestrel TLS 1.3 directo, sin proxy) ---
