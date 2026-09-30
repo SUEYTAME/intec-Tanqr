@@ -193,6 +193,11 @@ Evidencia repetida por Astra: backend52/52, build/lint frontend correctos; CI `3
 
 ## Reglas del backlog
 
+- [x] Igualar acceso Azure del compañero dentro de INTEC-combustible (2026-09-30):
+      Owner del grupo, gestión de secretos, Blob Data Contributor y propietario app/SP
+      SMTP; cinco asignaciones verificadas mediante Azure CLI/Graph. GitHub y login
+      TanQR separados. Falta que el compañero confirme entrada desde su propia sesión.
+
 - Una tarea marcada `[x]` significa que **se corrió la prueba y pasó**, no que se escribió el código.
 - Si descubres trabajo que falta, añádelo aquí en el momento. Un hallazgo que no se escribe se pierde.
 - Si una tarea está `[!]` bloqueada, no la rodees inventando un sustituto: sigue a la siguiente

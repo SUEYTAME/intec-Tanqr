@@ -132,6 +132,12 @@ en [[Bitacora de cambios]] y por requisito en [[Trazabilidad de requisitos del S
 
 ## Qué abrir según la tarea
 
+- **Colaboración Azure (2026-09-30):** compañero INTEC con object ID
+  `e333eaea-7226-40a8-a583-a26d4d940caa` tiene Owner del grupo del proyecto,
+  Key Vault Secrets Officer, Storage Blob Data Contributor y propiedad de app/SP
+  SMTP. Azure/Graph confirmaron las cinco asignaciones. Alcance limitado al proyecto;
+  GitHub, login TanQR y presupuesto de suscripción separados. Detalle en `docs/azure.md`.
+
 | Tarea | Archivos |
 |---|---|
 | Continuar | [[Tareas pendientes]] + [[Bitacora de cambios]] |

@@ -6,6 +6,29 @@ actualizado: 2026-09-30
 
 # Bitácora de cambios
 
+## 2026-09-30 — Acceso administrativo del compañero a Azure (Codex)
+
+Solicitud explícita: mismo acceso del titular para modificar/ver el proyecto.
+Cuenta destinataria resuelta en el tenant INTEC antes de escribir, object ID
+`e333eaea-7226-40a8-a583-a26d4d940caa`. Titular verificado como Owner de la
+suscripción INTEC; se restringió el nuevo Owner al grupo `rg-intec-fuel-dev-b805`.
+
+- Owner: asignación `571711b4-1010-4d14-8a36-d33a7fcdf610`.
+- Key Vault Secrets Officer, vault del proyecto: `0817484d-4dde-4530-991b-216f24296e7e`.
+- Storage Blob Data Contributor, storage del proyecto: `9a1c8012-09f9-4c2e-948e-15bca64eae0f`.
+- Propietario de app Entra `f2e704f8-6eb5-4dc5-b0cc-6f00b3928ff2` y service principal
+  `9ebb9963-46fe-4a7a-a670-b8c1a56ea4ea` del SMTP, igual que el titular.
+
+**Verificación:** lectura posterior de tres roles y ambas listas de propietarios,
+con object ID coincidente. `dotnet test backend -c Release --nologo` → **82/82**,
+cero fallos/omitidas; `npm run build` correcto. Pruebas sobre checkout actual con
+cambios preexistentes de SMS de otro bloque, preservados; no se desplegó código.
+CLI no admite `az ad sp owner add`: se usó Graph POST owners/$ref y se confirmó
+por lectura. Sin secretos en este registro. GitHub, usuarios TanQR y presupuesto
+de suscripción no modificados; entrada del compañero con su sesión no comprobada.
+**Commit:** commit documental que contiene esta entrada; base `762efaadf7bf863ac3f3d2b2d9242b9f04708c73`.
+**Requisitos:** ninguno cerrado; permisos de infraestructura, sin cambios de SRS.
+
 Changelog del proyecto. Más reciente arriba. Esta nota es la que permite que un agente sepa
 qué tocó el otro sin tener que leer el diff entero.
 
