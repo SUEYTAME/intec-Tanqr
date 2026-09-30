@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { expect, test, type Page, type APIRequestContext } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page, type APIRequestContext } from "@playwright/test";
 
 const apiBase = "http://127.0.0.1:5080";
 const password = `Qa-${randomBytes(24).toString("base64url")}aA1!`;
@@ -15,6 +15,11 @@ const today = new Intl.DateTimeFormat("en-CA", {
 
 type Created = { id: string; [key: string]: unknown };
 type Session = { accessToken: string };
+const workflowContexts: BrowserContext[] = [];
+
+test.afterEach(async () => {
+  await Promise.all(workflowContexts.splice(0).map((context) => context.close()));
+});
 
 async function call<T>(
   request: APIRequestContext,
@@ -189,6 +194,7 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
   const detailStatus = page.locator(".facts").getByText(/Creado|Enviado|Pendiente de entrega|Próximo a vencer/);
   await expect(detailStatus).toBeVisible();
   const managerListContext = await browser.newContext({ viewport: page.viewportSize() ?? undefined });
+  workflowContexts.push(managerListContext);
   const managerListPage = await managerListContext.newPage();
   await loginUi(managerListPage, accounts[0].email);
   await managerListPage.getByRole("button", { name: "Tickets", exact: true }).click();
@@ -210,6 +216,7 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
 
   // Despachador independiente valida el QR visible y confirma identidad.
   const dispatchContext = await browser.newContext({ viewport: page.viewportSize() ?? undefined });
+  workflowContexts.push(dispatchContext);
   const dispatchPage = await dispatchContext.newPage();
   await loginUi(dispatchPage, accounts[2].email);
   await dispatchPage.getByRole("button", { name: "Validar código" }).waitFor();
@@ -318,6 +325,4 @@ test("flujo integral aislado: solicitud, ticket QR, despacho, inventario, cierre
     if (item.signature === "xlsx") expect(bytes.subarray(0, 4).toString("hex")).toBe("504b0304");
     if (item.signature === "pdf") expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
   }
-  await managerListContext.close();
-  await dispatchContext.close();
 });
