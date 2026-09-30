@@ -2,6 +2,22 @@
 
 Actualizado: 2026-09-30.
 
+## Modo de presentación autorizado para hoy
+
+El usuario autorizó un SMS genérico, sin código/enlace, para la presentación.
+`TWILIO_TRIAL_TEMPLATE=sms_order_confirmation` y `TWILIO_TRIAL_UNTIL=2026-09-30`
+envían la plantilla oficial como Body y conservan From y To. El SMS contiene una
+confirmación de pedido y datos de ejemplo fijos de Twilio, no los datos del ticket.
+No admite personalización en Trial. Su envío directo quedó `delivered` y el usuario
+confirmó recepción en el teléfono el 2026-09-30.
+
+La app registra `DEMO Trial: confirmación genérica con datos de ejemplo Twilio,
+sin datos del ticket` junto al SID/status. Después de la fecha indicada (zona de
+República Dominicana), no envía HTTP y devuelve Failed con demo expirada.
+No hay fallback ni simulación. Ambas variables vacías conservan el SMS personalizado.
+Este modo sirve para demostrar conectividad y no cierra RF-09 completo.
+Referencia: https://www.twilio.com/docs/usage/trials/try-out-sms.
+
 El adaptador usa la API REST de Twilio con Basic auth y formulario `To`, `Body` y
 exactamente uno de `From` / `MessagingServiceSid`. No añade paquetes NuGet.
 `Sent` significa aceptado por Twilio (`queued`), no confirma recepción en el teléfono.

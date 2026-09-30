@@ -87,6 +87,41 @@ public sealed class SmsTests
     }
 
     private static HttpResponseMessage Json(HttpStatusCode status, string body) => new(status) { Content = new StringContent(body) };
+    [Fact]
+    public async Task Demo_envia_plantilla_y_declara_ausencia_de_datos_reales()
+    {
+        using var client = new HttpClient(new Handler(async request =>
+        {
+            var form = await request.Content!.ReadAsStringAsync();
+            Assert.Contains("Body=sms_order_confirmation", form);
+            Assert.DoesNotContain("COM-2026", form);
+            return Json(HttpStatusCode.Created, "{\"sid\":\"SMdemo\",\"status\":\"queued\"}");
+        }));
+        var sender = new TwilioSmsSender(client, Settings with { TrialTemplate = "sms_order_confirmation", TrialUntil = new DateOnly(2026,9,30) },
+            new FixedTime(new DateTimeOffset(2026,9,30,16,0,0,TimeSpan.Zero)));
+        var report = await sender.SendAsync("8095551234", "Ticket COM-2026-000001 https://ticket", default);
+        Assert.Equal(DeliveryResult.Sent, report.Result);
+        Assert.Contains("DEMO Trial", report.Detail);
+        Assert.Contains("sin datos del ticket", report.Detail);
+    }
+
+    [Theory]
+    [InlineData(2026,10,1,4)]
+    [InlineData(2026,10,2,16)]
+    public async Task Demo_expirada_no_envia_HTTP(int year, int month, int day, int hour)
+    {
+        using var client = new HttpClient(new Handler(_ => throw new InvalidOperationException("No debe enviar después de expirar")));
+        var sender = new TwilioSmsSender(client, Settings with { TrialTemplate = "sms_order_confirmation", TrialUntil = new DateOnly(2026,9,30) },
+            new FixedTime(new DateTimeOffset(year,month,day,hour,0,0,TimeSpan.Zero)));
+        var report = await sender.SendAsync("8095551234", "Ticket", default);
+        Assert.Equal(DeliveryResult.Failed, report.Result);
+        Assert.Contains("expirado", report.Detail);
+    }
+
+    private sealed class FixedTime(DateTimeOffset instant) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => instant;
+    }
     private sealed class Handler(Func<HttpRequestMessage, Task<HttpResponseMessage>> send) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => send(request);
@@ -96,6 +131,21 @@ public sealed class SmsTests
 [Collection("api")]
 public sealed class SmsConfigurationTests(ApiFixture fixture)
 {
+    [Theory]
+    [InlineData("sms_order_confirmation", null)]
+    [InlineData(null, "2026-09-30")]
+    [InlineData("inventada", "2026-09-30")]
+    public void Demo_requiere_plantilla_permitida_y_fecha(string? template, string? until)
+    {
+        var values = new Dictionary<string,string?>(fixture.Settings)
+        {
+            ["SMS_PROVIDER"]="twilio", ["TWILIO_ACCOUNT_SID"]="ACtest", ["TWILIO_AUTH_TOKEN"]="test",
+            ["TWILIO_FROM"]="+17375550100", ["TWILIO_MESSAGING_SERVICE_SID"]=null,
+            ["TWILIO_TRIAL_TEMPLATE"]=template, ["TWILIO_TRIAL_UNTIL"]=until
+        };
+        using var factory = ApiFixture.CreateFactory(values);
+        Assert.Contains("Demo Twilio requiere", Assert.Throws<InvalidOperationException>(() => factory.CreateClient()).Message);
+    }
     [Theory]
     [InlineData("otro", null, null, null, null, "proveedor no implementado")]
     [InlineData("twilio", null, null, null, null, "TWILIO_ACCOUNT_SID")]

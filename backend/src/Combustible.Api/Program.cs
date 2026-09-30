@@ -66,10 +66,21 @@ else if (string.Equals(smsProvider, "twilio", StringComparison.OrdinalIgnoreCase
     var serviceSid = builder.Configuration["TWILIO_MESSAGING_SERVICE_SID"];
     if (string.IsNullOrWhiteSpace(twilioFrom) == string.IsNullOrWhiteSpace(serviceSid))
         throw new InvalidOperationException("Twilio requiere exactamente uno de TWILIO_FROM o TWILIO_MESSAGING_SERVICE_SID.");
+    var trialTemplate = builder.Configuration["TWILIO_TRIAL_TEMPLATE"];
+    var trialUntilText = builder.Configuration["TWILIO_TRIAL_UNTIL"];
+    DateOnly? trialUntil = null;
+    if (!string.IsNullOrWhiteSpace(trialTemplate) || !string.IsNullOrWhiteSpace(trialUntilText))
+    {
+        if (trialTemplate != "sms_order_confirmation" ||
+            !DateOnly.TryParseExact(trialUntilText, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var expiry))
+            throw new InvalidOperationException("Demo Twilio requiere TWILIO_TRIAL_TEMPLATE=sms_order_confirmation y TWILIO_TRIAL_UNTIL=AAAA-MM-DD.");
+        trialUntil = expiry;
+    }
+    else trialTemplate = null;
     builder.Services.AddSingleton<ISmsSender>(_ => new TwilioSmsSender(new HttpClient(new SocketsHttpHandler
     {
         PooledConnectionLifetime = TimeSpan.FromMinutes(5)
-    }) { Timeout = TimeSpan.FromSeconds(15) }, new TwilioSettings(accountSid, authToken, twilioFrom, serviceSid)));
+    }) { Timeout = TimeSpan.FromSeconds(15) }, new TwilioSettings(accountSid, authToken, twilioFrom, serviceSid, trialTemplate, trialUntil)));
 }
 else throw new InvalidOperationException("SMS_PROVIDER: proveedor no implementado.");
 builder.Services.AddScoped<TicketService>();
