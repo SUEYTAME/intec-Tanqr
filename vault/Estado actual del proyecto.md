@@ -8,7 +8,7 @@ actualizado: 2026-09-30
 
 ## Mensajes al usuario — 2026-09-30
 
-El detalle de entrega de un ticket se muestra en español, sin la respuesta SMTP ni el error HTTP de Twilio. La validación y los avisos de cuenta duplicada también. La auditoría muestra la acción y la entidad en español. Backend **113/113**; frontend build/lint correctos.
+El detalle de entrega de un ticket se muestra en español, sin la respuesta SMTP ni el error HTTP de Twilio. La validación y los avisos de cuenta duplicada también. La auditoría muestra la acción y la entidad en español. Backend **113/113**; frontend build/lint correctos; navegador **10/10**.
 
 Fuente de continuidad. Leer después AGENTS.md y [[Tareas pendientes]]; decisiones en
 [[Decisiones de arquitectura]], evidencia exacta en [[Bitacora de cambios]].
