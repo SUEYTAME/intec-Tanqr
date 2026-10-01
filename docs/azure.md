@@ -1,6 +1,6 @@
 # Publicación en Azure — INTEC
 
-Actualizado: 2026-09-30. **Desplegada y verificada.** Es una demo con datos ficticios.
+Actualizado: 2026-10-01. **Desplegada y verificada.** Es una demo con datos ficticios.
 
 **URL:** https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
 
@@ -83,8 +83,8 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
 5. Subir el código probado y ejecutar el instalador en la VM (sin SSH, ver ADR-015):
 
    ```powershell
-   git archive --format=tar.gz -o artifacts/azure/src-4db7a30.tar.gz 4db7a30cb26c9728e5f13ab2399b271d443c3a23
-   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-4db7a30.tar.gz -f artifacts/azure/src-4db7a30.tar.gz --overwrite
+   git archive --format=tar.gz -o artifacts/azure/src-e21e3c2.tar.gz e21e3c293a62a1fec4dc0dd3bc939817fee1128f
+   az storage blob upload --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 --auth-mode login --account-name stintecfueldevb805 -c deployments -n src-e21e3c2.tar.gz -f artifacts/azure/src-e21e3c2.tar.gz --overwrite
    az vm run-command invoke --subscription 44f41884-c42a-4162-898f-d83d8d987ff3 -g rg-intec-fuel-dev-b805 -n vm-intec-fuel-dev-b805 --command-id RunShellScript --scripts '@deploy/azure/instalar.sh'
    ```
 
@@ -145,9 +145,9 @@ disco ni IP. Una sola VM no ofrece alta disponibilidad.
 
 - **SSH:** la clave `artifacts/azure/id_ed25519` tiene una frase de paso desconocida; la administración
   se hace con `run-command` (ADR-015).
-- **Imagen:** `intec-combustible:0.4.0-4db7a30`, construida en la VM desde el paquete privado
-  `src-4db7a30.tar.gz` (SHA-256 `593a2956095cbfaf805aa96314c8fe109a89108248f28f19ce171770b298c39c`),
-  no descargada de GHCR. Despliegue comprobado el 2026-09-30 con `/health/ready` HTTP 200.
+- **Imagen:** `intec-combustible:0.4.0-e21e3c2`, construida en la VM desde el paquete privado
+  `src-e21e3c2.tar.gz` (SHA-256 `242fc5917944e27db988276f4a85abb600bdb74a0a2d20d87265a04d8545a331`),
+  no descargada de GHCR. Despliegue comprobado el 2026-10-01 con `/health/ready` HTTP 200.
 - **Correo:** ACS entregó el ticket de prueba `COM-2026-000001` en el buzón del usuario (2026-09-23, bandeja de entrada, QR y PDF). Es correo de demo;
   el SMTP institucional (B-02) sigue pendiente para operación real.
 - SMS (B-01), datos reales (B-04) y prueba en Android físico (CA-6) siguen pendientes. Revisión desplegada: `4db7a30` (incluye paneles por rol, galones legibles, QR PDF, tablas PDF y refresco de estados entre sesiones).
@@ -200,3 +200,14 @@ ambas en Key Vault. Mensaje con datos de ejemplo de Twilio, sin datos del ticket
 detalle DEMO Trial explícito. Pasada la fecha de República Dominicana, Failed sin HTTP.
 Prueba directa y aprobación local COM-2026-000004 delivered; usuario confirmó la
 recepción de la prueba inicial. RF-09 personalizado sigue abierto. ADR-020.
+
+
+## Publicación vigente — 2026-10-01
+
+Azure ejecuta **0.4.0-e21e3c2**, cambios de Hesler revisados y publicados.
+CI 36932529714 cuatro jobs success: backend 122/122, navegador 10/10;
+backend local 122/122 y build/lint correctos. Salud 200, RestartCount=0,
+PostgreSQL healthy y datos/configuración preservados. Instalador fijado a e21e3c2.
+No existe job de despliegue automático: CI publica GHCR; repetir el paso 5 con
+el commit y checksum nuevos para actualizar Azure. Las versiones anteriores
+arriba son evidencia histórica. Detalle: [QA de despliegue](qa-despliegue-2026-10-01.md).
