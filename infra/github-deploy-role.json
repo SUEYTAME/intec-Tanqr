@@ -1,0 +1,15 @@
+{
+  "Name": "INTEC TanQR GitHub VM Deploy",
+  "IsCustom": true,
+  "Description": "Leer y ejecutar Run Command solo en la VM de TanQR",
+  "Actions": [
+    "Microsoft.Compute/virtualMachines/read",
+    "Microsoft.Compute/virtualMachines/runCommand/action"
+  ],
+  "NotActions": [],
+  "DataActions": [],
+  "NotDataActions": [],
+  "AssignableScopes": [
+    "/subscriptions/44f41884-c42a-4162-898f-d83d8d987ff3/resourceGroups/rg-intec-fuel-dev-b805"
+  ]
+}

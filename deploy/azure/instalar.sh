@@ -9,8 +9,9 @@ exec > >(tee -a /var/log/combustible-instalar.log) 2>&1
 FQDN=intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
 VAULT=kv-intec-fuel-dev-b805
 STORAGE=stintecfueldevb805
-REVISION=e21e3c293a62a1fec4dc0dd3bc939817fee1128f
-SRC_SHA256=242fc5917944e27db988276f4a85abb600bdb74a0a2d20d87265a04d8545a331
+REVISION=${REVISION:-e21e3c293a62a1fec4dc0dd3bc939817fee1128f}
+SRC_SHA256=${SRC_SHA256:-242fc5917944e27db988276f4a85abb600bdb74a0a2d20d87265a04d8545a331}
+[[ "$REVISION" =~ ^[0-9a-f]{40}$ && "$SRC_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo 'Revisión/checksum inválidos'; exit 1; }
 APP_VERSION=0.4.0-${REVISION:0:7}
 # Cuenta inicial ficticia (demo). No es un dato de INTEC.
 BOOTSTRAP_EMAIL=admin@combustible-demo.test
@@ -32,7 +33,18 @@ if [ ! -d "$SRC_DIR" ]; then
   echo "$SRC_SHA256  $BASE/src.tar.gz" | sha256sum -c -
   install -d -m 0700 "$SRC_DIR"; tar -xzf "$BASE/src.tar.gz" -C "$SRC_DIR"; rm -f "$BASE/src.tar.gz"
 fi
-if ! docker image inspect "intec-combustible:$APP_VERSION" >/dev/null 2>&1; then
+if [ -n "${IMAGE_SHA256:-}" ]; then
+  [[ "$IMAGE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo 'Checksum de imagen inválido'; exit 1; }
+  log "Cargando imagen exacta construida por CI"
+  ST=$(token https://storage.azure.com/)
+  curl -fsS -H "Authorization: Bearer $ST" -H "x-ms-version: 2023-11-03" \
+    "https://$STORAGE.blob.core.windows.net/deployments/image-$REVISION.tar.gz" -o "$BASE/image-$REVISION.tar.gz"
+  echo "$IMAGE_SHA256  $BASE/image-$REVISION.tar.gz" | sha256sum -c -
+  gzip -dc "$BASE/image-$REVISION.tar.gz" | docker load
+  rm -f "$BASE/image-$REVISION.tar.gz"
+  [ "$(docker image inspect "intec-combustible:$APP_VERSION" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$REVISION" ] \
+    || { echo 'La imagen no corresponde al commit probado'; exit 1; }
+elif ! docker image inspect "intec-combustible:$APP_VERSION" >/dev/null 2>&1; then
   log "Construyendo imagen intec-combustible:$APP_VERSION"
   docker build -q -t "intec-combustible:$APP_VERSION" "$SRC_DIR"
 fi
