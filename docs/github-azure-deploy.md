@@ -76,3 +76,17 @@ Fuentes oficiales:
 [cola de concurrencia](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency),
 [Azure Login OIDC](https://github.com/Azure/login),
 [Run Command](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/run-command).
+
+
+## Primera activación
+
+GitHub aceptó la propiedad queue:max y arrancó la ejecución
+[36938991352](https://github.com/SUEYTAME/intec-Tanqr/actions/runs/36938991352)
+para 175b052. Este registro de operación se publica con un segundo push para
+comprobar que espera en cola sin cancelar el primer despliegue. Resultado final
+en la bitácora del proyecto.
+
+Para mantenimiento: GitHub → Actions → CI → Disable workflow; no inicia nuevos
+trabajos. Esperar que termine el activo antes de ejecutar actualizaciones manuales.
+Para reintentar un fallo: Re-run failed jobs o Run workflow en fase-2-producto.
+Un commit con pruebas fallidas no llega al job deploy.

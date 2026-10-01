@@ -4,6 +4,11 @@ Actualizado: 2026-10-01. **Desplegada y verificada.** Es una demo con datos fict
 
 **URL:** https://intec-fuel-dev-b805.northcentralus.cloudapp.azure.com
 
+**CI/CD desde 2026-10-01:** push a fase-2-producto o workflow_dispatch en esa rama
+ejecuta pruebas, construye/publica imagen y despliega automáticamente a esta VM,
+en cola sin cancelar la ejecución activa. [Operación y recuperación](github-azure-deploy.md).
+Los apartados fechados anteriores describen despliegues manuales históricos.
+
 ## Cuenta y alcance autorizados
 
 El usuario autorizó crear lo necesario exclusivamente en su cuenta de INTEC:
@@ -65,7 +70,7 @@ su propia sesión todavía no fue comprobado.
 IaC: `infra/main.bicep`, `infra/modules/resources.bicep`, `infra/correo.bicep`, `infra/monitoreo.bicep`,
 `infra/presupuesto.bicep`. Decisiones: ADR-014, ADR-015 y ADR-017.
 
-## Cómo se desplegó (y cómo repetirlo)
+## Instalación inicial y alternativa manual de recuperación
 
 Todo es idempotente; repetir un paso reutiliza lo existente.
 
@@ -80,7 +85,7 @@ Todo es idempotente; repetir un paso reutiliza lo existente.
 2. `./scripts/azure-infra.ps1` (what-if) y luego `./scripts/azure-infra.ps1 -Deploy`.
 3. `./scripts/azure-secretos.ps1`: genera una vez los secretos y los guarda en Key Vault.
 4. `./scripts/azure-correo.ps1` (what-if) y `-Deploy`: app Entra, ACS y `smtp-*` en Key Vault.
-5. Subir el código probado y ejecutar el instalador en la VM (sin SSH, ver ADR-015):
+5. Alternativa manual: subir el código probado y ejecutar el instalador en la VM (sin SSH, ver ADR-015):
 
    ```powershell
    git archive --format=tar.gz -o artifacts/azure/src-e21e3c2.tar.gz e21e3c293a62a1fec4dc0dd3bc939817fee1128f
