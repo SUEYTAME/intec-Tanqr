@@ -216,3 +216,12 @@ PostgreSQL healthy y datos/configuración preservados. Instalador fijado a e21e3
 No existe job de despliegue automático: CI publica GHCR; repetir el paso 5 con
 el commit y checksum nuevos para actualizar Azure. Las versiones anteriores
 arriba son evidencia histórica. Detalle: [QA de despliegue](qa-despliegue-2026-10-01.md).
+
+
+## CI/CD verificado — 2026-10-01
+
+Release automática **0.4.0-64b4018**. Actions 36939082916, cinco jobs success;
+lectura independiente VM coincide en imagen/label/run 57, salud 200, RestartCount=0
+y PostgreSQL healthy. Configuración preservada. Los pushes de fase-2-producto
+despliegan después de las pruebas e imagen; ya no requiere repetir el paso manual.
+[Operación, permisos y recuperación](github-azure-deploy.md).

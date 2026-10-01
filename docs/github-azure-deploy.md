@@ -30,6 +30,10 @@ Aplicación Entra `intec-tanqr-github-deploy`:
 - App object ID: `a78b8f14-8ef2-4519-a112-8fe78e621c54`.
 - Service principal: `1e007bac-df8d-4373-9998-34d9e65e6e0c`.
 - Federación: `infra/github-deploy-federation.json`, solo la rama indicada del repo.
+  El repositorio usa `use_immutable_subject: true`: subject exacto
+  `repo:SUEYTAME@199396200/intec-Tanqr@1382019074:ref:refs/heads/fase-2-producto`.
+  Confirmado por la API de OIDC y el token registrado por Azure Login; no sustituir
+  por el formato antiguo sin IDs. [Referencia GitHub](https://docs.github.com/en/actions/reference/security/oidc).
 - Rol custom `INTEC TanQR GitHub VM Deploy` (definición en
   `infra/github-deploy-role.json`), asignado únicamente a la VM.
 - `Storage Blob Data Contributor`, únicamente en el contenedor `deployments`.
@@ -90,3 +94,15 @@ Para mantenimiento: GitHub → Actions → CI → Disable workflow; no inicia nu
 trabajos. Esperar que termine el activo antes de ejecutar actualizaciones manuales.
 Para reintentar un fallo: Re-run failed jobs o Run workflow en fase-2-producto.
 Un commit con pruebas fallidas no llega al job deploy.
+
+
+## Activación confirmada — 2026-10-01
+
+[36939082916](https://github.com/SUEYTAME/intec-Tanqr/actions/runs/36939082916)
+terminó success en cinco jobs: 122/122 backend, seis pruebas de despliegue,
+10/10 navegador y build/lint. Publicó automáticamente **0.4.0-64b4018**.
+Lectura independiente confirmó label OCI completo, run 57, running/RestartCount=0,
+PostgreSQL healthy, salud 200 y configuración intacta salvo versión.
+Primer flujo 36938991352 falló por subject OIDC antiguo; la federación se corrigió
+al formato inmutable observado. No hubo despliegue en ese intento. El segundo
+flujo esperó en cola y sus jobs comenzaron después de terminar el primero.
