@@ -161,6 +161,28 @@ public sealed class ProductTests(ApiFixture fixture)
     }
 
     [Fact]
+    public async Task Auditoria_muestra_el_nombre_y_conserva_el_id()
+    {
+        var (client, _) = await fixture.LoginAsync();
+        using (client)
+        {
+            var me = (await client.GetFromJsonAsync<MeResponse>("/api/auth/me"))!;
+            var page = (await client.GetFromJsonAsync<AuditPage>("/api/auditoria"))!;
+            var shown = page.Items.First(x => x.Action == "login" && x.EntityId == me.Id.ToString());
+            Assert.Equal(me.DisplayName, shown.Actor);
+            Assert.False(Guid.TryParse(shown.Actor, out _));
+            using var scope = fixture.Factory.Services.CreateScope();
+            var stored = await scope.ServiceProvider.GetRequiredService<AppDbContext>().AuditEvents.AsNoTracking().SingleAsync(x => x.Id == shown.Id);
+            Assert.Equal(me.Id.ToString(), stored.Actor);
+            Assert.Equal(AuditWriter.ComputeHash(stored), stored.Hash);
+        }
+    }
+
+    private sealed record MeResponse(Guid Id, string DisplayName);
+    private sealed record AuditPage(AuditItem[] Items);
+    private sealed record AuditItem(long Id, string Actor, string Action, string EntityId);
+
+    [Fact]
     public async Task Rechaza_contrasena_corta_y_campos_invalidos()
     {
         var (client, _) = await fixture.LoginAsync();

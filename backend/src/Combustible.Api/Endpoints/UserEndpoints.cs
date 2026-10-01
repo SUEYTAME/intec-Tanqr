@@ -93,7 +93,31 @@ public static class UserEndpoints
         app.MapGet("/api/auditoria", async (AppDbContext db, int page = 1) =>
         {
             if (page is < 1 or > 100000) return Results.BadRequest();
-            return Results.Ok(new { items = await db.AuditEvents.AsNoTracking().OrderByDescending(x => x.Id).Skip((page - 1) * 50).Take(50).ToListAsync(), total = await db.AuditEvents.CountAsync() });
+            // El evento guarda el id (entra en el hash). La consulta muestra el nombre.
+            var events = await db.AuditEvents.AsNoTracking().OrderByDescending(x => x.Id).Skip((page - 1) * 50).Take(50).ToListAsync();
+            var ids = new List<Guid>();
+            foreach (var actor in events.Select(x => x.Actor).Distinct())
+                if (Guid.TryParse(actor, out var id)) ids.Add(id);
+            var names = ids.Count == 0
+                ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                : (await db.Users.AsNoTracking().Where(u => ids.Contains(u.Id)).Select(u => new { u.Id, u.DisplayName }).ToListAsync())
+                    .ToDictionary(x => x.Id.ToString(), x => x.DisplayName, StringComparer.OrdinalIgnoreCase);
+            return Results.Ok(new
+            {
+                items = events.Select(x => new
+                {
+                    x.Id,
+                    x.OccurredAt,
+                    Actor = names.TryGetValue(x.Actor, out var name) && !string.IsNullOrWhiteSpace(name) ? name : x.Actor,
+                    x.Ip,
+                    x.Action,
+                    x.Entity,
+                    x.EntityId,
+                    x.PreviousHash,
+                    x.Hash,
+                }).ToList(),
+                total = await db.AuditEvents.CountAsync(),
+            });
         }).RequireAuthorization("audit-read");
         app.MapGet("/api/auditoria/verificar", async (AppDbContext db, CancellationToken cancellationToken) =>
         {

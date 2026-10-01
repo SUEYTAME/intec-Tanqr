@@ -230,9 +230,7 @@ function Audit() {
                   <td>{formatDateTime(row.occurredAt)}</td>
                   <td>{labelOf(auditActionLabels, row.action)}</td>
                   <td>{labelOf(auditEntityLabels, row.entity)}</td>
-                  <td className="mono">
-                    {labelOf(auditActorLabels, row.actor)}
-                  </td>
+                  <td>{labelOf(auditActorLabels, row.actor)}</td>
                   <td>{row.ip === "local" ? "Servidor" : row.ip}</td>
                 </tr>
               ))}
